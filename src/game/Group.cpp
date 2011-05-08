@@ -773,7 +773,7 @@ void Group::StartLootRool(WorldObject* lootTarget, LootMethod method, Loot* loot
     for(GroupReference *itr = GetFirstMember(); itr != NULL; itr = itr->next())
     {
         Player *playerToRoll = itr->getSource();
-        if(!playerToRoll || !playerToRoll->GetSession())
+        if(!playerToRoll || !playerToRoll->GetSession() || playerToRoll->IsBot())
             continue;
 
         if (lootItem.AllowedForPlayer(playerToRoll))

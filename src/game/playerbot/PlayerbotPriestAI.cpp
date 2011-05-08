@@ -55,6 +55,9 @@ void PlayerbotPriestAI::InitSpells(PlayerbotAI* const ai)
     PRAYER_OF_SHADOW_PROTECTION   = ai->initSpell(PRAYER_OF_SHADOW_PROTECTION_1);
     SHADOWFIEND                   = ai->initSpell(SHADOWFIEND_1);
     MIND_SEAR                     = ai->initSpell(MIND_SEAR_1);
+    SHADOWFORM                    = ai->initSpell(SHADOWFORM_1);
+    VAMPIRIC_EMBRACE              = ai->initSpell(VAMPIRIC_EMBRACE_1);
+    SHADOW_WORD_DEATH             = ai->initSpell(SHADOW_WORD_DEATH_1);
 
     // DISCIPLINE
     PENANCE                       = ai->initSpell(PENANCE_1);
@@ -121,216 +124,101 @@ void PlayerbotPriestAI::DoNextCombatManeuver(Unit *pTarget)
     if (!m_master)
         return;
 
-    //ai->SetMovementTarget(PlayerbotAI::MOVEMENT_FOLLOW, m_master);   // dont want to melee mob
-
     Player *m_bot = GetPlayerBot();
     Group *m_group = m_bot->GetGroup();
 
-    if (m_group)
-    {
-        Group::MemberSlotList const& groupSlot = m_group->GetMemberSlots();
-        for (Group::member_citerator itr = groupSlot.begin(); itr != groupSlot.end(); itr++)
-        {
-            Player *m_groupMember = sObjectMgr.GetPlayer(itr->guid);
-            if (!m_groupMember || !m_groupMember->isAlive())
-                continue;
-
-            uint32 memberHP = m_groupMember->GetHealth() * 100 / m_groupMember->GetMaxHealth();
-            if (memberHP < 80)
-                HealTarget(m_groupMember);
-        }
-    }
-
-    // Damage Spells
     ai->SetInFront(pTarget);
-    float dist = m_bot->GetDistance(pTarget);
 
-    switch (SpellSequence)
+    switch (m_bot->getRole())
     {
-        case SPELL_HOLY:
-            if (SMITE > 0 && LastSpellHoly < 1 && !pTarget->HasAura(SMITE, EFFECT_INDEX_0) && ai->GetManaPercent() >= 17)
+    case PriestHoly:
+        if (m_group)
+        {
+            Group::MemberSlotList const& groupSlot = m_group->GetMemberSlots();
+            for (Group::member_citerator itr = groupSlot.begin(); itr != groupSlot.end(); itr++)
             {
-                ai->CastSpell(SMITE, pTarget);
-                SpellSequence = SPELL_SHADOWMAGIC;
-                LastSpellHoly = LastSpellHoly + 1;
-                break;
-            }
-            else if (MANA_BURN > 0 && LastSpellHoly < 2 && pTarget->GetPower(POWER_MANA) > 0 && ai->GetManaPercent() < 70 && ai->GetManaPercent() >= 14)
-            {
+                Player *m_groupMember = sObjectMgr.GetPlayer(itr->guid);
+                if (!m_groupMember || !m_groupMember->isAlive())
+                    continue;
 
-                ai->CastSpell(MANA_BURN, pTarget);
-                ai->SetIgnoreUpdateTime(3);
-                SpellSequence = SPELL_SHADOWMAGIC;
-                LastSpellHoly = LastSpellHoly + 1;
-                break;
+                uint32 memberHP = m_groupMember->GetHealth() * 100 / m_groupMember->GetMaxHealth();
+                if (memberHP < 80 && HealTarget(m_groupMember))
+                    return;
             }
-            else if (HOLY_NOVA > 0 && LastSpellHoly < 3 && dist <= ATTACK_DISTANCE && ai->GetManaPercent() >= 22)
-            {
+        }
+        break;
 
-                ai->CastSpell(HOLY_NOVA);
-                SpellSequence = SPELL_SHADOWMAGIC;
-                LastSpellHoly = LastSpellHoly + 1;
-                break;
+    case PriestDiscipline:
+    case PriestShadow:
+        static uint32 SpellShadow[] = {SHADOW_WORD_PAIN, DEVOURING_PLAGUE, VAMPIRIC_TOUCH, MIND_BLAST, MIND_FLAY};
+        static uint32 elt = sizeof(SpellShadow)/sizeof(uint32); 
+        char *SpellFirstTarget = "11110";
+        char *SpellAllTargets = "10100";
+        char *SpellLastTarget = "00001";
+        uint32 numberTargets = 0;
+        uint32 numberTargetsWithin5f = 0;
+
+        for (Group::member_citerator itr = m_group->GetMemberSlots().begin(); itr != m_group->GetMemberSlots().end(); itr++)
+        {
+            for (Unit::AttackerSet::const_iterator itrt = sObjectMgr.GetPlayer(itr->guid)->getAttackers().begin(); itrt != sObjectMgr.GetPlayer(itr->guid)->getAttackers().end(); itrt++)
+            {
+                if ((*itrt)->IsWithinDist(m_bot, 36.0f))
+                {
+                    numberTargets++;
+                    if ((*itrt)->GetHealthPercent() <= 35 && ai->CastSpell(SHADOW_WORD_DEATH, (*itrt)))
+                        return;
+                }
+                if ((*itrt)->IsWithinDist(m_bot, 5.0f))
+                    numberTargetsWithin5f++;
             }
-            else if (HOLY_FIRE > 0 && LastSpellHoly < 4 && !pTarget->HasAura(HOLY_FIRE, EFFECT_INDEX_0) && ai->GetManaPercent() >= 13)
-            {
+        }
 
-                ai->CastSpell(HOLY_FIRE, pTarget);
-                SpellSequence = SPELL_SHADOWMAGIC;
-                LastSpellHoly = LastSpellHoly + 1;
-                break;
-            }
-            else if (PRAYER_OF_MENDING > 0 && LastSpellHoly < 5 && pVictim == m_master && m_master->GetHealth() <= m_master->GetMaxHealth() * 0.7 && !m_master->HasAura(PRAYER_OF_MENDING, EFFECT_INDEX_0) && ai->GetManaPercent() >= 15)
+        for (uint32 i = 0; i < elt; ++i)
+        {
+            if (numberTargetsWithin5f >= 5 && !MIND_SEAR)
             {
-
-                ai->CastSpell(PRAYER_OF_MENDING, m_master);
-                SpellSequence = SPELL_SHADOWMAGIC;
-                LastSpellHoly = LastSpellHoly + 1;
-                break;
-            }
-            else if (LastSpellHoly > 6)
-            {
-                LastSpellHoly = 0;
-                SpellSequence = SPELL_SHADOWMAGIC;
-                break;
-            }
-            LastSpellHoly = LastSpellHoly + 1;
-        //SpellSequence = SPELL_SHADOWMAGIC;
-        //break;
-
-        case SPELL_SHADOWMAGIC:
-            if (SHADOW_WORD_PAIN > 0 && LastSpellShadowMagic < 1 && !pTarget->HasAura(SHADOW_WORD_PAIN, EFFECT_INDEX_0) && ai->GetManaPercent() >= 25)
-            {
-
-                ai->CastSpell(SHADOW_WORD_PAIN, pTarget);
-                SpellSequence = SPELL_DISCIPLINE;
-                LastSpellShadowMagic = LastSpellShadowMagic + 1;
-                break;
-            }
-            else if (MIND_BLAST > 0 && LastSpellShadowMagic < 2 && ai->GetManaPercent() >= 19)
-            {
-
-                ai->CastSpell(MIND_BLAST, pTarget);
-                SpellSequence = SPELL_DISCIPLINE;
-                LastSpellShadowMagic = LastSpellShadowMagic + 1;
-                break;
-            }
-            else if (SCREAM > 0 && LastSpellShadowMagic < 3 && ai->GetManaPercent() >= 15)
-            {
-
-                ai->CastSpell(SCREAM);
-                SpellSequence = SPELL_DISCIPLINE;
-                (LastSpellShadowMagic = LastSpellShadowMagic + 1);
-                break;
+                if (m_bot->HasAura(SHADOWFORM))
+                    m_bot->RemoveAurasDueToSpell(SHADOWFORM);
+                if (ai->CastSpell(HOLY_NOVA))
+                    return;
             }
 
-            else if (MIND_FLAY > 0 && LastSpellShadowMagic < 4 && !pTarget->HasAura(MIND_FLAY, EFFECT_INDEX_0) && ai->GetManaPercent() >= 10)
-            {
+            if (!m_bot->HasAura(SHADOWFORM) && ai->SelfBuff(SHADOWFORM))
+                return;
 
-                ai->CastSpell(MIND_FLAY, pTarget);
-                ai->SetIgnoreUpdateTime(3);
-                SpellSequence = SPELL_DISCIPLINE;
-                LastSpellShadowMagic = LastSpellShadowMagic + 1;
-                break;
-            }
-            else if (DEVOURING_PLAGUE > 0 && LastSpellShadowMagic < 5 && !pTarget->HasAura(DEVOURING_PLAGUE, EFFECT_INDEX_0) && ai->GetManaPercent() >= 28)
+            /*if (numberTargets >= 5 && !pTarget->HasAuraFromUnit(MIND_SEAR, m_bot) && ai->CastSpell(MIND_SEAR, pTarget))
+                return;*/ // Will Replace Loop when Mind Sear debug : stackable by different players
+            if (numberTargets >= 5)
             {
-                ai->CastSpell(DEVOURING_PLAGUE, pTarget);
-                SpellSequence = SPELL_DISCIPLINE;
-                LastSpellShadowMagic = LastSpellShadowMagic + 1;
-                break;
-            }
-            else if (SHADOW_PROTECTION > 0 && LastSpellShadowMagic < 6 && ai->GetManaPercent() >= 60)
-            {
-                ai->CastSpell(SHADOW_PROTECTION, pTarget);
-                SpellSequence = SPELL_DISCIPLINE;
-                LastSpellShadowMagic = LastSpellShadowMagic + 1;
-                break;
-            }
-            else if (VAMPIRIC_TOUCH > 0 && LastSpellShadowMagic < 7 && !pTarget->HasAura(VAMPIRIC_TOUCH, EFFECT_INDEX_0) && ai->GetManaPercent() >= 18)
-            {
-                ai->CastSpell(VAMPIRIC_TOUCH, pTarget);
-                SpellSequence = SPELL_DISCIPLINE;
-                LastSpellShadowMagic = LastSpellShadowMagic + 1;
-                break;
-            }
-            else if (SHADOWFIEND > 0 && LastSpellShadowMagic < 8)
-            {
-                ai->CastSpell(SHADOWFIEND);
-                SpellSequence = SPELL_DISCIPLINE;
-                LastSpellShadowMagic = LastSpellShadowMagic + 1;
-                break;
-            }
-            else if (MIND_SEAR > 0 && LastSpellShadowMagic < 9 && ai->GetManaPercent() >= 28)
-            {
-                ai->CastSpell(MIND_SEAR, pTarget);
-                ai->SetIgnoreUpdateTime(5);
-                SpellSequence = SPELL_DISCIPLINE;
-                LastSpellShadowMagic = LastSpellShadowMagic + 1;
-                break;
-            }
-            else if (LastSpellShadowMagic > 10)
-            {
-                LastSpellShadowMagic = 0;
-                SpellSequence = SPELL_DISCIPLINE;
-                break;
-            }
-            LastSpellShadowMagic = LastSpellShadowMagic + 1;
-        //SpellSequence = SPELL_DISCIPLINE;
-        //break;
+                for (Group::member_citerator itr = m_group->GetMemberSlots().begin(); itr != m_group->GetMemberSlots().end(); itr++)
+                {
+                    for (Unit::AttackerSet::const_iterator itrt = sObjectMgr.GetPlayer(itr->guid)->getAttackers().begin(); itrt != sObjectMgr.GetPlayer(itr->guid)->getAttackers().end(); itrt++)
+                    {  
+                        if (!(*itrt)->HasAura(MIND_SEAR) && ai->CastSpell(MIND_SEAR, (*itrt)))
+                            return;
+                    }
+                }
+            }// This condition and Loops will be replaced when Mind Sear debug : stackable by differents players
 
-        case SPELL_DISCIPLINE:
-            if (FEAR_WARD > 0 && LastSpellDiscipline < 1 && ai->GetManaPercent() >= 3)
-            {
+            if (SpellFirstTarget[i] == '1' && !pTarget->HasAuraFromUnit(SpellShadow[i], m_bot) && ai->CastSpell(SpellShadow[i], pTarget))
+                return;
 
-                ai->CastSpell(FEAR_WARD, m_master);
-                SpellSequence = SPELL_HOLY;
-                LastSpellDiscipline = LastSpellDiscipline + 1;
-                break;
-            }
-            else if (POWER_INFUSION > 0 && LastSpellDiscipline < 2 && ai->GetManaPercent() >= 16)
+            if (SpellAllTargets[i] == '1' && numberTargets > 1)
             {
+                for (Group::member_citerator itr = m_group->GetMemberSlots().begin(); itr != m_group->GetMemberSlots().end(); itr++)
+                {
+                    for (Unit::AttackerSet::const_iterator itrt = sObjectMgr.GetPlayer(itr->guid)->getAttackers().begin(); itrt != sObjectMgr.GetPlayer(itr->guid)->getAttackers().end(); itrt++)
+                    {  
+                        if (!(*itrt)->HasAuraFromUnit(SpellShadow[i], m_bot) && ai->CastSpell(SpellShadow[i], (*itrt)))
+                            return;
+                    }
+                }
+            }
 
-                ai->CastSpell(POWER_INFUSION, m_master);
-                SpellSequence = SPELL_HOLY;
-                LastSpellDiscipline = LastSpellDiscipline + 1;
-                break;
-            }
-            else if (MASS_DISPEL > 0 && LastSpellDiscipline < 3 && ai->GetManaPercent() >= 33)
-            {
-
-                ai->CastSpell(MASS_DISPEL);
-                SpellSequence = SPELL_HOLY;
-                LastSpellDiscipline = LastSpellDiscipline + 1;
-                break;
-            }
-            else if (INNER_FOCUS > 0 && !m_bot->HasAura(INNER_FOCUS, EFFECT_INDEX_0) && LastSpellDiscipline < 4)
-            {
-
-                ai->CastSpell(INNER_FOCUS, m_bot);
-                SpellSequence = SPELL_HOLY;
-                LastSpellDiscipline = LastSpellDiscipline + 1;
-                break;
-            }
-            else if (PENANCE > 0 && LastSpellDiscipline < 5 && ai->GetManaPercent() >= 16)
-            {
-
-                ai->CastSpell(PENANCE);
-                SpellSequence = SPELL_HOLY;
-                LastSpellDiscipline = LastSpellDiscipline + 1;
-                break;
-            }
-            else if (LastSpellDiscipline > 6)
-            {
-                LastSpellDiscipline = 0;
-                SpellSequence = SPELL_HOLY;
-                break;
-            }
-            else
-            {
-                LastSpellDiscipline = LastSpellDiscipline + 1;
-                SpellSequence = SPELL_HOLY;
-            }
+            if (SpellLastTarget[i] == '1' && !pTarget->HasAuraFromUnit(SpellShadow[i], m_bot) && ai->CastSpell(SpellShadow[i], pTarget)) // HasAuraFromUnit when Mind Flay debug : stackable by different players
+                return;
+        }
+        break;
     }
 } // end DoNextCombatManeuver
 
@@ -348,7 +236,35 @@ void PlayerbotPriestAI::DoNonCombatActions()
     if (!m_master)
         return;
 
-    SpellSequence = SPELL_HOLY;
+    if (m_bot->getRole() != PriestHoly)
+    {
+        if (!m_bot->HasAura(SHADOWFORM) && ai->SelfBuff(SHADOWFORM))
+            return;
+        if (!m_bot->HasAura(VAMPIRIC_EMBRACE) && ai->SelfBuff(VAMPIRIC_EMBRACE))
+            return;
+    }
+
+    uint32 MinorGlyphs[] = {58009, 58015, 58228};           // power word fortitude - shadow protection - ombrefiel
+    uint32 ShadowMajorGlyphs[] = {55681, 55682, 55687};     // shadow word pain - shadow word death - mind flay
+    uint32 HolyMajorGlyphs[] = {55674, 55672, 55680};       // renew - power word shield - prayer of healing
+
+    for (uint32 i = 0; i < 3; i++)
+    {
+        if (!m_bot->HasSpell(MinorGlyphs[i]))
+            m_bot->learnSpell(MinorGlyphs[i], true);
+
+        if (m_bot->HasSpell(ShadowMajorGlyphs[i]) && m_bot->getRole() == PriestHoly)
+            m_bot->removeSpell(ShadowMajorGlyphs[i]);
+
+        if (m_bot->HasSpell(HolyMajorGlyphs[i]) && m_bot->getRole() != PriestHoly)
+            m_bot->removeSpell(HolyMajorGlyphs[i]);
+
+        if (!m_bot->HasSpell(ShadowMajorGlyphs[i]) && m_bot->getRole() != PriestHoly)
+            m_bot->learnSpell(ShadowMajorGlyphs[i], true);
+
+        if (!m_bot->HasSpell(HolyMajorGlyphs[i]) && m_bot->getRole() == PriestHoly)
+            m_bot->learnSpell(HolyMajorGlyphs[i], true);
+    }
 
     // selfbuff goes first
     if (ai->SelfBuff(INNER_FIRE))
