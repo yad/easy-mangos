@@ -38,6 +38,7 @@
 #include "Creature.h"
 #include "Formulas.h"
 #include "BattleGround.h"
+#include "InstanceData.h"
 #include "CreatureAI.h"
 #include "ScriptMgr.h"
 #include "Util.h"
