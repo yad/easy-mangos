@@ -93,14 +93,12 @@ bool ConfusedMovementGenerator<T>::Update(T &unit, const uint32 &diff)
             float y = i_y + 10.0f*(rand_norm_f() - 0.5f);
             float z = i_z;
 
-            // we do not really need it with mmaps active
             unit.UpdateAllowedPositionZ(x, y, z);
 
             Traveller<T> traveller(unit);
 
             PathInfo path(&unit, x, y, z);
-
-            if(path.getPathType() & PATHFIND_NOPATH)
+            if(!(path.getPathType() & PATHFIND_NORMAL))
             {
                 i_nextMoveTime.Reset(urand(800, 1000));
                 return true;
@@ -111,9 +109,9 @@ bool ConfusedMovementGenerator<T>::Update(T &unit, const uint32 &diff)
             float speed = traveller.Speed() * 0.001f; // in ms
             uint32 traveltime = uint32(pointPath.GetTotalLength() / speed);
             SplineFlags flags = (unit.GetTypeId() == TYPEID_UNIT) ? ((Creature*)&unit)->GetSplineFlags() : SPLINEFLAG_WALKMODE;
-            unit.SendMonsterMoveByPath(pointPath, 1, pointPath.size(), flags, traveltime);
+            unit.SendMonsterMoveByPath(pointPath, 1, std::min<uint32>(pointPath.size(), 5), flags, traveltime);
 
-            PathNode p = pointPath[pointPath.size()-1];
+            PathNode p = pointPath[std::min<uint32>(pointPath.size()-1, 4)];
             // we do not really need it with mmaps active
             unit.UpdateAllowedPositionZ(p.x, p.y, p.z);
             i_destinationHolder.SetDestination(traveller, p.x, p.y, p.z, false);
@@ -126,6 +124,7 @@ template<>
 void ConfusedMovementGenerator<Player>::Finalize(Player &unit)
 {
     unit.clearUnitState(UNIT_STAT_CONFUSED|UNIT_STAT_CONFUSED_MOVE);
+    unit.StopMoving();
 }
 
 template<>

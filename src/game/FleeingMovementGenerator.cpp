@@ -44,7 +44,7 @@ void FleeingMovementGenerator<T>::_setTargetLocation(T &owner)
     Traveller<T> traveller(owner);
     
     PathInfo path(&owner, x, y, z);
-    if(path.getPathType() & PATHFIND_NOPATH)
+    if(!(path.getPathType() & PATHFIND_NORMAL))
     {
         i_nextCheckTime.Reset(urand(1000, 1500));
         return;
@@ -55,9 +55,9 @@ void FleeingMovementGenerator<T>::_setTargetLocation(T &owner)
     float speed = traveller.Speed() * 0.001f; // in ms
     uint32 traveltime = uint32(pointPath.GetTotalLength() / speed);
     SplineFlags flags = (owner.GetTypeId() == TYPEID_UNIT) ? ((Creature*)&owner)->GetSplineFlags() : SPLINEFLAG_WALKMODE;
-    owner.SendMonsterMoveByPath(pointPath, 1, pointPath.size(), flags, traveltime);
+    owner.SendMonsterMoveByPath(pointPath, 1, std::min<uint32>(pointPath.size(), 5), flags, traveltime);
 
-    PathNode p = pointPath[pointPath.size()-1];
+    PathNode p = pointPath[std::min<uint32>(pointPath.size()-1, 4)];
     owner.UpdateAllowedPositionZ(p.x, p.y, p.z);
 
     i_destinationHolder.SetDestination(traveller, p.x, p.y, p.z, false);
@@ -134,6 +134,7 @@ template<>
 void FleeingMovementGenerator<Player>::Finalize(Player &owner)
 {
     owner.clearUnitState(UNIT_STAT_FLEEING|UNIT_STAT_FLEEING_MOVE);
+    owner.StopMoving();
 }
 
 template<>
