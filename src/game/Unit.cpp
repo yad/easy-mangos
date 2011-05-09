@@ -11751,9 +11751,9 @@ void Unit::MonsterMoveWithSpeed(float x, float y, float z, uint32 transitTime)
     }
 }
 
-void Unit::MonsterMoveByPath(float x, float y, float z, uint32 speed, bool smoothPath)
+void Unit::MonsterMoveByPath(float x, float y, float z, uint32 speed, bool smoothPath, bool forceDest)
 {
-    PathInfo path(this, x, y, z, !smoothPath, true);
+    PathInfo path(this, x, y, z, !smoothPath, forceDest);
     PointPath pointPath = path.getFullPath();
 
     uint32 traveltime = uint32(pointPath.GetTotalLength()/float(speed));
