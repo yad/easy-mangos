@@ -541,6 +541,9 @@
     <ClCompile Include="..\..\src\game\VehicleHandler.cpp">
       <Filter>World/Handlers</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\game\GuildMgr.cpp">
+      <Filter>Object</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\game\AccountMgr.h">
@@ -1023,6 +1026,9 @@
     </ClInclude>
     <ClInclude Include="..\..\src\game\LFGMgr.h">
       <Filter>World/Handlers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\game\GuildMgr.h">
+      <Filter>Object</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

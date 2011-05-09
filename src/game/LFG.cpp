@@ -102,7 +102,8 @@ void LFGGroupState::Clear()
     update = true;
     status = LFG_STATUS_NOT_SAVED;
     dungeonEntry = 0;
-    kicks = 0;
+    m_votesNeeded = 3;
+    m_kicksLeft = 5;
     kickActive = false;
     m_DungeonsList.clear();
     m_flags = LFG_MEMBER_FLAG_NONE |
@@ -110,6 +111,8 @@ void LFGGroupState::Clear()
               LFG_MEMBER_FLAG_ROLES |
               LFG_MEMBER_FLAG_BIND;
     m_proposal = NULL;
+    m_roleCheckCancelTime = 0;
+    m_roleCheckState      = LFG_ROLECHECK_NONE;
 }
 
 uint8 LFGGroupState::GetRoles(LFGRoles role)
@@ -124,3 +127,27 @@ uint8 LFGGroupState::GetRoles(LFGRoles role)
     }
     return count;
 };
+
+uint8 LFGGroupState::GetVotesNeeded() const
+{
+    return m_votesNeeded;
+}
+
+uint8 LFGGroupState::GetKicksLeft() const
+{
+    return m_kicksLeft;
+}
+
+void LFGGroupState::StartRoleCheck()
+{
+    m_roleCheckCancelTime = time_t(time(NULL)) + LFG_TIME_ROLECHECK;
+    SetRoleCheckState(LFG_ROLECHECK_INITIALITING);
+}
+
+bool LFGGroupState::IsRoleCheckActive()
+{
+    if (GetRoleCheckState() != LFG_ROLECHECK_NONE && m_roleCheckCancelTime && QueryRoleCheckTime())
+        return true;
+
+    return false;
+}

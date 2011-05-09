@@ -28,6 +28,7 @@
 #include "ObjectMgr.h"
 #include "Player.h"
 #include "Guild.h"
+#include "GuildMgr.h"
 #include "UpdateMask.h"
 #include "Auth/md5.h"
 #include "ObjectAccessor.h"
@@ -143,7 +144,15 @@ class CharacterHandler
                 return;
 
             LoginQueryHolder* lqh = (LoginQueryHolder*) holder;
-            WorldSession *botSession = new WorldSession(lqh->GetAccountId(), NULL, SEC_ADMINISTRATOR, 3, 0, LOCALE_enUS);
+            WorldSession* masterSession = sWorld.FindSession(lqh->GetAccountId());
+
+            if (! masterSession || sObjectMgr.GetPlayer(lqh->GetGuid()))
+            {
+                delete holder;
+                return;
+            }
+
+            WorldSession *botSession = new WorldSession(lqh->GetAccountId(), NULL, SEC_ADMINISTRATOR, masterSession->Expansion(), 0, masterSession->GetSessionDbcLocale());
             botSession->m_Address = "bot";
             botSession->HandlePlayerLogin(lqh);
         }
@@ -508,7 +517,7 @@ void WorldSession::HandleCharDeleteOpcode( WorldPacket & recv_data )
     std::string name;
 
     // is guild leader
-    if(sObjectMgr.GetGuildByLeader(guid))
+    if (sGuildMgr.GetGuildByLeader(guid))
     {
         WorldPacket data(SMSG_CHAR_DELETE, 1);
         data << (uint8)CHAR_DELETE_FAILED_GUILD_LEADER;
@@ -793,7 +802,7 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
 
     if(pCurrChar->GetGuildId() != 0)
     {
-        Guild* guild = sObjectMgr.GetGuildById(pCurrChar->GetGuildId());
+        Guild* guild = sGuildMgr.GetGuildById(pCurrChar->GetGuildId());
         if(guild)
         {
             data.Initialize(SMSG_GUILD_EVENT, (1+1+guild->GetMOTD().size()+1));

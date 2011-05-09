@@ -5383,6 +5383,24 @@ void Aura::HandlePeriodicTriggerSpell(bool apply, bool /*Real*/)
                 }
 
                 return;
+
+            case 63018: // Searing Light (Ulduar: XT-002)
+            case 65121: // Searing Light (h) (Ulduar: XT-002)
+                if (Unit *pCaster = pCaster = GetCaster())
+                {
+                    if (pCaster->HasAura(GetModifier()->m_amount))
+                        pCaster->CastSpell(target, 64210, true);
+                }
+
+                return;
+            case 63024: // Gravity Bomb (Ulduar: XT-002)
+            case 64234: // Gravity Bomb (h) (Ulduar: XT-002)
+                if (Unit *pCaster = pCaster = GetCaster())
+                {
+                    uint32 spellId = GetId() == 63024 ? 64203 : 64235;
+                    if (pCaster->HasAura(GetModifier()->m_amount))
+                        pCaster->CastSpell(target, spellId, true);
+                }
             default:
                 break;
         }
@@ -5634,6 +5652,13 @@ void Aura::HandlePeriodicDamage(bool apply, bool Real)
                     if (spellProto->CalculateSimpleValue(EFFECT_INDEX_1) !=0 &&
                         target->GetHealth() > target->GetMaxHealth() * spellProto->CalculateSimpleValue(EFFECT_INDEX_1) / 100)
                         m_modifier.m_amount += m_modifier.m_amount * spellProto->CalculateSimpleValue(EFFECT_INDEX_2) / 100;
+
+                    // Improved Rend - Rank 1
+                    if (caster->HasAura(12286))
+                        m_modifier.m_amount += int32(m_modifier.m_amount * 0.1f);
+                    // Improved Rend - Rank 2
+                    if (caster->HasAura(12658))
+                        m_modifier.m_amount += int32(m_modifier.m_amount * 0.2f);
                 }
                 break;
             }
@@ -8212,6 +8237,47 @@ void Aura::PeriodicDummyTick()
                         case 2: target->CastSpell(target, 55739, true); break;
                     }
                     return;
+
+                case 54798: // FLAMING Arrow Triggered Effect
+                {
+                    Unit * caster = GetCaster();
+                    if (!caster)
+                        return;
+
+                    Player *rider = caster->GetCharmerOrOwnerPlayerOrPlayerItself();
+                    if (!rider)
+                        return;
+
+                    if (target->GetEntry() == 29358)
+                    {
+                        if (target->HasAura(54683, EFFECT_INDEX_0))
+                            return;
+                        else
+                        {
+                            // Credit Frostworgs
+                            rider->CastSpell(rider, 54896, true);
+                            // set ablaze
+                            target->CastSpell(target, 54683, true);
+                            ((Creature*)target)->ForcedDespawn(6000);
+                        }
+                    }
+                    else if (target->GetEntry() == 29351)
+                    {
+                        if (target->HasAura(54683, EFFECT_INDEX_0))
+                            return;
+                        else
+                        {
+                            // Credit Frost Giants
+                            rider->CastSpell(rider, 54893, true);
+                            // set ablaze
+                            target->CastSpell(target, 54683, true);
+                            ((Creature*)target)->ForcedDespawn(6000);
+                        }
+                    }
+
+                    break;
+                }
+
                 case 62717:                                 // Slag Pot (periodic dmg)
                 case 63477:
                 {
@@ -9467,6 +9533,9 @@ void SpellAuraHolder::HandleSpellSpecificBoosts(bool apply)
                     }
                     break;
                 }
+                case 73034:
+                case 73033:
+                case 71222:
                 case 69290:
                 {
                     if (!apply)
@@ -9475,12 +9544,6 @@ void SpellAuraHolder::HandleSpellSpecificBoosts(bool apply)
                         {
                              cast_at_remove = true;
                              spellId1 = 69291;
-                             // Cast unknown spell - spore explode (override)
-                             float radius = GetSpellRadius(sSpellRadiusStore.LookupEntry(GetSpellProto()->EffectRadiusIndex[EFFECT_INDEX_0]));
-                             Map::PlayerList const& pList = m_target->GetMap()->GetPlayers();
-                             for (Map::PlayerList::const_iterator itr = pList.begin(); itr != pList.end(); ++itr)
-                                 if (itr->getSource() && itr->getSource()->IsWithinDistInMap(m_target,radius))
-                                     itr->getSource()->CastSpell(itr->getSource(), spellId1, true);
                         }
                     }
                     break;
