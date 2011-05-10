@@ -1044,7 +1044,7 @@ void LFGMgr::UpdateRoleCheck(Group* group)
         return;
 
     if (!CheckRoles(group))
-        newstate == LFG_ROLECHECK_WRONG_ROLES;
+        newstate = LFG_ROLECHECK_WRONG_ROLES;
     else 
         newstate = LFG_ROLECHECK_FINISHED;
 

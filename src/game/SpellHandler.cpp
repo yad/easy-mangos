@@ -634,131 +634,88 @@ void WorldSession::HandleSpellClick( WorldPacket & recv_data )
     }
 }
 
-void WorldSession::HandleMirrorImageDataRequest( WorldPacket & recv_data )
+void WorldSession::HandleGetMirrorimageData(WorldPacket& recv_data)
 {
-    uint64 guid;
+    DEBUG_FILTER_LOG(LOG_FILTER_SPELL_CAST, "WORLD: CMSG_GET_MIRRORIMAGE_DATA");
+
+    ObjectGuid guid;
     recv_data >> guid;
 
-    DEBUG_LOG("WORLD: CMSG_GET_MIRRORIMAGE_DATA");
+    Creature* pCreature = _player->GetMap()->GetAnyTypeCreature(guid);
 
-    // Get unit for which data is needed by client
-    Unit *unit = ObjectAccessor::GetUnit(*_player, guid);
-    if (!unit)
+    if (!pCreature)
         return;
 
-    // Get creator of the unit
-    Unit *creator = unit;
+    Unit::AuraList const& images = pCreature->GetAurasByType(SPELL_AURA_MIRROR_IMAGE);
 
-    // Get SPELL_AURA_247 caster
-    if (!unit->GetAurasByType(SPELL_AURA_MIRROR_IMAGE).empty())
-        creator = unit->GetAurasByType(SPELL_AURA_MIRROR_IMAGE).front()->GetCaster();
+    if (images.empty())
+        return;
+
+    Unit* pCaster = images.front()->GetCaster();
 
     WorldPacket data(SMSG_MIRRORIMAGE_DATA, 68);
-    data << (uint64)guid;
-    data << (uint32)creator->GetDisplayId();
-    if (creator->GetTypeId()==TYPEID_PLAYER)
+
+    data << guid;
+    data << (uint32)pCreature->GetDisplayId();
+
+    data << (uint8)pCreature->getRace();
+    data << (uint8)pCreature->getGender();
+    data << (uint8)pCreature->getClass();
+
+    if (pCaster && pCaster->GetTypeId() == TYPEID_PLAYER)
     {
-        Player * pCreator = (Player *)creator;
-        data << (uint8)pCreator->getRace();
-        data << (uint8)pCreator->getGender();
-        data << (uint8)pCreator->getClass();
-        data << (uint8)pCreator->GetByteValue(PLAYER_BYTES, 0); // skin
+        Player* pPlayer = (Player*)pCaster;
 
-        data << (uint8)pCreator->GetByteValue(PLAYER_BYTES, 1); // face
-        data << (uint8)pCreator->GetByteValue(PLAYER_BYTES, 2); // hair
-        data << (uint8)pCreator->GetByteValue(PLAYER_BYTES, 3); // haircolor
-        data << (uint8)pCreator->GetByteValue(PLAYER_BYTES_2, 0); // facialhair
+        // skin, face, hair, haircolor
+        data << (uint8)pPlayer->GetByteValue(PLAYER_BYTES, 0);
+        data << (uint8)pPlayer->GetByteValue(PLAYER_BYTES, 1);
+        data << (uint8)pPlayer->GetByteValue(PLAYER_BYTES, 2);
+        data << (uint8)pPlayer->GetByteValue(PLAYER_BYTES, 3);
 
-        data << (uint32)pCreator->GetGuildId();  // unk
-        static const EquipmentSlots ItemSlots[] =
-        {
-            EQUIPMENT_SLOT_HEAD,
-            EQUIPMENT_SLOT_SHOULDERS,
-            EQUIPMENT_SLOT_BODY,
-            EQUIPMENT_SLOT_CHEST,
-            EQUIPMENT_SLOT_WAIST,
-            EQUIPMENT_SLOT_LEGS,
-            EQUIPMENT_SLOT_FEET,
-            EQUIPMENT_SLOT_WRISTS,
-            EQUIPMENT_SLOT_HANDS,
-            EQUIPMENT_SLOT_BACK,
-            EQUIPMENT_SLOT_TABARD,
-            EQUIPMENT_SLOT_END
-        };
-        // Display items in visible slots
-        for (EquipmentSlots const* itr = &ItemSlots[0];*itr!=EQUIPMENT_SLOT_END;++itr)
-        {
-            if (*itr == EQUIPMENT_SLOT_HEAD && pCreator->HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_HIDE_HELM))
-                data << (uint32)0;
-            else if (*itr == EQUIPMENT_SLOT_BACK && pCreator->HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_HIDE_CLOAK))
-                data << (uint32)0;
-            else if (Item const *item = pCreator->GetItemByPos(INVENTORY_SLOT_BAG_0, *itr))
-                data << (uint32)item->GetProto()->DisplayInfoID;
-            else
-                data << (uint32)0;
-        }
+        // facial hair
+        data << (uint8)pPlayer->GetByteValue(PLAYER_BYTES_2, 0);
+
+        // guild id
+        data << (uint32)pPlayer->GetGuildId();
+
+        if (pPlayer->HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_HIDE_HELM))
+            data << (uint32)0;
+        else
+            data << (uint32)pPlayer->GetItemDisplayIdInSlot(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_HEAD);
+
+        data << (uint32)pPlayer->GetItemDisplayIdInSlot(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_SHOULDERS);
+        data << (uint32)pPlayer->GetItemDisplayIdInSlot(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_BODY);
+        data << (uint32)pPlayer->GetItemDisplayIdInSlot(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_CHEST);
+        data << (uint32)pPlayer->GetItemDisplayIdInSlot(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_WAIST);
+        data << (uint32)pPlayer->GetItemDisplayIdInSlot(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_LEGS);
+        data << (uint32)pPlayer->GetItemDisplayIdInSlot(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_FEET);
+        data << (uint32)pPlayer->GetItemDisplayIdInSlot(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_WRISTS);
+        data << (uint32)pPlayer->GetItemDisplayIdInSlot(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_HANDS);
+
+        if (pPlayer->HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_HIDE_CLOAK))
+            data << (uint32)0;
+        else
+            data << (uint32)pPlayer->GetItemDisplayIdInSlot(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_BACK);
+
+        data << (uint32)pPlayer->GetItemDisplayIdInSlot(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_TABARD);
     }
     else
     {
-        // Skip player data for creatures
-        data << (uint32)0;
-        data << (uint32)0;
-        data << (uint32)0;
-        data << (uint32)0;
-        data << (uint32)0;
-        data << (uint32)0;
-        data << (uint32)0;
-        data << (uint32)0;
-        data << (uint32)0;
-        data << (uint32)0;
-        data << (uint32)0;
-        data << (uint32)0;
-        data << (uint32)0;
-        data << (uint32)0;
-    }
-    SendPacket( &data );
-}
+        // pCaster may have been NULL (usually not expected, but may happen at disconnect, etc)
+        // OR
+        // pCaster is not player, data is taken from CreatureDisplayInfoExtraEntry by model already
+        data << (uint8)0;
+        data << (uint8)0;
+        data << (uint8)0;
+        data << (uint8)0;
 
-void WorldSession::HandleUpdateProjectilePosition(WorldPacket& recvPacket)
-{
-    ObjectGuid casterGuid;  // actually target ?
-    uint32 spellId;         // Spell Id
-    uint8  castCount;       //
-    float m_targetX, m_targetY, m_targetZ; // Position of missile hit
+        data << (uint8)0;
 
-    recvPacket >> casterGuid;
-    recvPacket >> spellId;
-    recvPacket >> castCount;
+        data << (uint32)0;
 
-    recvPacket >> m_targetX >> m_targetY >> m_targetZ;
-
-    // Do we need unit as we use 3d position anyway ?
-    Unit* pCaster = GetPlayer()->GetMap()->GetUnit(casterGuid);
-    if (!pCaster)
-        return;
-
-    SpellEntry const *spellInfo = sSpellStore.LookupEntry(spellId);
-
-    if(!spellInfo)
-    {
-        sLog.outError("CMSG_UPDATE_PROJECTILE_POSITION: unknown spell id %u", spellId);
-        recvPacket.rpos(recvPacket.wpos());                 // prevent spam at ignore packet
-        return;
+        for (int i = 0; i < 11; ++i)
+            data << (uint32)0;
     }
 
-    WorldPacket data(SMSG_NOTIFY_MISSILE_TRAJECTORY_COLLISION, 8+1+4+4+4);
-    data << casterGuid;
-    data << castCount;
-    data << m_targetX;
-    data << m_targetY;
-    data << m_targetZ;
     SendPacket(&data);
-
-    for(int i = 0; i < 3; ++i)
-    {
-        if(spellInfo->EffectTriggerSpell[i])
-            if (SpellEntry const* spellInfoT = sSpellStore.LookupEntry(spellInfo->EffectTriggerSpell[i]))
-                pCaster->CastSpell(m_targetX, m_targetY, m_targetZ, spellInfoT, true);
-    }
-
 }

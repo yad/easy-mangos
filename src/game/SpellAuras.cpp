@@ -299,7 +299,7 @@ pAuraHandler AuraHandler[TOTAL_AURAS]=
     &Aura::HandleComprehendLanguage,                        //244 SPELL_AURA_COMPREHEND_LANGUAGE
     &Aura::HandleNoImmediateEffect,                         //245 SPELL_AURA_MOD_DURATION_OF_MAGIC_EFFECTS     implemented in Unit::CalculateAuraDuration
     &Aura::HandleNoImmediateEffect,                         //246 SPELL_AURA_MOD_DURATION_OF_EFFECTS_BY_DISPEL implemented in Unit::CalculateAuraDuration
-    &Aura::HandleAuraMirrorImage,                           //247 SPELL_AURA_MIRROR_IMAGE
+    &Aura::HandleAuraMirrorImage,                           //247 SPELL_AURA_MIRROR_IMAGE                      target to become a clone of the caster
     &Aura::HandleNoImmediateEffect,                         //248 SPELL_AURA_MOD_COMBAT_RESULT_CHANCE         implemented in Unit::RollMeleeOutcomeAgainst
     &Aura::HandleAuraConvertRune,                           //249 SPELL_AURA_CONVERT_RUNE
     &Aura::HandleAuraModIncreaseHealth,                     //250 SPELL_AURA_MOD_INCREASE_HEALTH_2
@@ -2372,12 +2372,7 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                 break;
             }
             case SPELLFAMILY_MAGE:
-            {
-                // Fingers of Frost stacks set to max at apply
-                if (GetId() == 74396)
-                    GetHolder()->SetAuraCharges(GetSpellProto()->StackAmount);
                 break;
-            }
             case SPELLFAMILY_HUNTER:
             {
                 switch(GetId())
@@ -8751,6 +8746,44 @@ void Aura::HandleAuraOpenStable(bool apply, bool Real)
     // client auto close stable dialog at !apply aura
 }
 
+void Aura::HandleAuraMirrorImage(bool apply, bool Real)
+{
+    if (!Real)
+        return;
+
+    // Target of aura should always be creature (ref Spell::CheckCast)
+    Creature* pCreature = (Creature*)GetTarget();
+
+    if (apply)
+    {
+        // Caster can be player or creature, the unit who pCreature will become an clone of.
+        Unit* caster = GetCaster();
+
+        pCreature->SetByteValue(UNIT_FIELD_BYTES_0, 0, caster->getRace());
+        pCreature->SetByteValue(UNIT_FIELD_BYTES_0, 1, caster->getClass());
+        pCreature->SetByteValue(UNIT_FIELD_BYTES_0, 2, caster->getGender());
+        pCreature->SetByteValue(UNIT_FIELD_BYTES_0, 3, caster->getPowerType());
+
+        pCreature->SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_CLONED);
+
+        pCreature->SetDisplayId(caster->GetNativeDisplayId());
+    }
+    else
+    {
+        const CreatureInfo* cinfo = pCreature->GetCreatureInfo();
+        const CreatureModelInfo* minfo = sObjectMgr.GetCreatureModelInfo(pCreature->GetNativeDisplayId());
+
+        pCreature->SetByteValue(UNIT_FIELD_BYTES_0, 0, 0);
+        pCreature->SetByteValue(UNIT_FIELD_BYTES_0, 1, cinfo->unit_class);
+        pCreature->SetByteValue(UNIT_FIELD_BYTES_0, 2, minfo->gender);
+        pCreature->SetByteValue(UNIT_FIELD_BYTES_0, 3, 0);
+
+        pCreature->RemoveFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_CLONED);
+
+        pCreature->SetDisplayId(pCreature->GetNativeDisplayId());
+    }
+}
+
 void Aura::HandleAuraConvertRune(bool apply, bool Real)
 {
     if(!Real)
@@ -8984,6 +9017,7 @@ m_permanent(false), m_isRemovedOnShapeLost(true), m_deleted(false), m_in_use(0)
         case 55166:                                         // Tidal Force
         case 58914:                                         // Kill Command (pet part)
         case 71564:                                         // Deadly Precision
+        case 74396:                                         // Fingers of Frost
             m_stackAmount = m_spellProto->StackAmount;
             break;
     }
