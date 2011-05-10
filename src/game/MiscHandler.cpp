@@ -793,62 +793,55 @@ void WorldSession::HandleAreaTriggerOpcode(WorldPacket & recv_data)
             pl->ResurrectPlayer(0.5f);
             pl->SpawnCorpseBones();
         }
+    }
 
-        // check trigger requirements
-        bool missingItem = false;
-        bool missingLevel = false;
-        bool missingQuest = false;
-
-        if (pl->getLevel() < at->requiredLevel && !sWorld.getConfig(CONFIG_BOOL_INSTANCE_IGNORE_LEVEL))
-            missingLevel = true;
-
-        // must have one or the other, report the first one that's missing
-        if (at->requiredItem)
-        {
-            if (!pl->HasItemCount(at->requiredItem, 1) &&
-                (!at->requiredItem2 || !GetPlayer()->HasItemCount(at->requiredItem2, 1)))
-                missingItem = true;
-        }
-        else if (at->requiredItem2 && !pl->HasItemCount(at->requiredItem2, 1))
-            missingItem = true;
-
-        bool isRegularTargetMap = !targetMapEntry->IsDungeon() || pl->GetDifficulty(targetMapEntry->IsRaid()) == REGULAR_DIFFICULTY;
-
-        if (!isRegularTargetMap)
-        {
-            if (at->heroicKey)
+    switch (GetPlayer()->GetAreaTriggerLockStatus(at, GetPlayer()->GetDifficulty(targetMapEntry->IsRaid())))
+    {
+        case AREA_LOCKSTATUS_OK:
+            GetPlayer()->TeleportTo(at->target_mapId, at->target_X, at->target_Y, at->target_Z, at->target_Orientation, TELE_TO_NOT_LEAVE_TRANSPORT);
+            return;
+        case AREA_LOCKSTATUS_TOO_LOW_LEVEL:
+            SendAreaTriggerMessage(GetMangosString(LANG_LEVEL_MINREQUIRED), at->requiredLevel);
+            return;
+        case AREA_LOCKSTATUS_QUEST_NOT_COMPLETED:
+            if(at->target_mapId == 269)
             {
-                if (!pl->HasItemCount(at->heroicKey, 1) &&
-                    (!at->heroicKey2 || !pl->HasItemCount(at->heroicKey2, 1)))
-                    missingItem = true;
-            }
-            else if (at->heroicKey2 && !pl->HasItemCount(at->heroicKey2, 1))
-                missingItem = true;
-        }
-
-        if (!isRegularTargetMap)
-        {
-            if (at->requiredQuestHeroic && !pl->GetQuestRewardStatus(at->requiredQuestHeroic))
-                missingQuest = true;
-        }
-        else
-        {
-            if (at->requiredQuest && !pl->GetQuestRewardStatus(at->requiredQuest))
-                missingQuest = true;
-        }
-
-        if (missingItem || missingLevel || missingQuest)
-        {
-            // hack for "Opening of the Dark Portal"
-            if (missingQuest && at->target_mapId == 269)
                 SendAreaTriggerMessage("%s", at->requiredFailedText.c_str());
-            else if (missingQuest && targetMapEntry->IsContinent())// do not report anything for quest areatriggers
                 return;
-            // hack for TBC heroics
-            else if (missingLevel && !targetMapEntry->IsRaid() && GetPlayer()->GetDifficulty(false) == DUNGEON_DIFFICULTY_HEROIC && targetMapEntry->addon == 1)
-                SendAreaTriggerMessage(GetMangosString(LANG_LEVEL_MINREQUIRED), at->requiredLevel);
-            else
-                pl->SendTransferAborted(at->target_mapId, TRANSFER_ABORT_DIFFICULTY, pl->GetDifficulty(targetMapEntry->IsRaid()));
+            }
+            // No break here!
+        case AREA_LOCKSTATUS_MISSING_ITEM:
+            {
+                MapDifficultyEntry const* mapDiff = GetMapDifficultyData(targetMapEntry->MapID,GetPlayer()->GetDifficulty(targetMapEntry->IsRaid()));
+                if (mapDiff && mapDiff->mapDifficultyFlags & MAP_DIFFICULTY_FLAG_CONDITION)
+                {
+                    SendAreaTriggerMessage(mapDiff->areaTriggerText[GetSessionDbcLocale()]);
+                }
+                // do not report anything for quest areatriggers
+                DEBUG_LOG("HandleAreaTriggerOpcode:  LockAreaStatus %u, do action", uint8(GetPlayer()->GetAreaTriggerLockStatus(at, GetPlayer()->GetDifficulty(targetMapEntry->IsRaid()))));
+                return;
+            }
+        case AREA_LOCKSTATUS_MISSING_DIFFICULTY:
+            {
+                Difficulty difficulty = GetPlayer()->GetDifficulty(targetMapEntry->IsRaid());
+                GetPlayer()->SendTransferAborted(at->target_mapId, TRANSFER_ABORT_DIFFICULTY, difficulty > RAID_DIFFICULTY_10MAN_HEROIC ? RAID_DIFFICULTY_10MAN_HEROIC : difficulty);
+                return;
+            }
+        case AREA_LOCKSTATUS_INSUFFICIENT_EXPANSION:
+            GetPlayer()->SendTransferAborted(at->target_mapId, TRANSFER_ABORT_INSUF_EXPAN_LVL, targetMapEntry->Expansion());
+            return;
+        case AREA_LOCKSTATUS_NOT_ALLOWED:
+            GetPlayer()->SendTransferAborted(at->target_mapId, TRANSFER_ABORT_MAP_NOT_ALLOWED);
+            return;
+        // TODO: messages for other cases
+        case AREA_LOCKSTATUS_RAID_LOCKED:
+        case AREA_LOCKSTATUS_UNKNOWN_ERROR:
+            {
+                GetPlayer()->SendTransferAborted(at->target_mapId, TRANSFER_ABORT_ERROR);
+                return;
+            }
+        default:
+            DEBUG_LOG("HandleAreaTriggerOpcode: unhandled LockAreaStatus %u, do nothing", uint8(GetPlayer()->GetAreaTriggerLockStatus(at, GetPlayer()->GetDifficulty(targetMapEntry->IsRaid()))));
             return;
     }
 }

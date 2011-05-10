@@ -7724,6 +7724,7 @@ bool Unit::IsImmuneToSpellEffect(SpellEntry const* spellInfo, SpellEffectIndex i
 
         // Check for immune to application of harmful magical effects
         AuraList const& immuneAuraApply = GetAurasByType(SPELL_AURA_MOD_IMMUNE_AURA_APPLY_SCHOOL);
+
         if (!immuneAuraApply.empty() &&
             spellInfo->Dispel == DISPEL_MAGIC &&            // Magic debuff)
             !IsPositiveEffect(spellInfo, index))            // Harmful
@@ -7734,6 +7735,15 @@ bool Unit::IsImmuneToSpellEffect(SpellEntry const* spellInfo, SpellEffectIndex i
                 if ((*iter)->GetModifier()->m_miscvalue & schoolMask)
                     return true;
         }
+
+        AuraList const& immuneMechanicAuraApply = GetAurasByType(SPELL_AURA_MECHANIC_IMMUNITY_MASK);
+        for(AuraList::const_iterator i = immuneMechanicAuraApply.begin(); i != immuneMechanicAuraApply.end(); ++i)
+            if ((spellInfo->EffectMechanic[index] & (*i)->GetMiscValue() ||
+                spellInfo->Mechanic & (*i)->GetMiscValue()) ||
+                ((*i)->GetId() == 46924 &&                                                // Bladestorm Immunity
+                spellInfo->EffectMechanic[index] & IMMUNE_TO_MOVEMENT_IMPAIRMENT_AND_LOSS_CONTROL_MASK ||
+                spellInfo->Mechanic & IMMUNE_TO_MOVEMENT_IMPAIRMENT_AND_LOSS_CONTROL_MASK))
+                return true;
     }
 
     return false;
