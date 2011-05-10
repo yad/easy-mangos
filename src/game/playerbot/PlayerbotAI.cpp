@@ -1489,7 +1489,7 @@ void PlayerbotAI::DoNextCombatManeuver()
         }
         else
         {
-            if (m_bot->getClass() != CLASS_HUNTER/* && m_bot->getClass() != CLASS_PRIEST && m_bot->getClass() != CLASS_MAGE && m_bot->getClass() != CLASS_WARLOCK*/)
+            if (m_bot->getClass() != CLASS_HUNTER && m_bot->getClass() != CLASS_PRIEST/* && m_bot->getClass() != CLASS_MAGE && m_bot->getClass() != CLASS_WARLOCK*/)
                 SetMovementTarget(m_targetCombat);
 
             if (targetChanged)
