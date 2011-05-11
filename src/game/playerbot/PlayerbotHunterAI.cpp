@@ -313,6 +313,18 @@ void PlayerbotHunterAI::DoNonCombatActions()
     if (!m_master)
         return;
 
+    uint32 MinorGlyphs[] = {57903, 57866, 57870};           // feigh death - revive pet - healing pet
+    uint32 SurvivalMajorGlyphs[] = {56832, 56826, 63066};     // serpent sting - steady shot - explosive shot
+
+    for (uint32 i = 0; i < 3; i++)
+    {
+        if (!m_bot->HasSpell(MinorGlyphs[i]))
+            m_bot->learnSpell(MinorGlyphs[i], true);
+
+        if (!m_bot->HasSpell(SurvivalMajorGlyphs[i]))
+            m_bot->learnSpell(SurvivalMajorGlyphs[i], true);
+    }
+
     if (!m_bot->HasAura(TRUESHOT_AURA, EFFECT_INDEX_0))
         ai->CastSpell(TRUESHOT_AURA, m_bot);
 
