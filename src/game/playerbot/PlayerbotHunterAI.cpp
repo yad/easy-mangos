@@ -184,8 +184,13 @@ void PlayerbotHunterAI::DoNextCombatManeuver(Unit *pTarget)
                 ybt = yt + (ATTACK_DISTANCE * 2 * cos(angle));
 
             const TerrainInfo *map = m_bot->GetTerrain();
-            m_bot->AttackStop();
-            m_bot->GetMotionMaster()->MovePoint(m_master->GetMapId(), xbt, ybt, map->GetHeight(xbt, ybt, zt+1.0f, true));
+            
+            if (map->GetHeight(xbt, ybt, zt + 1.0f, true) > (zt - 3.0f) && map->GetHeight(xbt, ybt, zt + 1.0f, true) < (zt + 3.0f) && pTarget->IsWithinLOS(xbt, ybt, map->GetHeight(xbt, ybt, zt + 1.0f, true)))
+            {
+                m_bot->AttackStop();
+                m_bot->GetMotionMaster()->MovePoint(m_master->GetMapId(), xbt, ybt, map->GetHeight(xbt, ybt, zt + 1.0f, true));
+            }
+
             return;
         }
     }
@@ -209,59 +214,40 @@ void PlayerbotHunterAI::DoNextCombatManeuver(Unit *pTarget)
     if (!pTarget->HasAura(HUNTERS_MARK, EFFECT_INDEX_0) && ai->CastSpell(HUNTERS_MARK, pTarget))
         return;
 
-    static const uint32 RangedSpell[] = {KILL_SHOT, RAPID_FIRE, SERPENT_STING, BLACK_ARROW, ARCANE_SHOT, EXPLOSIVE_SHOT, AIMED_SHOT, MULTI_SHOT, STEADY_SHOT, VOLLEY};
-    static const uint32 MeleeSpell[] = {MONGOOSE_BITE, RAPTOR_STRIKE, IMMOLATION_TRAP, EXPLOSIVE_TRAP, VOLLEY};
+    static const uint32 RangedSpell[] = {KILL_SHOT, RAPID_FIRE, SERPENT_STING, BLACK_ARROW, ARCANE_SHOT, EXPLOSIVE_SHOT, AIMED_SHOT, STEADY_SHOT};
+    static const uint32 MeleeSpell[] = {MONGOOSE_BITE, RAPTOR_STRIKE, IMMOLATION_TRAP, EXPLOSIVE_TRAP};
     static const uint32 eltRanged = sizeof(RangedSpell)/sizeof(uint32);
     static const uint32 eltMelee = sizeof(MeleeSpell)/sizeof(uint32);
-    char *RangedSpellEnabled = "0000000000";
-    char *MeleeSpellEnabled = "00000";
-    uint32 bot_lvl = m_bot->getLevel();
+    char *RangedSpellEnabled = "00000000";
+    char *MeleeSpellEnabled = "0000";
 
-    if (bot_lvl <= 15)
-    {
-        RangedSpellEnabled = "0010100000";
-        MeleeSpellEnabled = "01000";
-    }
-    else if (bot_lvl == 16 || bot_lvl == 17)
-    {
-        RangedSpellEnabled = "0010100000";
-        MeleeSpellEnabled = "11100";
-    }
-    else if (bot_lvl >= 18 && bot_lvl < 26)
-    {
-        RangedSpellEnabled = "0010100F00";
-        MeleeSpellEnabled = "11100";
-    }
-    else if (bot_lvl >= 26 && bot_lvl < 34)
-    {
-        RangedSpellEnabled = "0V10100F00";
-        MeleeSpellEnabled = "11100";
-    }
-    else if (bot_lvl >= 34 && bot_lvl < 40)
-    {
-        RangedSpellEnabled = "0V10100F00";
-        MeleeSpellEnabled = "11010";
-    }
-    else if (bot_lvl >= 40 && bot_lvl < 50)
-    {
-        RangedSpellEnabled = "0V10100F0F";
-        MeleeSpellEnabled = "11011";
-    }
-    else if (bot_lvl >= 50 && bot_lvl < 60)
-    {
-        RangedSpellEnabled = "0V11100FFF";
-        MeleeSpellEnabled = "11011";
-    }
-    else if (bot_lvl >= 60 && bot_lvl < 71)
-    {
-        RangedSpellEnabled = "0V11010FFF";
-        MeleeSpellEnabled = "11011";
-    }
+    if (m_bot->getLevel() < 34)
+        MeleeSpellEnabled = "1110";
     else
+        MeleeSpellEnabled = "1101";
+
+    if (m_bot->getLevel() < 60)
+        RangedSpellEnabled = "0V11100F";
+    else
+        RangedSpellEnabled = "1V11011F";
+
+    Group *m_group = m_bot->GetGroup();
+    uint32 numberTargets = 0;
+
+    for (Group::member_citerator itr = m_group->GetMemberSlots().begin(); itr != m_group->GetMemberSlots().end(); itr++)
     {
-        RangedSpellEnabled = "1V11011FFF";
-        MeleeSpellEnabled = "11011";
+        for (Unit::AttackerSet::const_iterator itrt = sObjectMgr.GetPlayer(itr->guid)->getAttackers().begin(); itrt != sObjectMgr.GetPlayer(itr->guid)->getAttackers().end(); itrt++)
+        {
+            if ((*itrt)->IsWithinDist(m_bot, 36.0f))
+                numberTargets++;
+        }
     }
+    
+    if (m_rangedCombat && numberTargets >= 3 && ai->CastSpell(MULTI_SHOT, pTarget))
+        return;
+
+    if (numberTargets >= 5 && ai->CastSpell(VOLLEY, pTarget))
+        return;
 
     if (m_rangedCombat)
     {
