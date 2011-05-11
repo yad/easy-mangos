@@ -144,15 +144,7 @@ class CharacterHandler
                 return;
 
             LoginQueryHolder* lqh = (LoginQueryHolder*) holder;
-            WorldSession* masterSession = sWorld.FindSession(lqh->GetAccountId());
-
-            if (! masterSession || sObjectMgr.GetPlayer(lqh->GetGuid()))
-            {
-                delete holder;
-                return;
-            }
-
-            WorldSession *botSession = new WorldSession(lqh->GetAccountId(), NULL, SEC_ADMINISTRATOR, masterSession->Expansion(), 0, masterSession->GetSessionDbcLocale());
+            WorldSession *botSession = new WorldSession(lqh->GetAccountId(), NULL, SEC_ADMINISTRATOR, 3, 0, LOCALE_enUS);
             botSession->m_Address = "bot";
             botSession->HandlePlayerLogin(lqh);
         }
