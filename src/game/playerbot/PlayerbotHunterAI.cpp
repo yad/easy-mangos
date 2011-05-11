@@ -209,10 +209,10 @@ void PlayerbotHunterAI::DoNextCombatManeuver(Unit *pTarget)
     if (!pTarget->HasAura(HUNTERS_MARK, EFFECT_INDEX_0) && ai->CastSpell(HUNTERS_MARK, pTarget))
         return;
 
-    static uint32 RangedSpell[] = {KILL_SHOT, RAPID_FIRE, SERPENT_STING, BLACK_ARROW, ARCANE_SHOT, EXPLOSIVE_SHOT, AIMED_SHOT, MULTI_SHOT, STEADY_SHOT, VOLLEY};
-    static uint32 MeleeSpell[] = {MONGOOSE_BITE, RAPTOR_STRIKE, IMMOLATION_TRAP, EXPLOSIVE_TRAP, VOLLEY};
-    static uint32 eltRanged = sizeof(RangedSpell)/sizeof(uint32);
-    static uint32 eltMelee = sizeof(MeleeSpell)/sizeof(uint32);
+    static const uint32 RangedSpell[] = {KILL_SHOT, RAPID_FIRE, SERPENT_STING, BLACK_ARROW, ARCANE_SHOT, EXPLOSIVE_SHOT, AIMED_SHOT, MULTI_SHOT, STEADY_SHOT, VOLLEY};
+    static const uint32 MeleeSpell[] = {MONGOOSE_BITE, RAPTOR_STRIKE, IMMOLATION_TRAP, EXPLOSIVE_TRAP, VOLLEY};
+    static const uint32 eltRanged = sizeof(RangedSpell)/sizeof(uint32);
+    static const uint32 eltMelee = sizeof(MeleeSpell)/sizeof(uint32);
     char *RangedSpellEnabled = "0000000000";
     char *MeleeSpellEnabled = "00000";
     uint32 bot_lvl = m_bot->getLevel();
@@ -313,8 +313,8 @@ void PlayerbotHunterAI::DoNonCombatActions()
     if (!m_master)
         return;
 
-    uint32 MinorGlyphs[] = {57903, 57866, 57870};           // feigh death - revive pet - healing pet
-    uint32 SurvivalMajorGlyphs[] = {56832, 56826, 63066};     // serpent sting - steady shot - explosive shot
+    static const uint32 MinorGlyphs[] = {57903, 57866, 57870};           // feigh death - revive pet - healing pet
+    static const uint32 SurvivalMajorGlyphs[] = {56832, 56826, 63066};     // serpent sting - steady shot - explosive shot
 
     for (uint32 i = 0; i < 3; i++)
     {

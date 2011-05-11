@@ -92,7 +92,7 @@ bool PlayerbotPriestAI::HealTarget(Unit* target)
     Player *m_bot = GetPlayerBot();
     uint8 hp = target->GetHealth() * 100 / target->GetMaxHealth();
 
-    if (hp < 80 && !target->HasAura(WEAKENED_SOUL, EFFECT_INDEX_0) && !target->HasAura(POWER_WORD_SHIELD, EFFECT_INDEX_0) && ai->CastSpell(POWER_WORD_SHIELD, target))
+    if (target->isInCombat() && hp < 80 && !target->HasAura(WEAKENED_SOUL, EFFECT_INDEX_0) && !target->HasAura(POWER_WORD_SHIELD, EFFECT_INDEX_0) && ai->CastSpell(POWER_WORD_SHIELD, target))
         return true;
     
     if (hp < 15 && ai->CastSpell(CIRCLE_OF_HEALING, target))
@@ -150,8 +150,8 @@ void PlayerbotPriestAI::DoNextCombatManeuver(Unit *pTarget)
 
     case PriestDiscipline:
     case PriestShadow:
-        static uint32 SpellShadow[] = {SHADOW_WORD_PAIN, DEVOURING_PLAGUE, VAMPIRIC_TOUCH, MIND_BLAST, MIND_FLAY};
-        static uint32 elt = sizeof(SpellShadow)/sizeof(uint32); 
+        static const uint32 SpellShadow[] = {SHADOW_WORD_PAIN, DEVOURING_PLAGUE, VAMPIRIC_TOUCH, MIND_BLAST, MIND_FLAY};
+        static const uint32 elt = sizeof(SpellShadow)/sizeof(uint32); 
         char *SpellFirstTarget = "11110";
         char *SpellAllTargets = "10100";
         char *SpellLastTarget = "00001";
@@ -244,9 +244,9 @@ void PlayerbotPriestAI::DoNonCombatActions()
             return;
     }
 
-    uint32 MinorGlyphs[] = {58009, 58015, 58228};           // power word fortitude - shadow protection - ombrefiel
-    uint32 ShadowMajorGlyphs[] = {55681, 55682, 55687};     // shadow word pain - shadow word death - mind flay
-    uint32 HolyMajorGlyphs[] = {55674, 55672, 55680};       // renew - power word shield - prayer of healing
+    static const uint32 MinorGlyphs[] = {58009, 58015, 58228};           // power word fortitude - shadow protection - ombrefiel
+    static const uint32 ShadowMajorGlyphs[] = {55681, 55682, 55687};     // shadow word pain - shadow word death - mind flay
+    static const uint32 HolyMajorGlyphs[] = {55674, 55672, 55680};       // renew - power word shield - prayer of healing
 
     for (uint32 i = 0; i < 3; i++)
     {
