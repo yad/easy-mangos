@@ -2001,13 +2001,11 @@ void PlayerbotAI::SetMovementTarget(Unit *followTarget)
         {
             Group *gr = m_bot->GetGroup();
             
-            if (m_bot->GetSpeedRate(MOVE_RUN) != 1.3f)
+            if (m_bot->GetSpeedRate(MOVE_RUN) != 1.3f && !m_bot->IsWithinDistInMap(m_followTarget, 10.0f))
                 m_bot->SetSpeedRate(MOVE_RUN, 1.3f, true);
             
-            if (m_bot->IsWithinDistInMap(m_followTarget, 3.0f) || (m_bot->IsWithinDistInMap(m_followTarget, 5.0f) && gr->GetMembersCount() >= 6))
-            {
-                MovementClear();
-            }
+            if (m_bot->GetSpeedRate(MOVE_RUN) == 1.3f && m_bot->IsWithinDistInMap(m_followTarget, 10.0f))
+                m_bot->SetSpeedRate(MOVE_RUN, 1.0f, true);
             
             if (m_bot->IsWithinDistInMap(m_followTarget, 100.0f))
             {
