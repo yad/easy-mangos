@@ -384,8 +384,9 @@ void WorldSession::LogoutPlayer(bool Save)
 
         sLog.outChar("Account: %d (IP: %s) Logout Character:[%s] (guid: %u)", GetAccountId(), GetRemoteAddress().c_str(), _player->GetName() ,_player->GetGUIDLow());
 
-        if (uint64 lguid = GetPlayer()->GetLootGUID())
-            DoLootRelease(lguid);
+        ObjectGuid lootGuid = GetPlayer()->GetLootGuid();
+        if (!lootGuid.IsEmpty())
+            DoLootRelease(lootGuid);
 
         ///- If the player just died before logging out, make him appear as a ghost
         //FIXME: logout must be delayed in case lost connection with client in time of combat
@@ -492,7 +493,7 @@ void WorldSession::LogoutPlayer(bool Save)
                 slot->UpdateLogoutTime();
             }
 
-            guild->BroadcastEvent(GE_SIGNED_OFF, _player->GetGUID(), _player->GetName());
+            guild->BroadcastEvent(GE_SIGNED_OFF, _player->GetObjectGuid(), _player->GetName());
         }
 
         ///- Remove pet
