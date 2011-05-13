@@ -150,14 +150,13 @@ void PlayerbotPriestAI::DoNextCombatManeuver(Unit *pTarget)
 
     case PriestDiscipline:
     case PriestShadow:
-        static const uint32 SpellShadow[] = {SHADOW_WORD_PAIN, DEVOURING_PLAGUE, VAMPIRIC_TOUCH, MIND_BLAST, MIND_FLAY};
+        static const uint32 SpellShadow[] = {SHADOW_WORD_PAIN, DEVOURING_PLAGUE, VAMPIRIC_TOUCH, MIND_BLAST};
         static const uint32 elt = sizeof(SpellShadow)/sizeof(uint32); 
         char *SpellFirstTarget = "11110";
         char *SpellAllTargets = "10100";
-        char *SpellLastTarget = "00001";
         uint32 numberTargets = 0;
         uint32 numberTargetsWithin5f = 0;
-
+        
         for (Group::member_citerator itr = m_group->GetMemberSlots().begin(); itr != m_group->GetMemberSlots().end(); itr++)
         {
             for (Unit::AttackerSet::const_iterator itrt = sObjectMgr.GetPlayer(itr->guid)->getAttackers().begin(); itrt != sObjectMgr.GetPlayer(itr->guid)->getAttackers().end(); itrt++)
@@ -173,33 +172,22 @@ void PlayerbotPriestAI::DoNextCombatManeuver(Unit *pTarget)
             }
         }
 
+        if (numberTargetsWithin5f >= 5 && !MIND_SEAR)
+        {
+            if (m_bot->HasAura(SHADOWFORM))
+                m_bot->RemoveAurasDueToSpell(SHADOWFORM);
+            if (ai->CastSpell(HOLY_NOVA))
+                return;
+        }
+
+        if (!m_bot->HasAura(SHADOWFORM) && ai->SelfBuff(SHADOWFORM))
+            return;
+
+        if (numberTargets >= 5 && !pTarget->HasAuraFromUnit(MIND_SEAR, m_bot) && ai->CastSpell(MIND_SEAR, pTarget))
+            return;
+
         for (uint32 i = 0; i < elt; ++i)
         {
-            if (numberTargetsWithin5f >= 5 && !MIND_SEAR)
-            {
-                if (m_bot->HasAura(SHADOWFORM))
-                    m_bot->RemoveAurasDueToSpell(SHADOWFORM);
-                if (ai->CastSpell(HOLY_NOVA))
-                    return;
-            }
-
-            if (!m_bot->HasAura(SHADOWFORM) && ai->SelfBuff(SHADOWFORM))
-                return;
-
-            /*if (numberTargets >= 5 && !pTarget->HasAuraFromUnit(MIND_SEAR, m_bot) && ai->CastSpell(MIND_SEAR, pTarget))
-                return;*/ // Will Replace Loop when Mind Sear debug : stackable by different players
-            if (numberTargets >= 5)
-            {
-                for (Group::member_citerator itr = m_group->GetMemberSlots().begin(); itr != m_group->GetMemberSlots().end(); itr++)
-                {
-                    for (Unit::AttackerSet::const_iterator itrt = sObjectMgr.GetPlayer(itr->guid)->getAttackers().begin(); itrt != sObjectMgr.GetPlayer(itr->guid)->getAttackers().end(); itrt++)
-                    {  
-                        if (!(*itrt)->HasAura(MIND_SEAR) && ai->CastSpell(MIND_SEAR, (*itrt)))
-                            return;
-                    }
-                }
-            }// This condition and Loops will be replaced when Mind Sear debug : stackable by differents players
-
             if (SpellFirstTarget[i] == '1' && !pTarget->HasAuraFromUnit(SpellShadow[i], m_bot) && ai->CastSpell(SpellShadow[i], pTarget))
                 return;
 
@@ -214,10 +202,11 @@ void PlayerbotPriestAI::DoNextCombatManeuver(Unit *pTarget)
                     }
                 }
             }
-
-            if (SpellLastTarget[i] == '1' && !pTarget->HasAuraFromUnit(SpellShadow[i], m_bot) && ai->CastSpell(SpellShadow[i], pTarget)) // HasAuraFromUnit when Mind Flay debug : stackable by different players
-                return;
         }
+
+        if (!pTarget->HasAuraFromUnit(MIND_FLAY, m_bot) && ai->CastSpell(MIND_FLAY, pTarget))
+            return;
+
         break;
     }
 } // end DoNextCombatManeuver

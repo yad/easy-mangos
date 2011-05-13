@@ -211,25 +211,24 @@ void PlayerbotHunterAI::DoNextCombatManeuver(Unit *pTarget)
     
     // damage spells
 
-    if (!pTarget->HasAura(HUNTERS_MARK, EFFECT_INDEX_0) && ai->CastSpell(HUNTERS_MARK, pTarget))
+    if (!pTarget->HasAura(HUNTERS_MARK) && ai->CastSpell(HUNTERS_MARK, pTarget))
         return;
 
-    static const uint32 RangedSpell[] = {KILL_SHOT, RAPID_FIRE, SERPENT_STING, BLACK_ARROW, ARCANE_SHOT, EXPLOSIVE_SHOT, AIMED_SHOT, STEADY_SHOT};
+    if (m_bot->HasAura(ASPECT_OF_THE_VIPER) && ai->CastSpell(RAPID_FIRE))
+        return;
+
+    static const uint32 RangedSpell[] = {KILL_SHOT, EXPLOSIVE_SHOT, SERPENT_STING, BLACK_ARROW, ARCANE_SHOT, AIMED_SHOT, STEADY_SHOT};
     static const uint32 MeleeSpell[] = {MONGOOSE_BITE, RAPTOR_STRIKE, IMMOLATION_TRAP, EXPLOSIVE_TRAP};
     static const uint32 eltRanged = sizeof(RangedSpell)/sizeof(uint32);
     static const uint32 eltMelee = sizeof(MeleeSpell)/sizeof(uint32);
-    char *RangedSpellEnabled = "00000000";
-    char *MeleeSpellEnabled = "0000";
+    char *RangedSpellEnabled = "001110F";
+    char *MeleeSpellEnabled = "1110";
 
-    if (m_bot->getLevel() < 34)
-        MeleeSpellEnabled = "1110";
-    else
+    if (m_bot->getLevel() >= 34)
         MeleeSpellEnabled = "1101";
 
-    if (m_bot->getLevel() < 60)
-        RangedSpellEnabled = "0V11100F";
-    else
-        RangedSpellEnabled = "1V11011F";
+    if (m_bot->getLevel() >= 60)
+        RangedSpellEnabled = "111101F";
 
     Group *m_group = m_bot->GetGroup();
     uint32 numberTargets = 0;
@@ -253,23 +252,16 @@ void PlayerbotHunterAI::DoNextCombatManeuver(Unit *pTarget)
     {
         for (uint32 i = 0; i < eltRanged; ++i)
         {
-            if (RangedSpellEnabled[i] == 'V')
+            if (RangedSpellEnabled[i] == 'F')
 			{
-                if (m_bot->HasAura(ASPECT_OF_THE_VIPER) && !pTarget->HasAura(RangedSpell[i]) && ai->CastSpell(RangedSpell[i], pTarget))
-                    return;
-                else
-                    continue;
-			}
-            else if (RangedSpellEnabled[i] == 'F')
-			{
-                if (m_bot->HasAura(ASPECT_OF_THE_DRAGONHAWK) && !pTarget->HasAura(RangedSpell[i]) && ai->CastSpell(RangedSpell[i], pTarget))
+                if (m_bot->HasAura(ASPECT_OF_THE_DRAGONHAWK) && !pTarget->HasAuraFromUnit(RangedSpell[i], m_bot) && ai->CastSpell(RangedSpell[i], pTarget))
                     return;
                 else
                     continue;
 			}
 			else if (RangedSpellEnabled[i] == '1')
             {
-                if (!pTarget->HasAura(RangedSpell[i]) && ai->CastSpell(RangedSpell[i], pTarget))
+                if (!pTarget->HasAuraFromUnit(RangedSpell[i], m_bot) && ai->CastSpell(RangedSpell[i], pTarget))
                     return;
             }
         }
@@ -278,11 +270,11 @@ void PlayerbotHunterAI::DoNextCombatManeuver(Unit *pTarget)
     {
         for (uint32 i = 0; i < eltMelee; ++i)
         {
-            if (!pTarget->HasAura(MeleeSpell[i], EFFECT_INDEX_0) && ai->CastSpell(MeleeSpell[i], pTarget))
+            if (!pTarget->HasAuraFromUnit(MeleeSpell[i], m_bot) && ai->CastSpell(MeleeSpell[i], pTarget))
                 return;
         }
     }
- 
+
 } // end DoNextCombatManeuver
 
 void PlayerbotHunterAI::DoNonCombatActions()
