@@ -1050,11 +1050,12 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                         spell_id = 11538;
                     else if (roll < 70)                     // Chain Lighting (20% chance)
                         spell_id = 21179;
-                    else if (roll < 80)                     // Polymorph (10% chance)
+                    else if (roll < 77)                     // Polymorph (10% chance, 7% to target)
+                        spell_id = 14621;
+                    else if (roll < 80)                     // Polymorph (10% chance, 3% to self, backfire)
                     {
                         spell_id = 14621;
-                        if (urand(0, 9) < 3)                // 30% chance to self-cast
-                            newTarget = m_caster;
+                        newTarget = m_caster;
                     }
                     else if (roll < 95)                     // Enveloping Winds (15% chance)
                         spell_id = 25189;
@@ -1176,6 +1177,21 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                 {
                     if (unitTarget)
                         m_caster->CastSpell(m_caster, 20578, false, NULL);
+
+                    return;
+                }
+                case 21147:                                 // Arcane Vacuum
+                {
+                    if (!unitTarget)
+                        return;
+
+                    // Spell used by Azuregos to teleport all the players to him
+                    // This also resets the target threat
+                    if (m_caster->getThreatManager().getThreat(unitTarget))
+                        m_caster->getThreatManager().modifyThreatPercent(unitTarget, -100);
+
+                    // cast summon player
+                    m_caster->CastSpell(unitTarget, 21150, true);
 
                     return;
                 }
