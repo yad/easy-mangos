@@ -636,7 +636,7 @@ bool Unit::HasAuraFromUnit(uint32 Spell, Unit *caster)
 {
     SpellAuraHolderBounds spair = GetSpellAuraHolderBounds(Spell);
 
-    for(SpellAuraHolderMap::const_iterator itr = spair.first; itr != spair.second; ++itr)
+    for(SpellAuraHolderMap::iterator itr = spair.first; itr != spair.second; ++itr)
         if (itr->second->GetCasterGUID() == caster->GetGUID())
             return true;
 
