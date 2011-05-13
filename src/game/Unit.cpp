@@ -634,15 +634,12 @@ void Unit::RemoveSpellsCausingAura(AuraType auraType, SpellAuraHolder* except)
 
 bool Unit::HasAuraFromUnit(uint32 Spell, Unit *caster)
 {
-    SpellAuraHolderMap& auras = GetSpellAuraHolderMap();
+    SpellAuraHolderBounds spair = GetSpellAuraHolderBounds(Spell);
 
-    for(SpellAuraHolderMap::const_iterator itr = auras.begin(); itr != auras.end(); ++itr)
-    {
-        SpellAuraHolder *holder = itr->second;
-
-        if (holder->GetId() == Spell && holder->GetCasterGUID() == caster->GetGUID())
+    for(SpellAuraHolderMap::const_iterator itr = spair.first; itr != spair.second; ++itr)
+        if (itr->second->GetCasterGUID() == caster->GetGUID())
             return true;
-    }
+
     return false;
 }
 
