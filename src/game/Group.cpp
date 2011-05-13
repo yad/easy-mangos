@@ -767,7 +767,7 @@ void Group::StartLootRool(WorldObject* lootTarget, LootMethod method, Loot* loot
 
     LootItem const& lootItem =  loot->items[itemSlot];
 
-    Roll* r = new Roll(lootTarget->GetGUID(), method, lootItem);
+    Roll* r = new Roll(lootTarget->GetObjectGuid(), method, lootItem);
 
     //a vector is filled with only near party members
     for(GroupReference *itr = GetFirstMember(); itr != NULL; itr = itr->next())
@@ -1556,7 +1556,7 @@ void Group::UpdateLooterGuid( WorldObject* object, bool ifneed )
             {
                 if (pl->IsWithinDist(object, sWorld.getConfig(CONFIG_FLOAT_GROUP_XP_DISTANCE), false))
                 {
-                    bool refresh = pl->GetLootGUID() == object->GetGUID();
+                    bool refresh = pl->GetLootGuid() == object->GetObjectGuid();
 
                     //if(refresh)                           // update loot for new looter
                     //    pl->GetSession()->DoLootRelease(pl->GetLootGUID());
@@ -1577,7 +1577,7 @@ void Group::UpdateLooterGuid( WorldObject* object, bool ifneed )
         {
             if (pl->IsWithinDist(object, sWorld.getConfig(CONFIG_FLOAT_GROUP_XP_DISTANCE), false))
             {
-                bool refresh = pl->GetLootGUID() == object->GetGUID();
+                bool refresh = pl->GetLootGuid() == object->GetObjectGuid();
 
                 //if(refresh)                               // update loot for new looter
                 //    pl->GetSession()->DoLootRelease(pl->GetLootGUID());

@@ -1005,7 +1005,7 @@ void Map::RemoveAllObjectsInRemoveList()
             case TYPEID_CORPSE:
             {
                 // ??? WTF
-                Corpse* corpse = GetCorpse(obj->GetGUID());
+                Corpse* corpse = GetCorpse(obj->GetObjectGuid());
                 if (!corpse)
                     sLog.outError("Try delete corpse/bones %u that not in map", obj->GetGUIDLow());
                 else
@@ -2912,7 +2912,7 @@ Creature* Map::GetCreature(ObjectGuid guid)
 {
     __try
     {
-       return m_objectsStore.find<Creature>(guid.GetRawValue(), (Creature*)NULL);
+       return m_objectsStore.find<Creature>(guid, (Creature*)NULL);
     }
     __except ( EXCEPTION_EXECUTE_HANDLER )
     {
@@ -2971,7 +2971,7 @@ GameObject* Map::GetGameObject(ObjectGuid guid)
 {
     __try
     {
-       return m_objectsStore.find<GameObject>(guid.GetRawValue(), (GameObject*)NULL);
+       return m_objectsStore.find<GameObject>(guid, (GameObject*)NULL);
     }
     __except ( EXCEPTION_EXECUTE_HANDLER )
     {
@@ -2988,7 +2988,7 @@ DynamicObject* Map::GetDynamicObject(ObjectGuid guid)
 {
     __try
     {
-       return m_objectsStore.find<DynamicObject>(guid.GetRawValue(), (DynamicObject*)NULL);
+       return m_objectsStore.find<DynamicObject>(guid, (DynamicObject*)NULL);
     }
     __except ( EXCEPTION_EXECUTE_HANDLER )
     {

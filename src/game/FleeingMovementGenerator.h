@@ -29,7 +29,7 @@ class MANGOS_DLL_SPEC FleeingMovementGenerator
 : public MovementGeneratorMedium< T, FleeingMovementGenerator<T> >
 {
     public:
-        FleeingMovementGenerator(uint64 fright) : i_frightGUID(fright), i_nextCheckTime(0) {}
+        FleeingMovementGenerator(uint64 fright) : i_frightGuid(fright), i_nextCheckTime(0) {}
 
         void Initialize(T &);
         void Finalize(T &);
