@@ -156,7 +156,7 @@ void PlayerbotPriestAI::DoNextCombatManeuver(Unit *pTarget)
         uint32 numberTargets = 0;
         uint32 numberTargetsWithin5f = 0;
         
-        // Coun number of targets
+        // Count number of targets
         if (m_group)
         {
             for (GroupReference *ref = m_group->GetFirstMember(); ref; ref = ref->next())

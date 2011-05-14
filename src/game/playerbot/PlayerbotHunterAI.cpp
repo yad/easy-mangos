@@ -168,20 +168,21 @@ void PlayerbotHunterAI::DoNextCombatManeuver(Unit *pTarget)
         }
         else if (!m_bot->isMoving() && !m_bot->hasUnitState(UNIT_STAT_NO_FREE_MOVE) && !m_bot->hasUnitState(UNIT_STAT_CONTROLLED))
         {
-            float xb, yb, zb, xt, yt, zt, xbt, ybt, angle;
+            float xb, yb, zb, xt, yt, zt, xbt, ybt, angle, offset;
             m_bot->GetPosition(xb,yb,zb);
             pTarget->GetPosition(xt,yt,zt);
-            angle = acos(abs(yb - yt) / sqrt(pow(abs(xb - xt), 2) + pow(abs(yb - yt), 2)));
+            angle = atan(abs(xb - xt) / abs(yb - yt));
+            offset = ATTACK_DISTANCE * 2 * sin(angle);
 
             if (xb < xt)
-                xbt = xt - (ATTACK_DISTANCE * 2 * sin(angle));
+                xbt = xt - offset;
             else
-                xbt = xt + (ATTACK_DISTANCE * 2 * sin(angle));
+                xbt = xt + offset;
 
             if (yb < yt)
-                ybt = yt - (ATTACK_DISTANCE * 2 * cos(angle));
+                ybt = yt - offset;
             else
-                ybt = yt + (ATTACK_DISTANCE * 2 * cos(angle));
+                ybt = yt + offset;
 
             const TerrainInfo *map = m_bot->GetTerrain();
             
