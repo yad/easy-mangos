@@ -343,7 +343,6 @@ void Unit::Update( uint32 update_diff, uint32 p_time )
     // Or else we may have some SPELL_STATE_FINISHED spells stalled in pointers, that is bad.
     m_Events.Update( update_diff );
     _UpdateSpells( update_diff );
-
     CleanupDeletedAuras();
 
     if (m_lastManaUseTimer)
@@ -633,15 +632,10 @@ void Unit::RemoveSpellsCausingAura(AuraType auraType, SpellAuraHolder* except)
 
 bool Unit::HasAuraFromUnit(uint32 Spell, Unit *caster)
 {
-    SpellAuraHolderMap& auras = GetSpellAuraHolderMap();
-
-    for(SpellAuraHolderMap::const_iterator itr = auras.begin(); itr != auras.end(); ++itr)
-    {
-        SpellAuraHolder *holder = itr->second;
-
-        if (holder->GetId() == Spell && holder->GetCasterGUID() == caster->GetGUID())
+    for (SpellAuraHolderMap::const_iterator itr = m_spellAuraHolders.begin(); itr != m_spellAuraHolders.end(); ++itr)
+        if (itr->second->GetId() == Spell && itr->second->GetCasterGUID() == caster->GetGUID())
             return true;
-    }
+    
     return false;
 }
 
@@ -4350,6 +4344,32 @@ bool Unit::AddSpellAuraHolder(SpellAuraHolder *holder)
                 break;
             }
 
+            if (const SpellEntry *sp = foundHolder->GetSpellProto())
+            {
+                switch (sp->SpellFamilyName)
+                {
+                    default:
+                        if(!sp)
+                            break;
+
+                    case SPELLFAMILY_HUNTER:
+                        // Explosive Shot
+                        if (sp->SpellIconID == 3407)
+                            continue;
+                        break;
+
+                    case SPELLFAMILY_PRIEST:
+                        // Mind Flay
+                        if (sp->SpellIconID == 548 && (sp->SpellFamilyFlags2 & UI64LIT(0x00000040)))
+                            continue;
+
+                        // Mind Sear
+                        if (sp->SpellIconID == 2895)
+                            continue;
+                        break;
+                }
+            }
+
             bool stop = false;
 
             for (int32 i = 0; i < MAX_EFFECT_INDEX && !stop; ++i)
@@ -4360,13 +4380,6 @@ bool Unit::AddSpellAuraHolder(SpellAuraHolder *holder)
 
                 // m_auraname can be modified to SPELL_AURA_NONE for area auras, use original
                 AuraType aurNameReal = AuraType(aurSpellInfo->EffectApplyAuraName[i]);
-
-                // Priest's Mind Flay must stack from different casters
-                if (const SpellEntry* sp = foundHolder->GetSpellProto())
-                {
-                    if (sp && sp->SpellFamilyName == SPELLFAMILY_PRIEST && sp->SpellIconID == 548 && (sp->SpellFamilyFlags2 & UI64LIT(0x00000040)))
-                        break;
-                }
 
                 switch(aurNameReal)
                 {

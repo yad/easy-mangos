@@ -636,7 +636,7 @@ void PlayerbotMgr::AddAllBots()
     else
     {
 
-        QueryResult *result = CharacterDatabase.PQuery("SELECT guid, race FROM characters WHERE account = '%u'", accountId);
+        QueryResult *result = CharacterDatabase.PQuery("SELECT guid, race FROM characters WHERE account = '%u' ORDER BY RAND()", accountId);
         if( result )
         {
             int itrAlliance = 0;
