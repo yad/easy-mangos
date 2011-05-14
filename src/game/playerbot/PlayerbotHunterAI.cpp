@@ -192,6 +192,24 @@ void PlayerbotHunterAI::DoNextCombatManeuver(Unit *pTarget)
                 m_bot->AttackStop();
                 m_bot->GetMotionMaster()->MovePoint(m_master->GetMapId(), xbt, ybt, map->GetHeight(xbt, ybt, zt + 1.0f, true));
             }
+            else
+            {
+                if (xb < xt)
+                    xbt = xt + offset_x;
+                else
+                    xbt = xt - offset_x;
+
+                if (yb < yt)
+                    ybt = yt + offset_y;
+                else
+                    ybt = yt - offset_y;
+
+                if (map->GetHeight(xbt, ybt, zt + 1.0f, true) > (zt - 3.0f) && map->GetHeight(xbt, ybt, zt + 1.0f, true) < (zt + 3.0f) && pTarget->IsWithinLOS(xbt, ybt, map->GetHeight(xbt, ybt, zt + 1.0f, true)))
+                {
+                    m_bot->AttackStop();
+                    m_bot->GetMotionMaster()->MovePoint(m_master->GetMapId(), xbt, ybt, map->GetHeight(xbt, ybt, zt + 1.0f, true));
+                }
+            }
 
             return;
         }
