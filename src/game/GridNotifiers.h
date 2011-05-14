@@ -996,11 +996,11 @@ namespace MaNGOS
                 return false;
             }
         private:
-            bool i_targetForUnit;
-            bool i_targetForPlayer;
             WorldObject const* i_obj;
             WorldObject const* i_originalCaster;
             float i_range;
+            bool i_targetForUnit;
+            bool i_targetForPlayer;
     };
 
     class AnyAoETargetUnitInObjectRangeCheck
@@ -1028,9 +1028,9 @@ namespace MaNGOS
             }
 
         private:
-            bool i_targetForPlayer;
             WorldObject const* i_obj;
             float i_range;
+            bool i_targetForPlayer;
     };
 
     // do attack at call of help to friendly crearture
