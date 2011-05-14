@@ -42,9 +42,6 @@
     <ClCompile Include="..\..\src\game\AchievementMgr.cpp">
       <Filter>World/Handlers</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\game\AntiCheat.cpp">
-      <Filter>World/Handlers</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\game\ArenaTeamHandler.cpp">
       <Filter>World/Handlers</Filter>
     </ClCompile>
@@ -153,6 +150,9 @@
     <ClCompile Include="..\..\src\game\GuildHandler.cpp">
       <Filter>World/Handlers</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\game\GuildMgr.cpp">
+      <Filter>World/Handlers</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\game\InstanceData.cpp">
       <Filter>World/Handlers</Filter>
     </ClCompile>
@@ -172,9 +172,6 @@
       <Filter>World/Handlers</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\game\Mail.cpp">
-      <Filter>World/Handlers</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\game\MailHandler.cpp">
       <Filter>World/Handlers</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\game\Map.cpp">
@@ -553,12 +550,6 @@
     <ClCompile Include="..\..\src\game\PlayerStuff.cpp">
       <Filter>Object</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\game\LFGMgr.cpp">
-      <Filter>World/Handlers</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\game\LFG.cpp">
-      <Filter>World/Handlers</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\game\VehicleHandler.cpp">
       <Filter>World/Handlers</Filter>
     </ClCompile>
@@ -571,9 +562,6 @@
       <Filter>World/Handlers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\game\AchievementMgr.h">
-      <Filter>World/Handlers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game\AntiCheat.h">
       <Filter>World/Handlers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\game\BattleGround.h">
@@ -658,6 +646,9 @@
       <Filter>World/Handlers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\game\Group.h">
+      <Filter>World/Handlers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\game\GuildMgr.h">
       <Filter>World/Handlers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\game\InstanceData.h">
@@ -970,6 +961,12 @@
     <ClInclude Include="..\..\src\game\Camera.h">
       <Filter>Object</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\game\LFG.h">
+      <Filter>World/Handlers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\game\LFGMgr.h">
+      <Filter>World/Handlers</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\src\game\AuctionHouseBot\AuctionHouseBot.h">
       <Filter>AhBot</Filter>
     </ClInclude>
@@ -1047,15 +1044,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\game\playerbot\PlayerbotWarlockAI.h">
       <Filter>Playerbot</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game\LFG.h">
-      <Filter>World/Handlers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game\LFGMgr.h">
-      <Filter>World/Handlers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game\GuildMgr.h">
-      <Filter>Object</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
