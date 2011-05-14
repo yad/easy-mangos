@@ -357,6 +357,7 @@
     <ClCompile Include="..\..\src\game\AccountMgr.cpp" />
     <ClCompile Include="..\..\src\game\AchievementMgr.cpp" />
     <ClCompile Include="..\..\src\game\AggressorAI.cpp" />
+    <ClCompile Include="..\..\src\game\AntiCheat.cpp" />
     <ClCompile Include="..\..\src\game\ArenaTeam.cpp" />
     <ClCompile Include="..\..\src\game\ArenaTeamHandler.cpp" />
     <ClCompile Include="..\..\src\game\AuctionHouseBot\AuctionHouseBot.cpp" />
@@ -389,6 +390,8 @@
     <ClCompile Include="..\..\src\game\CharacterHandler.cpp" />
     <ClCompile Include="..\..\src\game\Chat.cpp" />
     <ClCompile Include="..\..\src\game\ChatHandler.cpp" />
+    <ClCompile Include="..\..\src\game\ChatLexicsCutter.cpp" />
+    <ClCompile Include="..\..\src\game\ChatLog.cpp" />
     <ClCompile Include="..\..\src\game\CombatHandler.cpp" />
     <ClCompile Include="..\..\src\game\ConfusedMovementGenerator.cpp" />
     <ClCompile Include="..\..\src\game\Corpse.cpp" />
@@ -434,6 +437,7 @@
     <ClCompile Include="..\..\src\game\LFG.cpp" />
     <ClCompile Include="..\..\src\game\LFGHandler.cpp" />
     <ClCompile Include="..\..\src\game\LFGMgr.cpp" />
+    <ClCompile Include="..\..\src\game\LFG.cpp" />
     <ClCompile Include="..\..\src\game\LootHandler.cpp" />
     <ClCompile Include="..\..\src\game\LootMgr.cpp" />
     <ClCompile Include="..\..\src\game\Mail.cpp" />
@@ -441,6 +445,7 @@
     <ClCompile Include="..\..\src\game\Map.cpp" />
     <ClCompile Include="..\..\src\game\MapManager.cpp" />
     <ClCompile Include="..\..\src\game\MapPersistentStateMgr.cpp" />
+    <ClCompile Include="..\..\src\game\MapUpdater.cpp" />
     <ClCompile Include="..\..\src\game\MassMailMgr.cpp" />
     <ClCompile Include="..\..\src\game\MiscHandler.cpp" />
     <ClCompile Include="..\..\src\game\MotionMaster.cpp" />
@@ -540,6 +545,7 @@
     <ClInclude Include="..\..\src\game\AccountMgr.h" />
     <ClInclude Include="..\..\src\game\AchievementMgr.h" />
     <ClInclude Include="..\..\src\game\AggressorAI.h" />
+    <ClInclude Include="..\..\src\game\AntiCheat.h" />
     <ClInclude Include="..\..\src\game\ArenaTeam.h" />
     <ClInclude Include="..\..\src\game\AuctionHouseBot\AuctionHouseBot.h" />
     <ClInclude Include="..\..\src\game\AuctionHouseMgr.h" />
@@ -567,6 +573,8 @@
     <ClInclude Include="..\..\src\game\ChannelMgr.h" />
     <ClInclude Include="..\..\src\game\CharacterDatabaseCleaner.h" />
     <ClInclude Include="..\..\src\game\Chat.h" />
+    <ClInclude Include="..\..\src\game\ChatLexicsCutter.h" />
+    <ClInclude Include="..\..\src\game\ChatLog.h" />
     <ClInclude Include="..\..\src\game\ConfusedMovementGenerator.h" />
     <ClInclude Include="..\..\src\game\Corpse.h" />
     <ClInclude Include="..\..\src\game\Creature.h" />
@@ -617,6 +625,7 @@
     <ClInclude Include="..\..\src\game\Map.h" />
     <ClInclude Include="..\..\src\game\MapManager.h" />
     <ClInclude Include="..\..\src\game\MapPersistentStateMgr.h" />
+    <ClInclude Include="..\..\src\game\MapUpdater.h" />
     <ClInclude Include="..\..\src\game\MapReference.h" />
     <ClInclude Include="..\..\src\game\MapRefManager.h" />
     <ClInclude Include="..\..\src\game\MassMailMgr.h" />

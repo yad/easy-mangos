@@ -1978,7 +1978,7 @@ void Unit::DealMeleeDamage(CalcDamageInfo *damageInfo, bool durabilityLoss)
                 SpellEntry const *i_spellProto = (*i)->GetSpellProto();
 
                 // Thorns
-                if (i_spellProto->SpellFamilyName == SPELLFAMILY_DRUID && i_spellProto->SpellFamilyFlags & UI64LIT(0x00000100))
+                if (i_spellProto && i_spellProto->SpellFamilyName == SPELLFAMILY_DRUID && i_spellProto->SpellFamilyFlags & UI64LIT(0x00000100))
                 {
                     Unit::AuraList const& dummyList = pVictim->GetAurasByType(SPELL_AURA_DUMMY);
                     for(Unit::AuraList::const_iterator iter = dummyList.begin(); iter != dummyList.end(); ++iter)
@@ -6407,12 +6407,13 @@ void Unit::RemoveGuardian( Pet* pet )
 
 void Unit::RemoveGuardians()
 {
-    while (!m_guardianPets.empty())
-    {
-        if (Pet* pet = GetMap()->GetPet(*m_guardianPets.begin()))
-            pet->Unsummon(PET_SAVE_AS_DELETED, this);
+    if (m_guardianPets.empty())
+        return;
 
-        m_guardianPets.erase(m_guardianPets.begin());
+    for (GuardianPetList::const_iterator itr = m_guardianPets.begin(); itr != m_guardianPets.end(); ++itr)
+    {
+        if (Pet* pet = _GetPet(*itr))
+            pet->Unsummon(PET_SAVE_AS_DELETED, this);
     }
     m_guardianPets.clear();
 }
@@ -7747,13 +7748,19 @@ bool Unit::IsImmuneToSpellEffect(SpellEntry const* spellInfo, SpellEffectIndex i
         }
 
         AuraList const& immuneMechanicAuraApply = GetAurasByType(SPELL_AURA_MECHANIC_IMMUNITY_MASK);
-        for(AuraList::const_iterator i = immuneMechanicAuraApply.begin(); i != immuneMechanicAuraApply.end(); ++i)
-            if ((spellInfo->EffectMechanic[index] & (*i)->GetMiscValue() ||
-                spellInfo->Mechanic & (*i)->GetMiscValue()) ||
-                ((*i)->GetId() == 46924 &&                                                // Bladestorm Immunity
-                spellInfo->EffectMechanic[index] & IMMUNE_TO_MOVEMENT_IMPAIRMENT_AND_LOSS_CONTROL_MASK ||
-                spellInfo->Mechanic & IMMUNE_TO_MOVEMENT_IMPAIRMENT_AND_LOSS_CONTROL_MASK))
-                return true;
+        // need more checks like ^ there
+        if (!immuneMechanicAuraApply.empty())
+        {
+            for(AuraList::const_iterator i = immuneMechanicAuraApply.begin(); i != immuneMechanicAuraApply.end(); ++i)
+            {
+                if ((spellInfo->EffectMechanic[index] & (*i)->GetMiscValue() ||
+                    spellInfo->Mechanic & (*i)->GetMiscValue()) ||
+                    ((*i)->GetId() == 46924 &&                                                // Bladestorm Immunity
+                    spellInfo->EffectMechanic[index] & IMMUNE_TO_MOVEMENT_IMPAIRMENT_AND_LOSS_CONTROL_MASK ||
+                    spellInfo->Mechanic & IMMUNE_TO_MOVEMENT_IMPAIRMENT_AND_LOSS_CONTROL_MASK))
+                    return true;
+            }
+        }
     }
 
     return false;
@@ -10669,6 +10676,13 @@ void Unit::ProcDamageAndSpellFor( bool isVictim, Unit * pTarget, uint32 procFlag
         SpellProcEventEntry const* spellProcEvent = NULL;
         if(!IsTriggeredAtSpellProcEvent(pTarget, itr->second, procSpell, procFlag, procExtra, attType, isVictim, spellProcEvent))
            continue;
+
+        // Frost Nova: prevent to remove root effect on self damage
+        if (itr->second->GetCaster() == pTarget)
+           if (SpellEntry const* spellInfo = itr->second->GetSpellProto())
+              if (procSpell && spellInfo->SpellFamilyName == SPELLFAMILY_MAGE && spellInfo->SpellFamilyFlags & UI64LIT(0x000000000000000000000040)
+                 && procSpell->SpellFamilyName == SPELLFAMILY_MAGE && procSpell->SpellFamilyFlags & UI64LIT(0x000000000000000000000040))
+                    continue;
 
         itr->second->SetInUse(true);                        // prevent holder deletion
         procTriggered.push_back( ProcTriggeredData(spellProcEvent, itr->second) );

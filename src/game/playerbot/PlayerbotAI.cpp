@@ -392,9 +392,9 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
         case SMSG_DUEL_REQUESTED:
         {
             WorldPacket p(packet);
-            uint64 flagGuid;
+            ObjectGuid flagGuid;
             p >> flagGuid;
-            uint64 playerGuid;
+            ObjectGuid playerGuid;
             p >> playerGuid;
 
             WorldPacket* const packet = new WorldPacket(CMSG_DUEL_ACCEPTED, 8);
@@ -411,7 +411,7 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
             uint8 castCount;
             uint32 spellId;
 
-            uint64 casterGuid = p.readPackGUID();
+            ObjectGuid casterGuid = p.readPackGUID();
             if (casterGuid != m_bot->GetGUID())
                 return;
 
@@ -428,7 +428,7 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
         case SMSG_MOVE_SET_CAN_FLY:
         {
             WorldPacket p(packet);
-            uint64 guid = p.readPackGUID();
+            ObjectGuid guid = p.readPackGUID();
             if (guid != m_bot->GetGUID())
                 return;
             m_bot->m_movementInfo.AddMovementFlag(MOVEFLAG_FLYING);
@@ -440,7 +440,7 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
         case SMSG_MOVE_UNSET_CAN_FLY:
         {
             WorldPacket p(packet);
-            uint64 guid = p.readPackGUID();
+            ObjectGuid guid = p.readPackGUID();
             if (guid != m_bot->GetGUID())
                 return;
             m_bot->m_movementInfo.RemoveMovementFlag(MOVEFLAG_FLYING);
@@ -652,8 +652,8 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
         case SMSG_SPELL_GO:
         {
             WorldPacket p(packet);
-            uint64 castItemGuid = p.readPackGUID();
-            uint64 casterGuid = p.readPackGUID();
+            ObjectGuid castItemGuid = p.readPackGUID();
+            ObjectGuid casterGuid = p.readPackGUID();
             if (casterGuid != m_bot->GetGUID())
                 return;
 

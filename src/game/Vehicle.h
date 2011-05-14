@@ -77,9 +77,11 @@ class MANGOS_DLL_SPEC VehicleKit
 
         Unit* GetBase() { return m_pBase; }
 
+        void InstallAccessory(uint32 entry, int8 seatId, bool minion = true);
+
     private:
         void UpdateFreeSeatCount();
-        void InstallAccessory(uint32 entry, int8 seatId, bool minion = true);
+
 
         SeatMap m_Seats;
         uint32 m_uiNumFreeSeats;

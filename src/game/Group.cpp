@@ -317,6 +317,9 @@ bool Group::AddMember(ObjectGuid guid, const char* name)
 
     SendUpdate();
 
+    if (isLFDGroup())
+        sLFGMgr.AddMemberToLFDGroup(guid);
+
     if (Player *player = sObjectMgr.GetPlayer(guid))
     {
         if (!IsLeader(player->GetObjectGuid()) && !isBGGroup())
@@ -347,7 +350,6 @@ bool Group::AddMember(ObjectGuid guid, const char* name)
         if(isRaidGroup())
             player->UpdateForQuestWorldObjects();
 
-        sLFGMgr.Leave(player);
     }
 
     return true;
@@ -393,7 +395,8 @@ uint32 Group::RemoveMember(ObjectGuid guid, uint8 method)
 
             _homebindIfInstance(player);
 
-            sLFGMgr.Leave(player);
+            if (isLFDGroup())
+                sLFGMgr.RemoveMemberFromLFDGroup(this,guid);
         }
 
         if (leaderChanged)
@@ -457,6 +460,9 @@ void Group::Disband(bool hideDestroy)
 
         if(!player->GetSession())
             continue;
+
+        if (isLFDGroup())
+            sLFGMgr.RemoveMemberFromLFDGroup(this, player->GetObjectGuid());
 
         WorldPacket data;
         if(!hideDestroy)
@@ -1863,7 +1869,7 @@ void Group::_homebindIfInstance(Player *player)
     if (player && !player->isGameMaster())
     {
         Map* map = player->GetMap();
-        if (map->IsDungeon())
+        if (map && map->IsDungeon())
         {
             // leaving the group in an instance, the homebind timer is started
             // unless the player is permanently saved to the instance
@@ -2001,6 +2007,56 @@ void Group::RewardGroupAtKill(Unit* pVictim, Player* player_tap)
             // member (alive or dead) or his corpse at req. distance
             if(player_tap->IsAtGroupRewardDistance(pVictim))
                 RewardGroupAtKill_helper(player_tap, pVictim, count, PvP, group_rate, sum_level, is_dungeon, not_gray_member_with_max_level, member_with_max_level, xp);
+        }
+    }
+}
+
+bool Group::ConvertToLFG(LFGType type)
+{
+    if (isBGGroup())
+        return false;
+
+    switch(type)
+    {
+        case LFG_TYPE_DUNGEON:
+        case LFG_TYPE_QUEST:
+        case LFG_TYPE_ZONE:
+        case LFG_TYPE_HEROIC_DUNGEON:
+            if (isRaidGroup())
+                return false;
+            m_groupType = GroupType(m_groupType | GROUPTYPE_LFD);
+            break;
+        case LFG_TYPE_RANDOM_DUNGEON:
+            if (isRaidGroup())
+                return false;
+            m_groupType = GroupType(m_groupType | GROUPTYPE_LFD | GROUPTYPE_UNK1);
+            break;
+        case LFG_TYPE_RAID:
+            if (!isRaidGroup())
+                ConvertToRaid();
+            m_groupType = GroupType(m_groupType | GROUPTYPE_LFD);
+            break;
+        default:
+            return false;
+    }
+
+    m_lootMethod = NEED_BEFORE_GREED;
+    SendUpdate();
+
+    static SqlStatementID updGgoup;
+    SqlStatement stmt = CharacterDatabase.CreateStatement(updGgoup, "UPDATE groups SET groupType= ? WHERE groupId= ?");
+    stmt.PExecute(uint8(m_groupType), GetObjectGuid().GetCounter());
+    return true;
+}
+
+void Group::SetGroupRoles(ObjectGuid guid, uint8 roles)
+{
+    for (member_witerator itr = m_memberSlots.begin(); itr != m_memberSlots.end(); ++itr)
+    {
+        if (itr->guid == guid )
+        {
+            itr->roles = roles;
+            return;
         }
     }
 }
