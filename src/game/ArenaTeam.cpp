@@ -191,7 +191,7 @@ bool ArenaTeam::AddMember(ObjectGuid playerGuid)
 
 bool ArenaTeam::AddMemberNoSave(Player* pl)
 {
-    if (GetMembersSize() >= GetType() * 2)
+    if (GetMembersSize() >= GetMaxMembersSize())
         return false;
 
     if (pl->GetArenaTeamId(GetSlot()))

@@ -72,7 +72,7 @@ bool FleeingMovementGenerator<T>::_getPoint(T &owner, float &x, float &y, float 
         return false;
 
     float dist_from_caster, angle_to_caster;
-    if(Unit *fright = ObjectAccessor::GetUnit(owner, i_frightGUID))
+    if(Unit *fright = ObjectAccessor::GetUnit(owner, i_frightGuid))
     {
         dist_from_caster = fright->GetDistance(&owner);
         if(dist_from_caster > 0.2f)

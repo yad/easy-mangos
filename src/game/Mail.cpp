@@ -32,6 +32,7 @@
 #include "Item.h"
 #include "Player.h"
 #include "World.h"
+#include "AuctionHouseBot\AuctionHouseBot.h"
 
 /**
  * Creates a new MailSender object.

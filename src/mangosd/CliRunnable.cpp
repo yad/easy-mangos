@@ -418,7 +418,7 @@ bool ChatHandler::HandleCharacterEraseCommand(char* args)
     if(!normalizePlayerName(target_name))
         return false;
 
-    ObjectGuid target_guid = sObjectMgr.GetPlayerGUIDByName(nameStr);
+    ObjectGuid target_guid = sObjectMgr.GetPlayerGuidByName(nameStr);
     uint32 account_id = sObjectMgr.GetPlayerAccountIdByGUID(target_guid);
 
     if (target_guid.IsEmpty() || !account_id)

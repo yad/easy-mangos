@@ -1624,7 +1624,7 @@ void PlayerbotAI::DoLoot()
 
                 if (!qitem && item->is_blocked)
                 {
-                    m_bot->SendLootRelease(m_bot->GetLootGUID());
+                    m_bot->SendLootRelease(m_bot->GetLootGuid());
                     continue;
                 }
 
