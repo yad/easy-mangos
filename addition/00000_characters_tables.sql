@@ -3,8 +3,8 @@
 
 DROP TABLE IF EXISTS `character_battleground_random`;
 CREATE TABLE `character_battleground_random` (
-    `guid` int(11) unsigned NOT NULL default 0,
-    PRIMARY KEY  (`guid`)
+  `guid` int(11) unsigned NOT NULL default '0',
+  PRIMARY KEY (`guid`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- BOP item trade
@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS `item_soulbound_trade_data` (
   -- better not drop table here, because of custom data
 CREATE TABLE IF NOT EXISTS `armory_character_stats` (
     `guid` int(11) NOT NULL,
-    `data longtext` NOT NULL,
+    `data` longtext NOT NULL,
     PRIMARY KEY (`guid`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='World of Warcraft Armory table';
 

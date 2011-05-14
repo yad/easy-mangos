@@ -1717,15 +1717,15 @@ struct SpellRadiusEntry
 {
     uint32    ID;                                           //          m_ID
     float     Radius;                                       //          m_radius
-    float     Radius2;                                      //          m_radiusPerLevel
-                                                            //          m_radiusMax
+                                                            //          m_radiusPerLevel
+    //float     RadiusMax;                                  //          m_radiusMax
 };
 
 struct SpellRangeEntry
 {
     uint32    ID;                                           // 0        m_ID
     float     minRange;                                     // 1        m_rangeMin[2]
-    float     minRangeFriendly;                             // 2
+    float     minRangeFriendly;                             // 2 
     float     maxRange;                                     // 3        m_rangeMax[2]
     float     maxRangeFriendly;                             // 4
     //uint32  Flags;                                        // 5        m_flags
@@ -2020,6 +2020,7 @@ struct WMOAreaTableEntry
     uint32 areaId;                                          // 10       m_AreaTableID (AreaTable.dbc)
     //char *Name[16];                                       //          m_AreaName_lang
     //uint32 nameFlags;
+
 };
 
 struct WorldMapAreaEntry
