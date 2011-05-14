@@ -223,6 +223,7 @@ void PlayerbotHunterAI::DoNextCombatManeuver(Unit *pTarget)
     static const uint32 eltMelee = sizeof(MeleeSpell)/sizeof(uint32);
     char *RangedSpellEnabled = "001110F";
     char *MeleeSpellEnabled = "1110";
+    uint32 numberTargets = 0;
 
     if (m_bot->getLevel() >= 34)
         MeleeSpellEnabled = "1101";
@@ -230,24 +231,30 @@ void PlayerbotHunterAI::DoNextCombatManeuver(Unit *pTarget)
     if (m_bot->getLevel() >= 60)
         RangedSpellEnabled = "111101F";
 
-    Group *m_group = m_bot->GetGroup();
-    uint32 numberTargets = 0;
-
-    for (Group::member_citerator itr = m_group->GetMemberSlots().begin(); itr != m_group->GetMemberSlots().end(); itr++)
+    // Count number of targets
+    if (Group* gr = m_bot->GetGroup())
     {
-        for (Unit::AttackerSet::const_iterator itrt = sObjectMgr.GetPlayer(itr->guid)->getAttackers().begin(); itrt != sObjectMgr.GetPlayer(itr->guid)->getAttackers().end(); itrt++)
+        for (GroupReference *ref = gr->GetFirstMember(); ref; ref = ref->next())
         {
-            if ((*itrt)->IsWithinDist(m_bot, 36.0f))
-                numberTargets++;
+            Player *g_member = ref->getSource();
+            for (Unit::AttackerSet::const_iterator itr = g_member->getAttackers().begin(); itr != g_member->getAttackers().end(); itr++)
+                if ((*itr)->IsWithinDist(m_bot, 36.0f))
+                    numberTargets++;
         }
     }
-    
+    else
+        for (Unit::AttackerSet::const_iterator itr = m_bot->getAttackers().begin(); itr!= m_bot->getAttackers().end(); itr++)
+            if ((*itr)->IsWithinDist(m_bot, 36.0f))
+                numberTargets++;
+
+    // Spells with Area of Effect
     if (m_rangedCombat && numberTargets >= 3 && ai->CastSpell(MULTI_SHOT, pTarget))
         return;
 
     if (numberTargets >= 5 && ai->CastSpell(VOLLEY, pTarget))
         return;
-
+    
+    // Casting spell cycle
     if (m_rangedCombat)
     {
         for (uint32 i = 0; i < eltRanged; ++i)

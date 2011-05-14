@@ -344,7 +344,6 @@ void Unit::Update( uint32 update_diff, uint32 p_time )
     // Or else we may have some SPELL_STATE_FINISHED spells stalled in pointers, that is bad.
     m_Events.Update( update_diff );
     _UpdateSpells( update_diff );
-
     CleanupDeletedAuras();
 
     if (m_lastManaUseTimer)
@@ -634,12 +633,10 @@ void Unit::RemoveSpellsCausingAura(AuraType auraType, SpellAuraHolder* except)
 
 bool Unit::HasAuraFromUnit(uint32 Spell, Unit *caster)
 {
-    SpellAuraHolderBounds spair = GetSpellAuraHolderBounds(Spell);
-
-    for(SpellAuraHolderMap::iterator itr = spair.first; itr != spair.second; ++itr)
-        if (itr->second->GetCasterGUID() == caster->GetGUID())
+    for (SpellAuraHolderMap::const_iterator itr = m_spellAuraHolders.begin(); itr != m_spellAuraHolders.end(); ++itr)
+        if (itr->second->GetId() == Spell && itr->second->GetCasterGUID() == caster->GetGUID())
             return true;
-
+    
     return false;
 }
 
