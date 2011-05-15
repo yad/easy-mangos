@@ -28,6 +28,8 @@
 #include "Player.h"
 
 #include <limits>
+#include <iterator>
+#include <list>
 
 INSTANTIATE_SINGLETON_1(LFGMgr);
 
