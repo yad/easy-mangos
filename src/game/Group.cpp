@@ -779,15 +779,20 @@ void Group::StartLootRool(WorldObject* lootTarget, LootMethod method, Loot* loot
     for(GroupReference *itr = GetFirstMember(); itr != NULL; itr = itr->next())
     {
         Player *playerToRoll = itr->getSource();
-        if(!playerToRoll || !playerToRoll->GetSession() || playerToRoll->IsBot())
+        if(!playerToRoll || !playerToRoll->GetSession())
             continue;
 
         if (lootItem.AllowedForPlayer(playerToRoll))
         {
             if (playerToRoll->IsWithinDist(lootTarget, sWorld.getConfig(CONFIG_FLOAT_GROUP_XP_DISTANCE), false))
             {
-                r->playerVote[playerToRoll->GetObjectGuid()] = ROLL_NOT_EMITED_YET;
-                ++r->totalPlayersRolling;
+                if (playerToRoll->IsBot())
+                    r->playerVote[playerToRoll->GetObjectGuid()] = ROLL_PASS;
+                else
+                {
+                    r->playerVote[playerToRoll->GetObjectGuid()] = ROLL_NOT_EMITED_YET;
+                    ++r->totalPlayersRolling;
+                }
             }
         }
     }
