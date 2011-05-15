@@ -383,9 +383,6 @@ void WorldSession::HandleAuctionSellItem(WorldPacket & recv_data)
         AH->itemGuidLow = newItem->GetObjectGuid().GetCounter();
         AH->itemTemplate = newItem->GetEntry();
         AH->owner = pl->GetGUIDLow();
-
-        Utf8toWStr(pl->GetName(), AH->ownerName);
-
         AH->startbid = bid;
         AH->bidder = 0;
         AH->bid = 0;
@@ -757,7 +754,7 @@ void WorldSession::HandleAuctionListItems(WorldPacket & recv_data)
     std::list<AuctionEntry*> auctions;
     for (AuctionHouseObject::AuctionEntryMap::const_iterator itr = aucs->begin(); itr != aucs->end(); ++itr)
         auctions.push_back(itr->second);
-    AuctionSorter sorter(Sort, GetPlayer());
+    AuctionSorter sorter(Sort);
     auctions.sort(sorter);
 
     // remove fake death
