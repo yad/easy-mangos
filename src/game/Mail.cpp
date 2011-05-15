@@ -245,18 +245,15 @@ void MailDraft::SendMailTo(MailReceiver const& receiver, MailSender const& sende
 {
     Player* pReceiver = receiver.GetPlayer();               // can be NULL
 
+    bool has_items = !m_items.empty();
+
     if (receiver.GetPlayerGuid() == auctionbot.GetAHBObjectGuid())
     {
-        if (sender.GetMailMessageType() == MAIL_AUCTION && !m_items.empty())
+        if (sender.GetMailMessageType() == MAIL_AUCTION && has_items)
             deleteIncludedItems(true);
 
         return;
     }
-
-    if (pReceiver)
-        prepareItems(pReceiver);                            // generate mail template items
-
-    bool has_items = !m_items.empty();
 
     // generate mail template items for online player, for offline player items will generated at open
     if (pReceiver)
