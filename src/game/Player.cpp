@@ -14469,7 +14469,6 @@ void Player::RewardQuest(Quest const *pQuest, uint32 reward, Object* questGiver,
         SendQuestReward(pQuest, XP, questGiver);
 
     bool handled = false;
-
     if (questGiver)
     {
         switch(questGiver->GetTypeId())
@@ -14481,16 +14480,16 @@ void Player::RewardQuest(Quest const *pQuest, uint32 reward, Object* questGiver,
                 handled = sScriptMgr.OnQuestRewarded(this, (GameObject*)questGiver, pQuest);
                 break;
         }
-
-        if (!handled && pQuest->GetQuestCompleteScript() != 0)
-            GetMap()->ScriptsStart(sQuestEndScripts, pQuest->GetQuestCompleteScript(), questGiver, this);
-
-        // cast spells after mark quest complete (some spells have quest completed state reqyurements in spell_area data)
-        if (pQuest->GetRewSpellCast() > 0)
-            CastSpell(this, pQuest->GetRewSpellCast(), true);
-        else if (pQuest->GetRewSpell() > 0)
-            CastSpell(this, pQuest->GetRewSpell(), true);
     }
+
+    if (!handled && questGiver && pQuest->GetQuestCompleteScript() != 0)
+        GetMap()->ScriptsStart(sQuestEndScripts, pQuest->GetQuestCompleteScript(), questGiver, this);
+
+    // cast spells after mark quest complete (some spells have quest completed state reqyurements in spell_area data)
+    if (pQuest->GetRewSpellCast() > 0)
+        CastSpell(this, pQuest->GetRewSpellCast(), true);
+    else if (pQuest->GetRewSpell() > 0)
+        CastSpell(this, pQuest->GetRewSpell(), true);
 
     if (pQuest->GetZoneOrSort() > 0)
         GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_COMPLETE_QUESTS_IN_ZONE, pQuest->GetZoneOrSort());
