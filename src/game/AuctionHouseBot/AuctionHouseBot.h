@@ -64,6 +64,18 @@ enum e_AHBOTConfigUInt32Values
     CONFIG_UINT32_AHBOT_BUYER_CHANCE_RATIO_HORDE,
     CONFIG_UINT32_AHBOT_BUYER_CHANCE_RATIO_NEUTRAL,
     CONFIG_UINT32_AHBOT_BUYER_RECHECK_INTERVAL,
+    CONFIG_UINT32_AHBOT_CLASS_MISC_MOUNT_MIN_REQ_LEVEL,
+    CONFIG_UINT32_AHBOT_CLASS_MISC_MOUNT_MAX_REQ_LEVEL,
+    CONFIG_UINT32_AHBOT_CLASS_MISC_MOUNT_MIN_SKILL_RANK,
+    CONFIG_UINT32_AHBOT_CLASS_MISC_MOUNT_MAX_SKILL_RANK,
+    CONFIG_UINT32_AHBOT_CLASS_GLYPH_MIN_REQ_LEVEL,
+    CONFIG_UINT32_AHBOT_CLASS_GLYPH_MAX_REQ_LEVEL,
+    CONFIG_UINT32_AHBOT_CLASS_GLYPH_MIN_ITEM_LEVEL,
+    CONFIG_UINT32_AHBOT_CLASS_GLYPH_MAX_ITEM_LEVEL,
+    CONFIG_UINT32_AHBOT_CLASS_TRADEGOOD_MIN_ITEM_LEVEL,
+    CONFIG_UINT32_AHBOT_CLASS_TRADEGOOD_MAX_ITEM_LEVEL,
+    CONFIG_UINT32_AHBOT_CLASS_CONTAINER_MIN_ITEM_LEVEL,
+    CONFIG_UINT32_AHBOT_CLASS_CONTAINER_MAX_ITEM_LEVEL,
     CONFIG_UINT32_AHBOT_UINT32_COUNT
 };
 
@@ -263,6 +275,8 @@ public :
     bool        Initialize();
     ObjectGuid  GetAHBObjectGuid() { return m_FakeGuid; };
     const char* GetAHBotName() const { return m_AHBotName.c_str(); }
+    const char* GetAHBotIncludes() const { return m_AHBotIncludes.c_str(); }
+    const char* GetAHBotExcludes() const { return m_AHBotExcludes.c_str(); }
     uint32      getConfig(e_AHBOTConfigUInt32Values index) const { return m_configUint32Values[index]; }
     bool        getConfig(e_AHBOTConfigBoolValues index) const { return m_configBoolValues[index]; }
     void        setConfig(e_AHBOTConfigBoolValues index, bool value) { m_configBoolValues[index]=value; }
@@ -275,6 +289,8 @@ public :
 private :
     ObjectGuid      m_FakeGuid;
     std::string     m_AHBotName;
+    std::string     m_AHBotIncludes;
+    std::string     m_AHBotExcludes;
     Config          m_AhBotCfg;
     uint32          m_ItemsPerCycleBoost;
     uint32          m_ItemsPerCycleNormal;
@@ -284,6 +300,8 @@ private :
     bool        m_configBoolValues[CONFIG_UINT32_AHBOT_BOOL_COUNT];
 
     void        SetAHBotName(const std::string& AHBotName) { if (AHBotName.size()>0) m_AHBotName = AHBotName; else m_AHBotName="AHBot"; }
+    void        SetAHBotIncludes(const std::string& AHBotIncludes) { if (AHBotIncludes.size()>0) m_AHBotIncludes = AHBotIncludes; else m_AHBotIncludes=""; }
+    void        SetAHBotExcludes(const std::string& AHBotExcludes) { if (AHBotExcludes.size()>0) m_AHBotExcludes = AHBotExcludes; else m_AHBotExcludes=""; }
 
     void        setConfig(e_AHBOTConfigUInt32Values index, char const* fieldname, uint32 defvalue);
     void        setConfig(e_AHBOTConfigBoolValues index, char const* fieldname, bool defvalue);

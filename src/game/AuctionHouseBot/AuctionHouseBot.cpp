@@ -78,6 +78,9 @@ void AHB_Base::GetConfigFromFile()
 
     SetAHBotName( m_AhBotCfg.GetStringDefault("AuctionHouseBot.Name", "AHBot" ) );
 
+    SetAHBotIncludes(m_AhBotCfg.GetStringDefault("AuctionHouseBot.forceIncludeItems", ""));
+    SetAHBotExcludes(m_AhBotCfg.GetStringDefault("AuctionHouseBot.forceExcludeItems", ""));
+
     setConfig(CONFIG_BOOL_AHBOT_BUYER_ALLIANCE_ENABLED       , "AuctionHouseBot.Buyer.Alliance.Enabled"      , false);
     setConfig(CONFIG_BOOL_AHBOT_BUYER_HORDE_ENABLED          , "AuctionHouseBot.Buyer.Horde.Enabled"         , false);
     setConfig(CONFIG_BOOL_AHBOT_BUYER_NEUTRAL_ENABLED        , "AuctionHouseBot.Buyer.Neutral.Enabled"       , false);
@@ -146,6 +149,19 @@ void AHB_Base::GetConfigFromFile()
     setConfig(CONFIG_BOOL_AHBOT_SELLER_ENABLED               , "AuctionHouseBot.Seller.Enabled"             , false);
     setConfig(CONFIG_BOOL_AHBOT_BUYER_ENABLED                , "AuctionHouseBot.Buyer.Enabled"              , false);
     setConfig(CONFIG_BOOL_AHBOT_BUYPRICE_BUYER               , "AuctionHouseBot.Buyer.Buyprice"             , true);
+
+    setConfig(CONFIG_UINT32_AHBOT_CLASS_MISC_MOUNT_MIN_REQ_LEVEL   , "AuctionHouseBot.Class.Misc.Mount.ReqLevel.Min" , 0);
+    setConfig(CONFIG_UINT32_AHBOT_CLASS_MISC_MOUNT_MAX_REQ_LEVEL   , "AuctionHouseBot.Class.Misc.Mount.ReqLevel.Max" , 0);
+    setConfig(CONFIG_UINT32_AHBOT_CLASS_MISC_MOUNT_MIN_SKILL_RANK  , "AuctionHouseBot.Class.Misc.Mount.ReqSkill.Min" , 0);
+    setConfig(CONFIG_UINT32_AHBOT_CLASS_MISC_MOUNT_MAX_SKILL_RANK  , "AuctionHouseBot.Class.Misc.Mount.ReqSkill.Max" , 0);
+    setConfig(CONFIG_UINT32_AHBOT_CLASS_GLYPH_MIN_REQ_LEVEL        , "AuctionHouseBot.Class.Glyph.ReqLevel.Min"      , 0);
+    setConfig(CONFIG_UINT32_AHBOT_CLASS_GLYPH_MAX_REQ_LEVEL        , "AuctionHouseBot.Class.Glyph.ReqLevel.Max"      , 0);
+    setConfig(CONFIG_UINT32_AHBOT_CLASS_GLYPH_MIN_ITEM_LEVEL       , "AuctionHouseBot.Class.Glyph.ItemLevel.Min"     , 0);
+    setConfig(CONFIG_UINT32_AHBOT_CLASS_GLYPH_MAX_ITEM_LEVEL       , "AuctionHouseBot.Class.Glyph.ItemLevel.Max"     , 0);
+    setConfig(CONFIG_UINT32_AHBOT_CLASS_TRADEGOOD_MIN_ITEM_LEVEL   , "AuctionHouseBot.Class.TradeGood.ItemLevel.Min" , 0);
+    setConfig(CONFIG_UINT32_AHBOT_CLASS_TRADEGOOD_MAX_ITEM_LEVEL   , "AuctionHouseBot.Class.TradeGood.ItemLevel.Max" , 0);
+    setConfig(CONFIG_UINT32_AHBOT_CLASS_CONTAINER_MIN_ITEM_LEVEL   , "AuctionHouseBot.Class.Container.ItemLevel.Min" , 0);
+    setConfig(CONFIG_UINT32_AHBOT_CLASS_CONTAINER_MAX_ITEM_LEVEL   , "AuctionHouseBot.Class.Container.ItemLevel.Max" , 0);
 }
 
 bool AHB_Base::Reload()
@@ -702,6 +718,26 @@ bool AHB_Seller::Initialize()
     std::vector<uint32> lootItems;
     uint32 itemsAdded = 0;
     QueryResult* results = (QueryResult*) NULL;
+
+    bool isIncludeItem = false;
+    std::vector<uint32> includeItems;
+    std::vector<uint32> excludeItems;
+    std::stringstream includeStream(sAHB_BaseConfig.GetAHBotIncludes());
+    std::stringstream excludeStream(sAHB_BaseConfig.GetAHBotExcludes());
+    std::string temp;
+
+    sLog.outString("AHBot> The following items will override all filters!");
+    sLog.outString(">> Forced Inclusion: %s",sAHB_BaseConfig.GetAHBotIncludes());
+    sLog.outString(">> Forced Exclusion: %s",sAHB_BaseConfig.GetAHBotExcludes());
+
+    while(getline(includeStream,temp,',')){
+        includeItems.push_back(atoi(temp.c_str()));
+    }
+
+    while(getline(excludeStream,temp,',')){
+        excludeItems.push_back(atoi(temp.c_str()));
+    }
+
     char npcQuery[] = "SELECT distinct `item` FROM `npc_vendor`";
 
     sLog.outString(">> Loading npc...");
@@ -762,6 +798,28 @@ bool AHB_Seller::Initialize()
         bar.step();
         if (prototype == NULL)
             continue;
+        if (excludeItems.size()>0)
+        {
+            bool isExcludeItem = false;
+            for (unsigned int i = 0; (i < excludeItems.size() && (!isExcludeItem)); i++)
+            {
+                if (itemID ==excludeItems[i])
+                    isExcludeItem = true;
+            }
+            if (isExcludeItem)
+                continue;
+        }
+        if (includeItems.size()>0)
+        {
+            isIncludeItem = false;
+            for (unsigned int i = 0; (i < includeItems.size() && (!isIncludeItem)); i++)
+            {
+                if (itemID == includeItems[i])
+                    isIncludeItem = true;
+            }
+        }
+        if(!isIncludeItem)
+        {
         switch (prototype->Bonding)
         {
         case 0:
@@ -845,21 +903,45 @@ bool AHB_Seller::Initialize()
             if ((!isLootItem) && (!isVendorItem))
                 continue;
         }
-        if ((prototype->Class==ITEM_CLASS_ARMOR)||(prototype->Class==ITEM_CLASS_WEAPON)||(prototype->Class==ITEM_CLASS_ARMOR))
+        if ((prototype->Class==ITEM_CLASS_ARMOR)||(prototype->Class==ITEM_CLASS_WEAPON))
         {
             if (((sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_ITEM_MIN_ITEM_LEVEL)) > 0) && (prototype->ItemLevel < sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_ITEM_MIN_ITEM_LEVEL))) continue;
             if (((sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_ITEM_MAX_ITEM_LEVEL)) > 0) && (prototype->ItemLevel > sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_ITEM_MAX_ITEM_LEVEL))) continue;
             if (((sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_ITEM_MIN_REQ_LEVEL)) > 0) && (prototype->RequiredLevel < sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_ITEM_MIN_REQ_LEVEL))) continue;
             if (((sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_ITEM_MAX_REQ_LEVEL)) > 0) && (prototype->RequiredLevel > sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_ITEM_MAX_REQ_LEVEL))) continue;
-            if (((sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_ITEM_MIN_SKILL_RANK)) > 0) && (prototype->RequiredSkill < sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_ITEM_MIN_SKILL_RANK))) continue;
-            if (((sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_ITEM_MAX_SKILL_RANK)) > 0) && (prototype->RequiredSkill > sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_ITEM_MAX_SKILL_RANK))) continue;
+            if (((sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_ITEM_MIN_SKILL_RANK)) > 0) && (prototype->RequiredSkillRank < sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_ITEM_MIN_SKILL_RANK))) continue;
+            if (((sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_ITEM_MAX_SKILL_RANK)) > 0) && (prototype->RequiredSkillRank > sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_ITEM_MAX_SKILL_RANK))) continue;
         }
         if ((prototype->Class==ITEM_CLASS_RECIPE)||(prototype->Class==ITEM_CLASS_CONSUMABLE)||(prototype->Class==ITEM_CLASS_PROJECTILE))
         {
             if (((sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_ITEM_MIN_REQ_LEVEL)) > 0) && (prototype->RequiredLevel < sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_ITEM_MIN_REQ_LEVEL))) continue;
             if (((sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_ITEM_MAX_REQ_LEVEL)) > 0) && (prototype->RequiredLevel > sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_ITEM_MAX_REQ_LEVEL))) continue;
-            if (((sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_ITEM_MIN_SKILL_RANK)) > 0) && (prototype->RequiredSkill < sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_ITEM_MIN_SKILL_RANK))) continue;
-            if (((sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_ITEM_MAX_SKILL_RANK)) > 0) && (prototype->RequiredSkill > sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_ITEM_MAX_SKILL_RANK))) continue;
+            if (((sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_ITEM_MIN_SKILL_RANK)) > 0) && (prototype->RequiredSkillRank < sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_ITEM_MIN_SKILL_RANK))) continue;
+            if (((sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_ITEM_MAX_SKILL_RANK)) > 0) && (prototype->RequiredSkillRank > sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_ITEM_MAX_SKILL_RANK))) continue;
+        }
+        if ((prototype->Class==ITEM_CLASS_MISC) && (prototype->SubClass==ITEM_SUBCLASS_JUNK_MOUNT))
+        {
+            if (((sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_CLASS_MISC_MOUNT_MIN_REQ_LEVEL)) > 0) && (prototype->RequiredLevel < sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_CLASS_MISC_MOUNT_MIN_REQ_LEVEL))) continue;
+            if (((sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_CLASS_MISC_MOUNT_MAX_REQ_LEVEL)) > 0) && (prototype->RequiredLevel > sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_CLASS_MISC_MOUNT_MAX_REQ_LEVEL))) continue;
+            if (((sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_CLASS_MISC_MOUNT_MIN_SKILL_RANK)) > 0) && (prototype->RequiredSkillRank < sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_CLASS_MISC_MOUNT_MIN_SKILL_RANK))) continue;
+            if (((sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_CLASS_MISC_MOUNT_MAX_SKILL_RANK)) > 0) && (prototype->RequiredSkillRank > sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_CLASS_MISC_MOUNT_MAX_SKILL_RANK))) continue;
+        }
+        if ((prototype->Class==ITEM_CLASS_GLYPH))
+        {
+            if (((sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_CLASS_GLYPH_MIN_REQ_LEVEL)) > 0) && (prototype->RequiredLevel < sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_CLASS_GLYPH_MIN_REQ_LEVEL))) continue;
+            if (((sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_CLASS_GLYPH_MAX_REQ_LEVEL)) > 0) && (prototype->RequiredLevel > sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_CLASS_GLYPH_MAX_REQ_LEVEL))) continue;
+            if (((sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_CLASS_GLYPH_MIN_ITEM_LEVEL)) > 0) && (prototype->RequiredLevel < sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_CLASS_GLYPH_MIN_ITEM_LEVEL))) continue;
+            if (((sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_CLASS_GLYPH_MAX_ITEM_LEVEL)) > 0) && (prototype->RequiredLevel > sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_CLASS_GLYPH_MAX_ITEM_LEVEL))) continue;
+        }
+        if ((prototype->Class==ITEM_CLASS_TRADE_GOODS))
+        {
+            if (((sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_CLASS_TRADEGOOD_MIN_ITEM_LEVEL)) > 0) && (prototype->ItemLevel < sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_CLASS_TRADEGOOD_MIN_ITEM_LEVEL))) continue;
+            if (((sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_CLASS_TRADEGOOD_MAX_ITEM_LEVEL)) > 0) && (prototype->ItemLevel > sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_CLASS_TRADEGOOD_MAX_ITEM_LEVEL))) continue;
+        }
+        if ((prototype->Class==ITEM_CLASS_CONTAINER) || (prototype->Class==ITEM_CLASS_QUIVER))
+        {
+            if (((sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_CLASS_CONTAINER_MIN_ITEM_LEVEL)) > 0) && (prototype->ItemLevel < sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_CLASS_CONTAINER_MIN_ITEM_LEVEL))) continue;
+            if (((sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_CLASS_CONTAINER_MAX_ITEM_LEVEL)) > 0) && (prototype->ItemLevel > sAHB_BaseConfig.getConfig(CONFIG_UINT32_AHBOT_CLASS_CONTAINER_MAX_ITEM_LEVEL))) continue;
         }
         if ((prototype->Class==ITEM_CLASS_MISC) && (prototype->Flags == 4))
         {
@@ -873,6 +955,7 @@ bool AHB_Seller::Initialize()
                 if (!sAHB_BaseConfig.getConfig(CONFIG_BOOL_AHBOT_LOCKBOX_ENABLED))
                     continue;
             }
+        }
         }
 
         m_ItemPool[prototype->Quality][prototype->Class].push_back(itemID);
