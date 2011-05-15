@@ -180,7 +180,7 @@ void PlayerbotHunterAI::DoNextCombatManeuver(Unit *pTarget)
 
             const TerrainInfo *map = m_bot->GetTerrain();
             
-            if (map->GetHeight(xbt, ybt, zb + 2.0f, true) > (zb - 5.0f) && map->GetHeight(xbt, ybt, zb + 2.0f, true) < (zb + 5.0f) && pTarget->IsWithinLOS(xbt, ybt, map->GetHeight(xbt, ybt, zb + 2.0f, true)))
+            if (map->GetHeight(xbt, ybt, zb + 2.0f, true) > (zb - 10.0f) && map->GetHeight(xbt, ybt, zb + 2.0f, true) < (zb + 5.0f) && pTarget->IsWithinLOS(xbt, ybt, map->GetHeight(xbt, ybt, zb + 2.0f, true)))
             {
                 m_bot->AttackStop();
                 m_bot->GetMotionMaster()->MovePoint(m_master->GetMapId(), xbt, ybt, map->GetHeight(xbt, ybt, zb + 2.0f, true));
@@ -190,7 +190,7 @@ void PlayerbotHunterAI::DoNextCombatManeuver(Unit *pTarget)
                 xbt = (xb < xt) ? (xt + offset_x) : (xt - offset_x);
                 ybt = (yb < yt) ? (yt + offset_y) : (yt - offset_y);
 
-                if (map->GetHeight(xbt, ybt, zb + 2.0f, true) > (zb - 5.0f) && map->GetHeight(xbt, ybt, zb + 2.0f, true) < (zb + 5.0f) && pTarget->IsWithinLOS(xbt, ybt, map->GetHeight(xbt, ybt, zb + 2.0f, true)))
+                if (map->GetHeight(xbt, ybt, zb + 2.0f, true) > (zb - 10.0f) && map->GetHeight(xbt, ybt, zb + 2.0f, true) < (zb + 5.0f) && pTarget->IsWithinLOS(xbt, ybt, map->GetHeight(xbt, ybt, zb + 2.0f, true)))
                 {
                     m_bot->AttackStop();
                     m_bot->GetMotionMaster()->MovePoint(m_master->GetMapId(), xbt, ybt, map->GetHeight(xbt, ybt, zb + 2.0f, true));
