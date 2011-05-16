@@ -2217,6 +2217,7 @@ bool Player::LearnAllMySpellsForMyLevel()
 
 bool Player::LearnAllMyTalentsForMyLevel()
 {
+    resetTalents(true, true);
     uint32 classMask = getClassMask();
     uint32 level = getLevel();
 
@@ -2250,43 +2251,10 @@ bool Player::LearnAllMyTalentsForMyLevel()
 
         if(!spellid)                                        // ??? none spells in talent
             continue;
-
-        SpellEntry const* spellInfo = sSpellStore.LookupEntry(spellid);
-        if(!spellInfo || !SpellMgr::IsSpellValid(spellInfo,m_session->GetPlayer(),false))
-            continue;
-
-        if(level < 10)
-            continue;
-
-        if(level < 15 && talentInfo->Row > 0)
-            continue;
-
-        if(level < 20 && talentInfo->Row > 1)
-            continue;
-
-        if(level < 25 && talentInfo->Row > 2)
-            continue;
-
-        if(level < 30 && talentInfo->Row > 3)
-            continue;
-
-        if(level < 35 && talentInfo->Row > 4)
-            continue;
-
-        if(level < 40 && talentInfo->Row > 5)
-            continue;
-
-        if(level < 45 && talentInfo->Row > 6)
-            continue;
-
-        if(level < 50 && talentInfo->Row > 7)
-            continue;
-
-        if(level < 55 && talentInfo->Row > 8)
-            continue;
         
         // learn highest rank of talent and learn all non-talent spell ranks (recursive by tree)
-        learnSpellHighRank(spellid);
+        if(talentInfo->Row < ((level-5) / 5))
+            learnSpellHighRank(spellid);
     }
 
     SendTalentsInfoData(false);
