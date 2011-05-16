@@ -591,15 +591,30 @@ Player::Player (WorldSession *session): Unit(), m_mover(this), m_camera(this), m
     m_flytimer = time(NULL);
     bIFromSet = NULL;
 
-    baseMoveSpeed[MOVE_WALK] = 2.5f;
-    baseMoveSpeed[MOVE_RUN] = 7.0f * sWorld.getConfig(CONFIG_FLOAT_RATE_CHARRUNSPEED);
-    baseMoveSpeed[MOVE_RUN_BACK] = 1.25f;
-    baseMoveSpeed[MOVE_SWIM] = 4.722222f * sWorld.getConfig(CONFIG_FLOAT_RATE_CHARSWIMSPEED);
-    baseMoveSpeed[MOVE_SWIM_BACK] = 4.5f;
-    baseMoveSpeed[MOVE_TURN_RATE] = 3.141594f;
-    baseMoveSpeed[MOVE_FLIGHT] = 7.0f * sWorld.getConfig(CONFIG_FLOAT_RATE_CHARFLIGHTSPEED);
-    baseMoveSpeed[MOVE_FLIGHT_BACK] = 4.5f;
-    baseMoveSpeed[MOVE_PITCH_RATE] = 3.14f;
+    if (session->IsBotSession())
+    {
+        baseMoveSpeed[MOVE_WALK] = 2.5f * 1.1f;
+        baseMoveSpeed[MOVE_RUN] = 7.0f * sWorld.getConfig(CONFIG_FLOAT_RATE_CHARRUNSPEED) * 1.1f;
+        baseMoveSpeed[MOVE_RUN_BACK] = 2.5f * 1.1f;
+        baseMoveSpeed[MOVE_SWIM] = 4.722222f * sWorld.getConfig(CONFIG_FLOAT_RATE_CHARSWIMSPEED) * 1.1f;
+        baseMoveSpeed[MOVE_SWIM_BACK] = 4.5f * 1.1f;
+        baseMoveSpeed[MOVE_TURN_RATE] = 3.141594f * 1.1f;
+        baseMoveSpeed[MOVE_FLIGHT] = 7.0f * sWorld.getConfig(CONFIG_FLOAT_RATE_CHARFLIGHTSPEED) * 1.1f;
+        baseMoveSpeed[MOVE_FLIGHT_BACK] = 4.5f * 1.1f;
+        baseMoveSpeed[MOVE_PITCH_RATE] = 3.14f * 1.1f;
+    }
+    else
+    {
+        baseMoveSpeed[MOVE_WALK] = 2.5f;
+        baseMoveSpeed[MOVE_RUN] = 7.0f * sWorld.getConfig(CONFIG_FLOAT_RATE_CHARRUNSPEED);
+        baseMoveSpeed[MOVE_RUN_BACK] = 2.5f;
+        baseMoveSpeed[MOVE_SWIM] = 4.722222f * sWorld.getConfig(CONFIG_FLOAT_RATE_CHARSWIMSPEED);
+        baseMoveSpeed[MOVE_SWIM_BACK] = 4.5f;
+        baseMoveSpeed[MOVE_TURN_RATE] = 3.141594f;
+        baseMoveSpeed[MOVE_FLIGHT] = 7.0f * sWorld.getConfig(CONFIG_FLOAT_RATE_CHARFLIGHTSPEED);
+        baseMoveSpeed[MOVE_FLIGHT_BACK] = 4.5f;
+        baseMoveSpeed[MOVE_PITCH_RATE] = 3.14f;
+    }
 
     SetPendingBind(NULL, 0);
     m_LFGState = new LFGPlayerState(this);
@@ -19216,6 +19231,7 @@ void Player::AddSpellMod(SpellModifier* mod, bool apply)
         if (mod->charges == -1)
             --m_SpellModRemoveCount;
         m_spellMods[mod->op].remove(mod);
+        delete mod;
     }
 }
 

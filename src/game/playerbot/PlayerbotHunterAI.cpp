@@ -266,13 +266,13 @@ void PlayerbotHunterAI::DoNextCombatManeuver(Unit *pTarget)
         for (uint32 i = 0; i < eltRanged; ++i)
         {
             if (RangedSpellEnabled[i] == 'F')
-			{
+            {
                 if (m_bot->HasAura(ASPECT_OF_THE_DRAGONHAWK) && !pTarget->HasAuraFromUnit(RangedSpell[i], m_bot) && ai->CastSpell(RangedSpell[i], pTarget))
                     return;
                 else
                     continue;
-			}
-			else if (RangedSpellEnabled[i] == '1')
+            }
+            else if (RangedSpellEnabled[i] == '1')
             {
                 if (!pTarget->HasAuraFromUnit(RangedSpell[i], m_bot) && ai->CastSpell(RangedSpell[i], pTarget))
                     return;
