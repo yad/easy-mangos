@@ -432,7 +432,6 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
             if (guid != m_bot->GetGUID())
                 return;
             m_bot->m_movementInfo.AddMovementFlag(MOVEFLAG_FLYING);
-            //m_bot->SetSpeed(MOVE_RUN, GetLeader()->GetSpeed(MOVE_FLIGHT) +0.1f, true);
             return;
         }
 
@@ -444,7 +443,6 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
             if (guid != m_bot->GetGUID())
                 return;
             m_bot->m_movementInfo.RemoveMovementFlag(MOVEFLAG_FLYING);
-            //m_bot->SetSpeed(MOVE_RUN,GetLeader()->GetSpeedRate(MOVE_RUN),true);
             return;
         }
 
@@ -1936,9 +1934,6 @@ void PlayerbotAI::SetMovementTarget(Unit *followTarget)
 
     if (m_bot == GetLeader())
     {
-        if (m_bot->GetSpeedRate(MOVE_RUN) != 1.0f)
-            m_bot->SetSpeedRate(MOVE_RUN, 1.0f, true);
-
         if (!m_bot->GetBattleGround())
         {
             if (m_bot->IsWithinDistInMap(m_followTarget, orig_x, orig_y, orig_z, 5.0f))
@@ -1999,16 +1994,9 @@ void PlayerbotAI::SetMovementTarget(Unit *followTarget)
     {
         if (!m_bot->GetBattleGround())
         {
-            Group *gr = m_bot->GetGroup();
-            
-            if (m_bot->GetSpeedRate(MOVE_RUN) != 1.3f && !m_bot->IsWithinDistInMap(m_followTarget, 10.0f))
-                m_bot->SetSpeedRate(MOVE_RUN, 1.3f, true);
-            
-            if (m_bot->GetSpeedRate(MOVE_RUN) == 1.3f && m_bot->IsWithinDistInMap(m_followTarget, 10.0f))
-                m_bot->SetSpeedRate(MOVE_RUN, 1.0f, true);
-            
             if (m_bot->IsWithinDistInMap(m_followTarget, 100.0f))
             {
+                Group *gr = m_bot->GetGroup();
                 if (gr->GetMembersCount() >= 6 && !m_bot->IsWithinDistInMap(m_followTarget, 5.0f))
                 {
                     float xcb, ycb, zcb;
@@ -2041,15 +2029,12 @@ void PlayerbotAI::SetMovementTarget(Unit *followTarget)
         }
         else
         {
-            if (m_bot->GetSpeedRate(MOVE_RUN) != 1.0f)
-                m_bot->SetSpeedRate(MOVE_RUN, 1.0f, true);
-
             if (m_bot->IsWithinDistInMap(m_followTarget, 3.0f))
             {
                 if (SetInFront(m_followTarget))
                     MovementClear();
             }
-            else
+            else if (m_bot->IsInMap(GetLeader()))
             {
                 float xcb, ycb, zcb;
                 float xdb, ydb, zdb;

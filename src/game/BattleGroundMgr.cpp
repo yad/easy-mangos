@@ -964,6 +964,8 @@ void BattleGroundQueue::Update(BattleGroundTypeId bgTypeId, BattleGroundBracketI
                 for(std::list<Player *>::iterator tIter = team.begin(); tIter != team.end(); ++tIter)
                 {
                     Player* p = *tIter;
+                    p->GiveLevel(leader->getLevel());
+                    p->GetPlayerbotAI()->CheckStuff();
 
                     if (team.front()->GetGroup() && !team.front()->GetGroup()->isRaidGroup() && team.front()->GetGroup()->IsFull())
                     {
@@ -982,14 +984,6 @@ void BattleGroundQueue::Update(BattleGroundTypeId bgTypeId, BattleGroundBracketI
 
                 if (team.front()->GetGroup())
                 {
-                    GroupReference *ref = team.front()->GetGroup()->GetFirstMember();
-                    while (ref)
-                    {
-                        Player* p = ref->getSource();
-                        p->GiveLevel(leader->getLevel());
-                        p->GetPlayerbotAI()->CheckStuff();
-                        ref = ref->next();
-                    }
                     WorldPacket packet(CMSG_BATTLEMASTER_JOIN, 8+4+4+1);
                     packet << uint64(team.front()->GetGUID());
                     packet << uint32(bgTypeId);
@@ -1205,7 +1199,12 @@ void BattleGroundQueue::Update(BattleGroundTypeId bgTypeId, BattleGroundBracketI
 
                 for(std::list<Player *>::iterator tIter = team.begin(); tIter != team.end(); ++tIter)
                 {
+                    WorldPacket pk1;
                     Player* p = *tIter;
+                    p->GiveLevel(leader->getLevel());
+                    p->GetPlayerbotAI()->CheckStuff();
+                    p->SetArenaTeamIdInvited(at->GetId());
+                    p->GetSession()->HandleArenaTeamAcceptOpcode(pk1);
 
                     if (team.front() == p)
                     {
@@ -1218,26 +1217,15 @@ void BattleGroundQueue::Update(BattleGroundTypeId bgTypeId, BattleGroundBracketI
                     }
                     else
                     {
-                        WorldPacket pk1(CMSG_GROUP_INVITE, 10);                // guess size
-                        pk1 << p->GetName();                                   // max len 48
-                        pk1 << uint32(0);
-                        team.front()->GetSession()->HandleGroupInviteOpcode(pk1);
+                        WorldPacket pk2(CMSG_GROUP_INVITE, 10);                // guess size
+                        pk2 << p->GetName();                                   // max len 48
+                        pk2 << uint32(0);
+                        team.front()->GetSession()->HandleGroupInviteOpcode(pk2);
                     }
                 }
 
                 if (team.front()->GetGroup())
                 {
-                    GroupReference *ref = team.front()->GetGroup()->GetFirstMember();
-                    while (ref)
-                    {
-                        Player* p = ref->getSource();
-                        p->GiveLevel(leader->getLevel());
-                        p->GetPlayerbotAI()->CheckStuff();
-                        p->SetArenaTeamIdInvited(at->GetId());
-                        WorldPacket pk2;
-                        p->GetSession()->HandleArenaTeamAcceptOpcode(pk2);
-                        ref = ref->next();
-                    }
                     WorldPacket packet(CMSG_BATTLEMASTER_JOIN_ARENA,8+1+1+1);
                     packet << uint64(0);           // arena Battlemaster guid
                     packet << uint8(arenaSlot);    // 2v2, 3v3 or 5v5

@@ -474,7 +474,6 @@ m_isPersistent(false), m_in_use(0), m_spellAuraHolder(holder)
 
 Aura::~Aura()
 {
-    delete m_spellmod;
 }
 
 AreaAura::AreaAura(SpellEntry const* spellproto, SpellEffectIndex eff, int32 *currentBasePoints, SpellAuraHolder *holder, Unit *target,

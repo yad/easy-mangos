@@ -54,7 +54,7 @@ m_petFollowAngle(PET_FOLLOW_ANGLE), m_needSave(true), m_petCounter(0), m_PetScal
 
     baseMoveSpeed[MOVE_WALK] = 2.5f;
     baseMoveSpeed[MOVE_RUN] = 7.0f * sWorld.getConfig(CONFIG_FLOAT_RATE_CHARRUNSPEED);
-    baseMoveSpeed[MOVE_RUN_BACK] = 1.25f;
+    baseMoveSpeed[MOVE_RUN_BACK] = 2.5f;
     baseMoveSpeed[MOVE_SWIM] = 4.722222f * sWorld.getConfig(CONFIG_FLOAT_RATE_CHARSWIMSPEED);
     baseMoveSpeed[MOVE_SWIM_BACK] = 4.5f;
     baseMoveSpeed[MOVE_TURN_RATE] = 3.141594f;

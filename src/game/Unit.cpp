@@ -281,7 +281,7 @@ Unit::Unit() :
 
     baseMoveSpeed[MOVE_WALK] = 2.5f;
     baseMoveSpeed[MOVE_RUN] = 7.0f;
-    baseMoveSpeed[MOVE_RUN_BACK] = 1.25f;
+    baseMoveSpeed[MOVE_RUN_BACK] = 2.5f;
     baseMoveSpeed[MOVE_SWIM] = 4.722222f;
     baseMoveSpeed[MOVE_SWIM_BACK] = 4.5f;
     baseMoveSpeed[MOVE_TURN_RATE] = 3.141594f;
