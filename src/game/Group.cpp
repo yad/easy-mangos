@@ -148,19 +148,31 @@ bool Group::Create(ObjectGuid guid, const char * name)
 
         Player::ConvertInstancesToGroup(leader, this, guid);
 
-        // store group in database
-        CharacterDatabase.BeginTransaction();
-        CharacterDatabase.PExecute("DELETE FROM groups WHERE groupId ='%u'", m_Guid.GetCounter());
-        CharacterDatabase.PExecute("DELETE FROM group_member WHERE groupId ='%u'", m_Guid.GetCounter());
-        CharacterDatabase.PExecute("INSERT INTO groups (groupId,leaderGuid,lootMethod,looterGuid,lootThreshold,icon1,icon2,icon3,icon4,icon5,icon6,icon7,icon8,groupType,difficulty,raiddifficulty) "
-            "VALUES ('%u','%u','%u','%u','%u','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','%u','%u','%u')",
-            m_Guid.GetCounter(), m_leaderGuid.GetCounter(), uint32(m_lootMethod),
-            m_looterGuid.GetCounter(), uint32(m_lootThreshold),
-            m_targetIcons[0].GetRawValue(), m_targetIcons[1].GetRawValue(),
-            m_targetIcons[2].GetRawValue(), m_targetIcons[3].GetRawValue(),
-            m_targetIcons[4].GetRawValue(), m_targetIcons[5].GetRawValue(),
-            m_targetIcons[6].GetRawValue(), m_targetIcons[7].GetRawValue(),
-            uint8(m_groupType), uint32(m_dungeonDifficulty), uint32(m_raidDifficulty));
+        uint32 nbRealPlayers = 0;
+        GroupReference *ref = GetFirstMember();
+        while (ref)
+        {
+            if (!ref->getSource()->IsBot())
+                ++nbRealPlayers;
+            ref = ref->next();
+        }
+
+        if (nbRealPlayers < 2)
+        {
+            // store group in database
+            CharacterDatabase.BeginTransaction();
+            CharacterDatabase.PExecute("DELETE FROM groups WHERE groupId ='%u'", m_Guid.GetCounter());
+            CharacterDatabase.PExecute("DELETE FROM group_member WHERE groupId ='%u'", m_Guid.GetCounter());
+            CharacterDatabase.PExecute("INSERT INTO groups (groupId,leaderGuid,lootMethod,looterGuid,lootThreshold,icon1,icon2,icon3,icon4,icon5,icon6,icon7,icon8,groupType,difficulty,raiddifficulty) "
+                "VALUES ('%u','%u','%u','%u','%u','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','%u','%u','%u')",
+                m_Guid.GetCounter(), m_leaderGuid.GetCounter(), uint32(m_lootMethod),
+                m_looterGuid.GetCounter(), uint32(m_lootThreshold),
+                m_targetIcons[0].GetRawValue(), m_targetIcons[1].GetRawValue(),
+                m_targetIcons[2].GetRawValue(), m_targetIcons[3].GetRawValue(),
+                m_targetIcons[4].GetRawValue(), m_targetIcons[5].GetRawValue(),
+                m_targetIcons[6].GetRawValue(), m_targetIcons[7].GetRawValue(),
+                uint8(m_groupType), uint32(m_dungeonDifficulty), uint32(m_raidDifficulty));
+        }
     }
     else
         m_Guid =  ObjectGuid(HIGHGUID_GROUP,uint32(0));
@@ -1230,9 +1242,12 @@ bool Group::_addMember(ObjectGuid guid, const char* name, uint8 group, GroupFlag
 
     if (!isBGGroup())
     {
-        // insert into group table
-        CharacterDatabase.PExecute("INSERT INTO group_member(groupId,memberGuid,memberFlags,subgroup,roles) VALUES('%u','%u','%u','%u','%u')",
-            m_Guid.GetCounter(), member.guid.GetCounter(), member.flags, member.group, member.roles);
+        if (!player || !player->IsBot())
+        {
+            // insert into group table
+            CharacterDatabase.PExecute("INSERT INTO group_member(groupId,memberGuid,memberFlags,subgroup,roles) VALUES('%u','%u','%u','%u','%u')",
+                m_Guid.GetCounter(), member.guid.GetCounter(), member.flags, member.group, member.roles);
+        }
     }
 
     return true;
