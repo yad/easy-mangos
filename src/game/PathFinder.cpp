@@ -19,6 +19,7 @@
 #include "MoveMap.h"
 #include "GridMap.h"
 #include "Creature.h"
+#include "Player.h"
 #include "PathFinder.h"
 #include "Log.h"
 
@@ -209,7 +210,7 @@ void PathInfo::BuildPolyPath(PathNode startPos, PathNode endPos)
         m_type = (m_sourceUnit->GetTypeId() == TYPEID_UNIT && ((Creature*)m_sourceUnit)->CanFly())
                     ? PathType(PATHFIND_NORMAL | PATHFIND_NOT_USING_PATH) : PATHFIND_NOPATH;
 
-        if (m_sourceUnit->GetTypeId() == TYPEID_PLAYER && ((Player*)m_sourceUnit)->CanFly() && ((Player*)m_sourceUnit)->IsBot())
+        if (m_sourceUnit->GetTypeId() == TYPEID_PLAYER && ((Player*)m_sourceUnit)->IsFlying() && ((Player*)m_sourceUnit)->IsBot())
             m_type = PathType(PATHFIND_NORMAL | PATHFIND_NOT_USING_PATH);
         return;
     }
@@ -254,7 +255,7 @@ void PathInfo::BuildPolyPath(PathNode startPos, PathNode endPos)
                 else
                 {
                     DEBUG_FILTER_LOG(LOG_FILTER_PATHFINDING, "++ BuildPolyPath :: flying case\n");
-                    if (owner->CanFly())
+                    if (owner->IsFlying())
                         buildShotrcut = true;
                 }
             }

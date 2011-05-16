@@ -138,8 +138,6 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner)
     D::_addUnitStateMove(owner);
     if (owner.GetTypeId() == TYPEID_UNIT && ((Creature*)&owner)->CanFly())
         ((Creature&)owner).AddSplineFlag(SPLINEFLAG_FLYING);
-    if (owner.GetTypeId() == TYPEID_PLAYER && ((Player*)&owner)->CanFly() && ((Player*)&owner)->IsBot())
-        ((Player&)owner).m_movementInfo.AddMovementFlag(MOVEFLAG_FLYING);
 }
 
 template<>
@@ -213,8 +211,6 @@ bool TargetedMovementGeneratorMedium<T,D>::Update(T &owner, const uint32 & time_
         D::_addUnitStateMove(owner);
         if (owner.GetTypeId() == TYPEID_UNIT && ((Creature*)&owner)->CanFly())
             ((Creature&)owner).AddSplineFlag(SPLINEFLAG_FLYING);
-        if (owner.GetTypeId() == TYPEID_PLAYER && ((Player*)&owner)->CanFly() && ((Player*)&owner)->IsBot())
-            ((Player&)owner).m_movementInfo.AddMovementFlag(MOVEFLAG_FLYING);
 
         i_destinationHolder.StartTravel(traveller);
         return true;
@@ -250,7 +246,7 @@ bool TargetedMovementGeneratorMedium<T,D>::Update(T &owner, const uint32 & time_
                 // handle the difference in elevation when the creature is flying
                 if (owner.GetTypeId() == TYPEID_UNIT && ((Creature*)&owner)->CanFly())
                     targetMoved = i_target->GetDistanceSqr(end_point.x, end_point.y, end_point.z) > dist*dist;
-                else if (owner.GetTypeId() == TYPEID_PLAYER && ((Player*)&owner)->CanFly() && ((Player*)&owner)->IsBot())
+                else if (owner.GetTypeId() == TYPEID_PLAYER && ((Player*)&owner)->IsFlying() && ((Player*)&owner)->IsBot())
                     targetMoved = i_target->GetDistanceSqr(end_point.x, end_point.y, end_point.z) > dist*dist;
                 else
                     targetMoved = i_target->GetDistance2d(end_point.x, end_point.y) > dist;
@@ -297,11 +293,6 @@ template<>
 void ChaseMovementGenerator<Player>::Initialize(Player &owner)
 {
     owner.addUnitState(UNIT_STAT_CHASE|UNIT_STAT_CHASE_MOVE);
-    owner.m_movementInfo.RemoveMovementFlag(MOVEFLAG_WALK_MODE);
-
-    if (((Player*)&owner)->CanFly())
-        owner.m_movementInfo.AddMovementFlag(MOVEFLAG_FLYING);
-
     _setTargetLocation(owner);
 }
 
@@ -379,10 +370,6 @@ void FollowMovementGenerator<Player>::Initialize(Player &owner)
     owner.addUnitState(UNIT_STAT_FOLLOW|UNIT_STAT_FOLLOW_MOVE);
     _updateWalkMode(owner);
     _updateSpeed(owner);
-
-    if (((Player*)&owner)->CanFly())
-        owner.m_movementInfo.AddMovementFlag(MOVEFLAG_FLYING);
-
     _setTargetLocation(owner);
 }
 
