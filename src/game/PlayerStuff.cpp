@@ -2217,7 +2217,6 @@ bool Player::LearnAllMySpellsForMyLevel()
 
 bool Player::LearnAllMyTalentsForMyLevel()
 {
-    resetTalents(true, true);
     uint32 classMask = getClassMask();
     uint32 level = getLevel();
 
@@ -2237,26 +2236,16 @@ bool Player::LearnAllMyTalentsForMyLevel()
         if( (classMask & talentTabInfo->ClassMask) == 0 )
             continue;
 
-        // search highest talent rank
-        uint32 spellid = 0;
-
-        for(int rank = MAX_TALENT_RANK-1; rank >= 0; --rank)
-        {
-            if(talentInfo->RankID[rank]!=0)
-            {
-                spellid = talentInfo->RankID[rank];
-                break;
-            }
-        }
-
-        if(!spellid)                                        // ??? none spells in talent
-            continue;
-        
-        // learn highest rank of talent and learn all non-talent spell ranks (recursive by tree)
         if(talentInfo->Row < ((level-5) / 5))
-            learnSpellHighRank(spellid);
+            learnSpellHighRank(talentInfo->RankID[0]);
+        else
+        {
+            for (int i = 0; i < MAX_TALENT_RANK; ++i)
+                if (talentInfo->RankID[i] && HasSpell(talentInfo->RankID[i]))
+                    removeSpell(talentInfo->RankID[i], false, false);
+        }
     }
-
+    
     SendTalentsInfoData(false);
     return true;
 }
