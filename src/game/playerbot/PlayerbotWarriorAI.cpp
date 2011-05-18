@@ -334,29 +334,4 @@ void PlayerbotWarriorAI::DoNonCombatActions()
     if (VIGILANCE > 0)
         (!m_master->HasAura(VIGILANCE, EFFECT_INDEX_0) && ai->CastSpell(VIGILANCE, m_master));
 
-    // hp check
-    if (m_bot->getStandState() != UNIT_STAND_STATE_STAND)
-        m_bot->SetStandState(UNIT_STAND_STATE_STAND);
-
-    Item* pItem = ai->FindFood();
-    Item* fItem = ai->FindBandage();
-
-    if (pItem != NULL && ai->GetHealthPercent() < 30)
-    {
-
-        ai->UseItem(pItem);
-        return;
-    }
-    else if (pItem == NULL && fItem != NULL && !m_bot->HasAura(RECENTLY_BANDAGED, EFFECT_INDEX_0) && ai->GetHealthPercent() < 70)
-    {
-
-        ai->UseItem(fItem);
-        return;
-    }
-    else if (pItem == NULL && fItem == NULL && m_bot->getRace() == RACE_DRAENEI && !m_bot->HasAura(GIFT_OF_THE_NAARU, EFFECT_INDEX_0) && ai->GetHealthPercent() < 70)
-    {
-
-        ai->CastSpell(GIFT_OF_THE_NAARU, m_bot);
-        return;
-    }
 } // end DoNonCombatActions

@@ -505,40 +505,6 @@ void PlayerbotWarlockAI::DoNonCombatActions()
             return;
     }
 
-    if (ai->GetManaPercent() < 25)
-    {
-        Item* pItem = ai->FindDrink();
-        if (pItem)
-        {
-
-            ai->UseItem(pItem);
-            return;
-        }
-    }
-
-    // hp check
-    if (ai->GetHealthPercent() < 30)
-    {
-        Item* pItem = ai->FindFood();
-        if (pItem)
-        {
-
-            ai->UseItem(pItem);
-            return;
-        }
-    }
-
-    if (ai->GetHealthPercent() < 50 && !m_bot->HasAura(RECENTLY_BANDAGED))
-    {
-        Item* fItem = ai->FindBandage();
-        if (fItem)
-        {
-
-            ai->UseItem(fItem);
-            return;
-        }
-    }
-
     //Heal Voidwalker
     if (pet && pet->GetEntry() == DEMON_VOIDWALKER && CONSUME_SHADOWS && pet->GetHealthPercent() < 75 && !pet->HasAura(CONSUME_SHADOWS))
         ai->CastPetSpell(CONSUME_SHADOWS);
