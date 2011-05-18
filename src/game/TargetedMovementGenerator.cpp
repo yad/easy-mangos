@@ -246,7 +246,7 @@ bool TargetedMovementGeneratorMedium<T,D>::Update(T &owner, const uint32 & time_
                 // handle the difference in elevation when the creature is flying
                 if (owner.GetTypeId() == TYPEID_UNIT && ((Creature*)&owner)->CanFly())
                     targetMoved = i_target->GetDistanceSqr(end_point.x, end_point.y, end_point.z) > dist*dist;
-                else if (owner.GetTypeId() == TYPEID_PLAYER && ((Player*)&owner)->IsFlying() && ((Player*)&owner)->IsBot())
+                else if (owner.GetTypeId() == TYPEID_PLAYER && ((Player*)&owner)->IsBot() && ((Player*)&owner)->IsFreeFlying())
                     targetMoved = i_target->GetDistanceSqr(end_point.x, end_point.y, end_point.z) > dist*dist;
                 else
                     targetMoved = i_target->GetDistance2d(end_point.x, end_point.y) > dist;
