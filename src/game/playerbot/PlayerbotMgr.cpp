@@ -444,7 +444,7 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
                 Player* const bot = itr->getSource();
                 Group *grp = bot->GetGroup();
                 if (grp)
-                    grp->RemoveMember(bot->GetGUID(), 1);
+                    grp->RemoveMember(bot->GetObjectGuid(), 1);
             }
             return;
         }
@@ -459,7 +459,7 @@ void PlayerbotMgr::Stay()
 {
 }
 
-void PlayerbotMgr::LogoutPlayerBot(uint64 guid)
+void PlayerbotMgr::LogoutPlayerBot(ObjectGuid guid)
 {
     Player* bot = GetPlayerBot(guid);
     if (bot)
@@ -487,13 +487,13 @@ void PlayerbotMgr::LogoutPlayerBot(uint64 guid)
     }
 }
 
-Player* PlayerbotMgr::GetPlayerBot(uint64 playerGuid) const
+Player* PlayerbotMgr::GetPlayerBot(ObjectGuid playerGuid) const
 {
     HashMapHolder < Player > ::MapType& m = sObjectAccessor.GetPlayers();
     for (HashMapHolder < Player > ::MapType::const_iterator itr = m.begin(); itr != m.end(); ++itr)
     {
         Player* const bot = itr->second;
-        if (bot && bot->GetGUID() == playerGuid)
+        if (bot && bot->GetObjectGuid() == playerGuid)
             return bot;
     }
     return NULL;
@@ -520,7 +520,7 @@ void PlayerbotMgr::OnBotLogin(Player * const bot)
         if (!at)
            continue;
 
-        at->DelMember(bot->GetGUID());
+        at->DelMember(bot->GetObjectGuid());
     }
 
     if (bot->GetGroup())

@@ -47,8 +47,8 @@ public:
 
     static void AddAllBots();
 
-    void LogoutPlayerBot(uint64 guid);
-    Player* GetPlayerBot (uint64 guid) const;
+    void LogoutPlayerBot(ObjectGuid guid);
+    Player* GetPlayerBot (ObjectGuid guid) const;
     Player* GetLeader() const { return m_master; };
     void SetLeader(Player* pl) { m_master = pl; };
 

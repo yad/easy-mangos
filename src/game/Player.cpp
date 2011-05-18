@@ -5153,7 +5153,7 @@ void Player::JoinLFGChannel()
     {
         if((*i)->IsLFG())
         {
-            (*i)->Join(GetGUID(),"");
+            (*i)->Join(GetObjectGuid(),"");
             break;
         }
     }

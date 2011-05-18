@@ -200,11 +200,11 @@ bool ArenaTeam::AddMemberNoSave(Player* pl)
         return false;
     }
 
-    Player::RemovePetitionsAndSigns(pl->GetGUID(), GetType());
+    Player::RemovePetitionsAndSigns(pl->GetObjectGuid(), GetType());
 
     ArenaTeamMember newmember;
     newmember.name              = pl->GetName();
-    newmember.guid              = pl->GetGUID();
+    newmember.guid              = pl->GetObjectGuid();
     newmember.Class             = pl->getClass();
     newmember.games_season      = 0;
     newmember.games_week        = 0;
@@ -238,7 +238,7 @@ bool ArenaTeam::AddMemberNoSave(Player* pl)
         pl->SetArenaTeamIdInvited(0);
         pl->SetArenaTeamInfoField(arenaSlot, ARENA_TEAM_ID, m_TeamId);
         pl->SetArenaTeamInfoField(arenaSlot, ARENA_TEAM_TYPE, GetType());
-        pl->SetArenaTeamInfoField(arenaSlot, ARENA_TEAM_MEMBER, (GetCaptainGuid() == pl->GetGUID()) ? 0 : 1);
+        pl->SetArenaTeamInfoField(arenaSlot, ARENA_TEAM_MEMBER, (GetCaptainGuid() == pl->GetObjectGuid()) ? 0 : 1);
         pl->SetArenaTeamInfoField(arenaSlot, ARENA_TEAM_GAMES_WEEK, newmember.games_week);
         pl->SetArenaTeamInfoField(arenaSlot, ARENA_TEAM_GAMES_SEASON, newmember.games_season);
         pl->SetArenaTeamInfoField(arenaSlot, ARENA_TEAM_WINS_SEASON, newmember.wins_season);

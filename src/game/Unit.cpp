@@ -633,7 +633,7 @@ void Unit::RemoveSpellsCausingAura(AuraType auraType, SpellAuraHolder* except)
 bool Unit::HasAuraFromUnit(uint32 Spell, Unit *caster)
 {
     for (SpellAuraHolderMap::const_iterator itr = m_spellAuraHolders.begin(); itr != m_spellAuraHolders.end(); ++itr)
-        if (itr->second->GetId() == Spell && itr->second->GetCasterGuid() == caster->GetGUID())
+        if (itr->second->GetId() == Spell && itr->second->GetCasterGuid() == caster->GetObjectGuid())
             return true;
     
     return false;
@@ -10957,7 +10957,7 @@ void Unit::SetFeignDeath(bool apply, ObjectGuid casterGuid, uint32 /*spellID*/)
     {
         /*
         WorldPacket data(SMSG_FEIGN_DEATH_RESISTED, 9);
-        data<<GetGUID();
+        data<<GetObjectGuid();
         data<<uint8(0);
         SendMessageToSet(&data,true);
         */
@@ -10988,7 +10988,7 @@ void Unit::SetFeignDeath(bool apply, ObjectGuid casterGuid, uint32 /*spellID*/)
     {
         /*
         WorldPacket data(SMSG_FEIGN_DEATH_RESISTED, 9);
-        data<<GetGUID();
+        data<<GetObjectGuid();
         data<<uint8(1);
         SendMessageToSet(&data,true);
         */

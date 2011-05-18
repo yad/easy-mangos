@@ -985,7 +985,7 @@ void BattleGroundQueue::Update(BattleGroundTypeId bgTypeId, BattleGroundBracketI
                 if (team.front()->GetGroup())
                 {
                     WorldPacket packet(CMSG_BATTLEMASTER_JOIN, 8+4+4+1);
-                    packet << uint64(team.front()->GetGUID());
+                    packet << uint64(team.front()->GetObjectGuid());
                     packet << uint32(bgTypeId);
                     packet << uint32(bg_template->GetInstanceID());
                     packet << uint8(1);
@@ -1208,7 +1208,7 @@ void BattleGroundQueue::Update(BattleGroundTypeId bgTypeId, BattleGroundBracketI
 
                     if (team.front() == p)
                     {
-                        at->ForceCaptain(team.front()->GetGUID());
+                        at->ForceCaptain(team.front()->GetObjectGuid());
                         at->ForceName("ArenaBoT");
                         at->ForceType(arenaType);
                         at->ForceTeamId(sObjectMgr.GenerateArenaTeamId());
