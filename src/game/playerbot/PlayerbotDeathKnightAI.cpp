@@ -501,21 +501,4 @@ void PlayerbotDeathKnightAI::DoNonCombatActions()
     if (HORN_OF_WINTER > 0)
         (!m_master->HasAura(HORN_OF_WINTER, EFFECT_INDEX_0) && ai->CastSpell (HORN_OF_WINTER, m_master));
 
-    // hp check
-    if (m_bot->getStandState() != UNIT_STAND_STATE_STAND)
-        m_bot->SetStandState(UNIT_STAND_STATE_STAND);
-
-    Item* pItem = ai->FindFood();
-    Item* fItem = ai->FindBandage();
-
-    if (pItem != NULL && ai->GetHealthPercent() < 30)
-    {
-        ai->UseItem(pItem);
-        return;
-    }
-    else if (pItem == NULL && fItem != NULL && !m_bot->HasAura(RECENTLY_BANDAGED, EFFECT_INDEX_0) && ai->GetHealthPercent() < 70)
-    {
-        ai->UseItem(fItem);
-        return;
-    }
 } // end DoNonCombatActions

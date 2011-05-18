@@ -319,53 +319,14 @@ void PlayerbotHunterAI::DoNonCombatActions()
     if (!m_bot->HasAura(TRUESHOT_AURA, EFFECT_INDEX_0))
         ai->CastSpell(TRUESHOT_AURA, m_bot);
 
-    if (!m_bot->HasAura(ASPECT_OF_THE_VIPER, EFFECT_INDEX_0) && ai->GetManaPercent() < 90)
-        ai->CastSpell(ASPECT_OF_THE_VIPER, m_bot);
-    else if (!m_bot->HasAura(ASPECT_OF_THE_DRAGONHAWK, EFFECT_INDEX_0) && ai->GetManaPercent() >= 90)
-        ai->CastSpell(ASPECT_OF_THE_DRAGONHAWK, m_bot);
+    if (!m_bot->HasAura(ASPECT_OF_THE_VIPER, EFFECT_INDEX_0) && ai->GetManaPercent() < 90 && ai->CastSpell(ASPECT_OF_THE_VIPER, m_bot))
+        return;
+    else if (!m_bot->HasAura(ASPECT_OF_THE_DRAGONHAWK, EFFECT_INDEX_0) && ai->GetManaPercent() >= 90 && ai->CastSpell(ASPECT_OF_THE_DRAGONHAWK, m_bot))
+        return;
 
     // reset ranged combat state
     if (!m_rangedCombat)
         m_rangedCombat = true;
-
-    // mana check
-    if (m_bot->getStandState() != UNIT_STAND_STATE_STAND)
-        m_bot->SetStandState(UNIT_STAND_STATE_STAND);
-
-    Item* pItem = ai->FindDrink();
-    Item* fItem = ai->FindBandage();
-
-    if (pItem != NULL && ai->GetManaPercent() < 30)
-    {
-
-        ai->UseItem(pItem);
-        return;
-    }
-
-    // hp check
-    if (m_bot->getStandState() != UNIT_STAND_STATE_STAND)
-        m_bot->SetStandState(UNIT_STAND_STATE_STAND);
-
-    pItem = ai->FindFood();
-
-    if (pItem != NULL && ai->GetHealthPercent() < 30)
-    {
-
-        ai->UseItem(pItem);
-        return;
-    }
-    else if (pItem == NULL && fItem != NULL && !m_bot->HasAura(RECENTLY_BANDAGED, EFFECT_INDEX_0) && ai->GetHealthPercent() < 70)
-    {
-
-        ai->UseItem(fItem);
-        return;
-    }
-    else if (pItem == NULL && fItem == NULL && m_bot->getRace() == RACE_DRAENEI && !m_bot->HasAura(GIFT_OF_THE_NAARU, EFFECT_INDEX_0) && ai->GetHealthPercent() < 70)
-    {
-
-        ai->CastSpell(GIFT_OF_THE_NAARU, m_bot);
-        return;
-    }
 
     // check for pet
     if (PET_SUMMON > 0 && !m_petSummonFailed && HasPet(m_bot))

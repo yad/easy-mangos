@@ -9131,8 +9131,9 @@ void SpellAuraHolder::_AddSpellAuraHolder()
         //*****************************************************
 
         // Sitdown on apply aura req seated
-        if (m_spellProto->AuraInterruptFlags & AURA_INTERRUPT_FLAG_NOT_SEATED && !m_target->IsSitState())
-            m_target->SetStandState(UNIT_STAND_STATE_SIT);
+        if (m_target->GetTypeId() != TYPEID_PLAYER || (m_target->GetTypeId() == TYPEID_PLAYER && !((Player*)m_target)->IsBot()))
+            if (m_spellProto->AuraInterruptFlags & AURA_INTERRUPT_FLAG_NOT_SEATED && !m_target->IsSitState())
+                m_target->SetStandState(UNIT_STAND_STATE_SIT);
 
         // register aura diminishing on apply
         if (getDiminishGroup() != DIMINISHING_NONE )

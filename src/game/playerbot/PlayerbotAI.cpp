@@ -1276,6 +1276,8 @@ bool PlayerbotAI::GetCombatTarget(Unit* forcedTarget)
         m_lootCreature.clear();
         m_lootCurrent = 0;
         m_targetCombat = NULL;
+        if (m_bot->HasAura(25990))
+            m_bot->RemoveAurasDueToSpell(25990);
     }
 
     if (forcedTarget)
@@ -2317,6 +2319,7 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
             if (m_bot->getClass() == CLASS_HUNTER)
                    m_bot->HandleEmote(1);
 
+            CastAura(25990, m_bot); // Regen hp + mana : Spell Aura Gruccu Food
             DoLoot();
         }
 
