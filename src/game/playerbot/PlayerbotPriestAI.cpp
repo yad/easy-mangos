@@ -126,25 +126,24 @@ void PlayerbotPriestAI::DoNextCombatManeuver(Unit *pTarget)
 
     Player *m_bot = GetPlayerBot();
     Group *m_group = m_bot->GetGroup();
-
+    GroupReference *ref = (m_group) ? m_group->GetFirstMember() : NULL;
+	
     ai->SetInFront(pTarget);
 
     switch (m_bot->getRole())
     {
     case PriestHoly:
-        if (m_group)
+        do
         {
-            for (GroupReference *ref = m_group->GetFirstMember(); ref; ref = ref->next())
-            {
-                Player *m_groupMember = ref->getSource();
-                if (!m_groupMember || !m_groupMember->isAlive())
-                    continue;
+            Player *g_member = (ref) ? ref->getSource() : m_bot;
 
-                uint32 memberHP = m_groupMember->GetHealth() * 100 / m_groupMember->GetMaxHealth();
-                if (memberHP < 80 && HealTarget(m_groupMember))
-                    return;           
-            }
-        }
+            if (!g_member->isAlive())
+                continue;
+
+            if ((g_member->GetHealth() * 100 / g_member->GetMaxHealth()) < 80 && HealTarget(g_member))
+                return;
+
+        }while(ref = (ref) ? ref->next() : NULL);
         break;
 
     case PriestDiscipline:
@@ -157,27 +156,14 @@ void PlayerbotPriestAI::DoNextCombatManeuver(Unit *pTarget)
         uint32 numberTargetsWithin5f = 0;
         
         // Count number of targets
-        if (m_group)
+        do
         {
-            for (GroupReference *ref = m_group->GetFirstMember(); ref; ref = ref->next())
-            {
-                Player *g_member = ref->getSource();
-                for (Unit::AttackerSet::const_iterator itr = g_member->getAttackers().begin(); itr != g_member->getAttackers().end(); itr++)
-                {
-                    if ((*itr)->IsWithinDist(m_bot, 36.0f))
-                    {
-                        numberTargets++;
-                        if ((*itr)->GetHealthPercent() <= 35 && ai->CastSpell(SHADOW_WORD_DEATH, (*itr)))
-                            return;
-                    }
-                    if ((*itr)->IsWithinDist(m_bot, 5.0f))
-                        numberTargetsWithin5f++;
-                }
-            }
-        }
-        else
-        {
-            for (Unit::AttackerSet::const_iterator itr = m_bot->getAttackers().begin(); itr != m_bot->getAttackers().end(); itr++)
+            Player *g_member = (ref) ? ref->getSource() : m_bot;
+
+            if (!g_member->isAlive())
+                continue;
+
+            for (Unit::AttackerSet::const_iterator itr = g_member->getAttackers().begin(); itr != g_member->getAttackers().end(); itr++)
             {
                 if ((*itr)->IsWithinDist(m_bot, 36.0f))
                 {
@@ -188,7 +174,8 @@ void PlayerbotPriestAI::DoNextCombatManeuver(Unit *pTarget)
                 if ((*itr)->IsWithinDist(m_bot, 5.0f))
                     numberTargetsWithin5f++;
             }
-        }
+
+        }while(ref = (ref) ? ref->next() : NULL);
 
         // Spells with Area of Effect
         if (numberTargetsWithin5f >= 5 && !MIND_SEAR)
@@ -215,20 +202,19 @@ void PlayerbotPriestAI::DoNextCombatManeuver(Unit *pTarget)
             // Cycle for others targets
             if (SpellAllTargets[i] == '1' && numberTargets > 1)
             {
-                if (m_group)
+                ref = (m_group) ? m_group->GetFirstMember() : NULL;
+                do
                 {
-                    for (GroupReference *ref = m_group->GetFirstMember(); ref; ref = ref->next())
-                    {
-                        Player *g_member = ref->getSource();
-                        for (Unit::AttackerSet::const_iterator itr = g_member->getAttackers().begin(); itr != g_member->getAttackers().end(); itr++)
-                            if (!(*itr)->HasAuraFromUnit(SpellShadow[i], m_bot) && ai->CastSpell(SpellShadow[i], (*itr)))
-                                return;
-                    }
-                }
-                else
-                    for (Unit::AttackerSet::const_iterator itr = m_bot->getAttackers().begin(); itr != m_bot->getAttackers().end(); itr++)
-                        if (!(*itr)->HasAuraFromUnit(SpellShadow[i], m_bot) && ai->CastSpell(SpellShadow[i], (*itr)))
-                            return;
+                    Player *g_member = (ref) ? ref->getSource() : m_bot;
+
+                    if (!g_member->isAlive())
+                        continue;
+
+                    for (Unit::AttackerSet::const_iterator itr = g_member->getAttackers().begin(); itr != g_member->getAttackers().end(); itr++)
+                         if (!(*itr)->HasAuraFromUnit(SpellShadow[i], m_bot) && ai->CastSpell(SpellShadow[i], (*itr)))
+                             return;
+
+                }while(ref = (ref) ? ref->next() : NULL);
             }
         }
 

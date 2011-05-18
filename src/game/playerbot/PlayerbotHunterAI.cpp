@@ -238,20 +238,20 @@ void PlayerbotHunterAI::DoNextCombatManeuver(Unit *pTarget)
         RangedSpellEnabled = "111101F";
 
     // Count number of targets
-    if (Group* gr = m_bot->GetGroup())
+    Group* m_group = m_bot->GetGroup();
+    GroupReference *ref = (m_group) ? m_group->GetFirstMember() : NULL;
+    do
     {
-        for (GroupReference *ref = gr->GetFirstMember(); ref; ref = ref->next())
-        {
-            Player *g_member = ref->getSource();
-            for (Unit::AttackerSet::const_iterator itr = g_member->getAttackers().begin(); itr != g_member->getAttackers().end(); itr++)
-                if ((*itr)->IsWithinDist(m_bot, 36.0f))
-                    numberTargets++;
-        }
-    }
-    else
-        for (Unit::AttackerSet::const_iterator itr = m_bot->getAttackers().begin(); itr!= m_bot->getAttackers().end(); itr++)
+        Player *g_member = (ref) ? ref->getSource() : m_bot;
+
+        if (!g_member->isAlive())
+            continue;
+
+        for (Unit::AttackerSet::const_iterator itr = g_member->getAttackers().begin(); itr != g_member->getAttackers().end(); itr++)
             if ((*itr)->IsWithinDist(m_bot, 36.0f))
                 numberTargets++;
+
+    }while(ref = (ref) ? ref->next() : NULL);
 
     // Spells with Area of Effect
     if (m_rangedCombat && numberTargets >= 3 && ai->CastSpell(MULTI_SHOT, pTarget))
