@@ -771,7 +771,7 @@ void BattleGround::EndBattleGround(Team winner)
                     }
                     std::ostringstream sql_query;
                     //                                                        gameid,              teamid,                     guid,                    changeType,             ratingChange,               teamRating,                  damageDone,                          deaths,                          healingDone,                           damageTaken,                           healingTaken,                         killingBlows,                      mapId,                 start,                   end
-                    sql_query << "INSERT INTO armory_game_chart VALUES ('" << gameID << "', '" << resultTeamID << "', '" << plr->GetGUID() << "', '" << changeType << "', '" << ratingChange  << "', '" << resultRating << "', '" << itr->second->DamageDone << "', '" << itr->second->Deaths << "', '" << itr->second->HealingDone << "', '" << itr->second->DamageTaken << "', '" << itr->second->HealingTaken << "', '" << itr->second->KillingBlows << "', '" << m_MapId << "', '" << m_StartTime << "', '" << m_EndTime << "')";
+                    sql_query << "INSERT INTO armory_game_chart VALUES ('" << gameID << "', '" << resultTeamID << "', '" << plr->GetObjectGuid().GetCounter()<< "', '" << changeType << "', '" << ratingChange  << "', '" << resultRating << "', '" << itr->second->DamageDone << "', '" << itr->second->Deaths << "', '" << itr->second->HealingDone << "', '" << itr->second->DamageTaken << "', '" << itr->second->HealingTaken << "', '" << itr->second->KillingBlows << "', '" << m_MapId << "', '" << m_StartTime << "', '" << m_EndTime << "')";
                     CharacterDatabase.Execute(sql_query.str().c_str());
                 }
                 /** World of Warcraft Armory **/
@@ -1689,7 +1689,7 @@ void BattleGround::SpawnBGCreature(ObjectGuid guid, uint32 respawntime)
 
 bool BattleGround::DelObject(uint32 type)
 {
-    if (m_BgObjects[type].IsEmpty())
+    if (!m_BgObjects[type])
         return true;
 
     GameObject *obj = GetBgMap()->GetGameObject(m_BgObjects[type]);

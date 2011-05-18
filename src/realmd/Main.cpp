@@ -54,6 +54,8 @@ char serviceDescription[] = "Massive Network Game Object Server";
  *  2 - paused
  */
 int m_ServiceStatus = -1;
+#else
+#include "PosixDaemon.h"
 #endif
 
 bool StartDB();
@@ -75,6 +77,10 @@ void usage(const char *prog)
         "    -s run                   run as service\n\r"
         "    -s install               install service\n\r"
         "    -s uninstall             uninstall service\n\r"
+        #else
+        "    Running as daemon functions:\n\r"
+        "    -s run                   run as daemon\n\r"
+        "    -s stop                  stop daemon\n\r"
         #endif
         ,prog);
 }
@@ -85,16 +91,22 @@ extern int main(int argc, char **argv)
     ///- Command line parsing
     char const* cfg_file = _REALMD_CONFIG;
 
-#ifdef WIN32
     char const *options = ":c:s:";
-#else
-    char const *options = ":c:";
-#endif
 
     ACE_Get_Opt cmd_opts(argc, argv, options);
     cmd_opts.long_option("version", 'v');
 
+#ifndef WIN32                                               // need call before options for posix daemon
+    if (!sConfig.SetSource(cfg_file))
+    {
+        sLog.outError("Could not find configuration file %s.", cfg_file);
+        Log::WaitBeforeContinueIfNeed();
+        return 1;
+    }
+#endif
+
     int option;
+
     while ((option = cmd_opts()) != EOF)
     {
         switch (option)
@@ -105,9 +117,10 @@ extern int main(int argc, char **argv)
             case 'v':
                 printf("%s\n", _FULLVERSION(REVISION_DATE,REVISION_TIME,REVISION_NR,REVISION_ID));
                 return 0;
-#ifdef WIN32
+
             case 's':
             {
+#ifdef WIN32
                 const char *mode = cmd_opts.opt_arg();
 
                 if (!strcmp(mode, "install"))
@@ -131,9 +144,22 @@ extern int main(int argc, char **argv)
                     Log::WaitBeforeContinueIfNeed();
                     return 1;
                 }
+#else
+                const char *mode = cmd_opts.opt_arg();
+                if (!strcmp(mode, "run"))
+                    startDaemon();
+                else if (!strcmp(mode, "stop"))
+                    stopDaemon();
+                else
+                {
+                    sLog.outError("Runtime-Error: -%c unsupported argument %s", cmd_opts.opt_opt(), mode);
+                    usage(argv[0]);
+                    Log::WaitBeforeContinueIfNeed();
+                    return 1;
+                }
+#endif
                 break;
             }
-#endif
             case ':':
                 sLog.outError("Runtime-Error: -%c option requires an input argument", cmd_opts.opt_opt());
                 usage(argv[0]);
@@ -147,12 +173,15 @@ extern int main(int argc, char **argv)
         }
     }
 
+#ifdef WIN32                                                // need call after options for windows service
     if (!sConfig.SetSource(cfg_file))
     {
         sLog.outError("Could not find configuration file %s.", cfg_file);
         Log::WaitBeforeContinueIfNeed();
         return 1;
     }
+#endif
+
     sLog.Initialize();
 
     sLog.outString( "%s [realm-daemon]", _FULLVERSION(REVISION_DATE,REVISION_TIME,REVISION_NR,REVISION_ID) );
@@ -294,6 +323,9 @@ extern int main(int argc, char **argv)
     uint32 numLoops = (sConfig.GetIntDefault( "MaxPingTime", 30 ) * (MINUTE * 1000000 / 100000));
     uint32 loopCounter = 0;
 
+    #ifndef WIN32
+    detachDaemon();
+    #endif
     ///- Wait for termination signal
     while (!stopEvent)
     {

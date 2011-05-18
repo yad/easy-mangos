@@ -412,7 +412,7 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
             uint32 spellId;
 
             ObjectGuid casterGuid = p.readPackGUID();
-            if (casterGuid != m_bot->GetGUID())
+            if (casterGuid != m_bot->GetObjectGuid())
                 return;
 
             p >> castCount >> spellId;
@@ -424,23 +424,27 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
             return;
         }
 
-        // handle flying acknowledgement
+        case SMSG_FORCE_RUN_SPEED_CHANGE:
+        {
+			CheckMount();
+			return;
+		}
+
         case SMSG_MOVE_SET_CAN_FLY:
         {
             WorldPacket p(packet);
             ObjectGuid guid = p.readPackGUID();
-            if (guid != m_bot->GetGUID())
+            if (guid != m_bot->GetObjectGuid())
                 return;
             m_bot->m_movementInfo.AddMovementFlag(MOVEFLAG_FLYING);
             return;
         }
 
-        // handle dismount flying acknowledgement
         case SMSG_MOVE_UNSET_CAN_FLY:
         {
             WorldPacket p(packet);
             ObjectGuid guid = p.readPackGUID();
-            if (guid != m_bot->GetGUID())
+            if (guid != m_bot->GetObjectGuid())
                 return;
             m_bot->m_movementInfo.RemoveMovementFlag(MOVEFLAG_FLYING);
             return;
@@ -459,11 +463,11 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
                 if (newLeader)
                 {
                     SetLeader(newLeader);
-                    m_bot->GetGroup()->ChangeLeader(newLeader->GetGUID());
+                    m_bot->GetGroup()->ChangeLeader(newLeader->GetObjectGuid());
                 }
-                else if (m_bot->GetGroup()->IsMember(GetLeader()->GetGUID()))
+                else if (m_bot->GetGroup()->IsMember(GetLeader()->GetObjectGuid()))
                 {
-                    m_bot->GetGroup()->ChangeLeader(newLeader->GetGUID());
+                    m_bot->GetGroup()->ChangeLeader(newLeader->GetObjectGuid());
                 }
             }
             return;
@@ -652,7 +656,7 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
             WorldPacket p(packet);
             ObjectGuid castItemGuid = p.readPackGUID();
             ObjectGuid casterGuid = p.readPackGUID();
-            if (casterGuid != m_bot->GetGUID())
+            if (casterGuid != m_bot->GetObjectGuid())
                 return;
 
             uint32 spellId;
@@ -1458,7 +1462,7 @@ void PlayerbotAI::DoNextCombatManeuver()
                 if (m_bot->getStandState() != UNIT_STAND_STATE_STAND)
                     m_bot->SetStandState(UNIT_STAND_STATE_STAND);
                 m_bot->Attack(m_targetCombat, true);
-                m_lootCreature.push_back(m_targetCombat->GetGUID());
+                m_lootCreature.push_back(m_targetCombat->GetObjectGuid());
                 GetClassAI()->DoFirstCombatManeuver(m_targetCombat);
             }
             else
@@ -1496,7 +1500,7 @@ void PlayerbotAI::DoNextCombatManeuver()
                 if (m_bot->getStandState() != UNIT_STAND_STATE_STAND)
                     m_bot->SetStandState(UNIT_STAND_STATE_STAND);
                 m_bot->Attack(m_targetCombat, true);
-                m_lootCreature.push_back(m_targetCombat->GetGUID());
+                m_lootCreature.push_back(m_targetCombat->GetObjectGuid());
                 GetClassAI()->DoFirstCombatManeuver(m_targetCombat);
             }
             else
@@ -1729,7 +1733,7 @@ void PlayerbotAI::TurnInQuests(WorldObject *questgiver)
         m_bot->SetSelectionGuid(giverGUID);
 
         // auto complete every completed quest this NPC has
-        m_bot->PrepareQuestMenu(giverGUID.GetRawValue());
+        m_bot->PrepareQuestMenu(giverGUID);
         QuestMenu& questMenu = m_bot->PlayerTalkClass->GetQuestMenu();
         for (uint32 iI = 0; iI < questMenu.MenuItemCount(); ++iI)
         {
@@ -3299,7 +3303,7 @@ void PlayerbotAI::HandleTeleportAck()
     if (m_bot->IsBeingTeleportedNear())
     {
         WorldPacket p = WorldPacket(MSG_MOVE_TELEPORT_ACK, 8 + 4 + 4);
-        p.appendPackGUID(m_bot->GetGUID());
+        p.appendPackGUID(m_bot->GetObjectGuid());
         p << (uint32) 0; // supposed to be flags? not used currently
         p << (uint32) time(0); // time - not currently used
         m_bot->GetSession()->HandleMoveTeleportAckOpcode(p);

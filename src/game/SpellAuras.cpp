@@ -1009,7 +1009,7 @@ void Aura::ReapplyAffectedPassiveAuras( Unit* target, bool owner_mode )
 
         for(std::map<uint32, ObjectGuid>::const_iterator map_itr = affectedSelf.begin(); map_itr != affectedSelf.end(); ++map_itr)
         {
-            Item* item = pTarget && !map_itr->second.IsEmpty() ? pTarget->GetItemByGuid(map_itr->second) : NULL;
+            Item* item = pTarget && map_itr->second ? pTarget->GetItemByGuid(map_itr->second) : NULL;
             target->RemoveAurasDueToSpell(map_itr->first);
             target->CastSpell(target, map_itr->first, true, item);
         }
@@ -1119,7 +1119,7 @@ void Aura::TriggerSpell()
     ObjectGuid casterGUID = GetCasterGuid();
     Unit* triggerTarget = GetTriggerTarget();
 
-    if (casterGUID.IsEmpty() || !triggerTarget)
+    if (!casterGUID || !triggerTarget)
         return;
 
     // generic casting code with custom spells and target/caster customs
@@ -1990,7 +1990,7 @@ void Aura::TriggerSpellWithValue()
     ObjectGuid casterGuid = GetCasterGuid();
     Unit* target = GetTriggerTarget();
 
-    if (casterGuid.IsEmpty() || !target)
+    if (!casterGuid || !target)
         return;
 
     // generic casting code with custom spells and target/caster customs
@@ -2501,6 +2501,17 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
             case 12479:                                     // Hex of Jammal'an
                 target->CastSpell(target, 12480, true, NULL, this);
                 return;
+            case 12774:                                     // (DND) Belnistrasz Idol Shutdown Visual
+            {
+                if (m_removeMode == AURA_REMOVE_BY_DEATH)
+                    return;
+
+                // Idom Rool Camera Shake <- wtf, don't drink while making spellnames?
+                if (Unit* caster = GetCaster())
+                    caster->CastSpell(caster, 12816, true);
+
+                return;
+            }
             case 28169:                                     // Mutating Injection
             {
                 // Mutagen Explosion
@@ -7140,7 +7151,7 @@ void Aura::HandleAuraRetainComboPoints(bool apply, bool Real)
 
     // combo points was added in SPELL_EFFECT_ADD_COMBO_POINTS handler
     // remove only if aura expire by time (in case combo points amount change aura removed without combo points lost)
-    if (!apply && m_removeMode == AURA_REMOVE_BY_EXPIRE && !target->GetComboTargetGuid().IsEmpty())
+    if (!apply && m_removeMode == AURA_REMOVE_BY_EXPIRE && target->GetComboTargetGuid())
         if (Unit* unit = ObjectAccessor::GetUnit(*GetTarget(),target->GetComboTargetGuid()))
             target->AddComboPoints(unit, -m_modifier.m_amount);
 }
@@ -7340,7 +7351,7 @@ void Aura::HandleSchoolAbsorb(bool apply, bool Real)
                 // Send activate cooldown timer (possible 0) at client side
                 WorldPacket data(SMSG_MODIFY_COOLDOWN, (4+8+4));
                 data << spellProto->Id;
-                data << plr->GetGUID();
+                data << plr->GetObjectGuid();
                 data << end_time*IN_MILLISECONDS;
                 plr->SendDirectMessage(&data);
             }
@@ -9089,7 +9100,7 @@ void SpellAuraHolder::_AddSpellAuraHolder()
     {
         if (m_spellProto->Attributes & SPELL_ATTR_DISABLED_WHILE_ACTIVE)
         {
-            Item* castItem = !m_castItemGuid.IsEmpty() ? ((Player*)caster)->GetItemByGuid(m_castItemGuid) : NULL;
+            Item* castItem = m_castItemGuid ? ((Player*)caster)->GetItemByGuid(m_castItemGuid) : NULL;
             ((Player*)caster)->AddSpellAndCategoryCooldowns(m_spellProto,castItem ? castItem->GetEntry() : 0, NULL,true);
         }
     }
@@ -9409,7 +9420,7 @@ Unit* SpellAuraHolder::GetCaster() const
 bool SpellAuraHolder::IsWeaponBuffCoexistableWith(SpellAuraHolder const* ref) const
 {
     // only item casted spells
-    if (GetCastItemGuid().IsEmpty())
+    if (!GetCastItemGuid())
         return false;
 
     // Exclude Debuffs
@@ -9438,7 +9449,7 @@ bool SpellAuraHolder::IsWeaponBuffCoexistableWith(SpellAuraHolder const* ref) co
         return false;
 
     // form different weapons
-    return !ref->GetCastItemGuid().IsEmpty() && ref->GetCastItemGuid() != GetCastItemGuid();
+    return ref->GetCastItemGuid() && ref->GetCastItemGuid() != GetCastItemGuid();
 }
 
 bool SpellAuraHolder::IsNeedVisibleSlot(Unit const* caster) const
@@ -9627,7 +9638,7 @@ void SpellAuraHolder::HandleSpellSpecificBoosts(bool apply)
                 // Glyph of Frostbolt
                 if (Unit * caster = GetCaster())
                     if (caster->HasAura(56370))
-                        m_target->RemoveAurasByCasterSpell(GetId(), caster->GetGUID());
+                        m_target->RemoveAurasByCasterSpell(GetId(), caster->GetObjectGuid());
             }
 
             switch(GetId())
@@ -10503,7 +10514,7 @@ void Aura::HandleAuraSetVehicle(bool apply, bool real)
             target->RemoveVehicleKit();
 
     WorldPacket data(SMSG_SET_VEHICLE_REC_ID, target->GetPackGUID().size()+4);
-    data.appendPackGUID(target->GetGUID());
+    data.appendPackGUID(target->GetObjectGuid());
     data << uint32(apply ? vehicleId : 0);
     target->SendMessageToSet(&data, true);
 
