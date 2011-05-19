@@ -3445,15 +3445,16 @@ void Spell::cast(bool skipCheck)
                 if (m_caster->HasAura(58375))               // Glyph of Blocking
                     AddTriggeredSpell(58374);               // Glyph of Blocking
             }
-            // Shattering Throw
-            else if (m_spellInfo->Id == 64382)
-                AddTriggeredSpell(64380);                     // Shattering Throw
             // Bloodsurge (triggered), Sudden Death (triggered)
             else if (m_spellInfo->Id == 46916 || m_spellInfo->Id == 52437)
+            {
                 // Item - Warrior T10 Melee 4P Bonus
                 if (Aura *aur = m_caster->GetAura(70847, EFFECT_INDEX_0))
+                {
                     if (roll_chance_i(aur->GetModifier()->m_amount))
                         AddTriggeredSpell(70849);           // Extra Charge!
+                }
+            }
             break;
         }
         case SPELLFAMILY_PRIEST:
@@ -3507,8 +3508,11 @@ void Spell::cast(bool skipCheck)
             break;
         case SPELLFAMILY_HUNTER:
         {
+            // Deterrence
+            if (m_spellInfo->Id == 19263)
+                AddPrecastSpell(67801);
             // Kill Command
-            if (m_spellInfo->Id == 34026)
+            else if (m_spellInfo->Id == 34026)
             {
                 if (m_caster->HasAura(37483))               // Improved Kill Command - Item set bonus
                     m_caster->CastSpell(m_caster, 37482, true);// Exploited Weakness

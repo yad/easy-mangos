@@ -90,7 +90,7 @@ extern int main(int argc, char **argv)
 {
     ///- Command line parsing
     char const* cfg_file = _REALMD_CONFIG;
-    bool hasConfig = false;
+
     char const *options = ":c:s:";
 
     ACE_Get_Opt cmd_opts(argc, argv, options);
@@ -155,7 +155,7 @@ extern int main(int argc, char **argv)
             break;
         case 's':
             stopDaemon();
-            break
+            break;
     }
 #endif
 

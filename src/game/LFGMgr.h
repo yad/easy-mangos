@@ -127,8 +127,8 @@ struct LFGProposal
     LFGQueueSet declinerGuids;                               // Decliners in this proposal
 
     // helpers
-    Group* GetGroup() { return m_group; };
-    void SetGroup(Group* group) { m_group = group; };
+    Group* GetGroup();
+    void SetGroup(Group* group);
     void AddMember(ObjectGuid guid);
     void RemoveMember(ObjectGuid guid);
 
@@ -147,7 +147,7 @@ struct LFGProposal
     private:
     LFGDungeonEntry const* m_dungeon;                        // Dungeon
     LFGProposalState m_state;                                // State of the proposal
-    Group* m_group;                                          // Proposal group (NULL if not created)
+    ObjectGuid m_groupGuid;                                  // Proposal group (empty if not created)
     time_t m_cancelTime;                                     // Time when we will cancel this proposal
 };
 
@@ -166,7 +166,8 @@ class LFGMgr
         void Update(uint32 diff);
 
         void TryCompleteGroups(LFGType type);
-        bool TryCompleteGroup(Group* group, Player* player);
+        bool TryAddMembersToGroup(Group* group, LFGQueueSet* players);
+        void CompleteGroup(Group* group, LFGQueueSet* players);
         bool TryCreateGroup(LFGType type);
 
         // Join system
@@ -229,7 +230,7 @@ class LFGMgr
         bool CheckRoles(Group* group, Player* player = NULL);
         bool CheckRoles(LFGRolesMap* roleMap);
         bool RoleChanged(Player* player, uint8 roles);
-        void SetGroupRoles(Group* group, Player* player = NULL);
+        void SetGroupRoles(Group* group, LFGQueueSet* = NULL);
         void SetRoles(LFGRolesMap* roleMap);
 
         // Social check system

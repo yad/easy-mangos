@@ -80,7 +80,7 @@ extern int main(int argc, char **argv)
 {
     ///- Command line parsing
     char const* cfg_file = _MANGOSD_CONFIG;
-    bool hasConfig = false;
+
 
     char const *options = ":c:s:";
 
@@ -145,7 +145,7 @@ extern int main(int argc, char **argv)
             break;
         case 's':
             stopDaemon();
-            break
+            break;
     }
 #endif
 
