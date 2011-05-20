@@ -284,6 +284,21 @@ class MANGOS_DLL_SPEC Group
 
             return ObjectGuid();
         }
+
+        Unit* GetTankTarget() { return tankTarget; }
+        Unit* GetAssistTarget() { return assistTarget; }
+
+        void SetTankTarget(Unit* target) { tankTarget = target; }
+        void SetAssistTarget(Unit* target) { assistTarget = target; }
+
+        bool IsTank(ObjectGuid guid) const
+        {
+            member_citerator mslot = _getMemberCSlot(guid);
+            if (mslot==m_memberSlots.end())
+                return false;
+
+            return mslot->flags & GROUP_MAIN_TANK;
+        }
         bool IsAssistant(ObjectGuid guid) const
         {
             member_citerator mslot = _getMemberCSlot(guid);
@@ -460,5 +475,7 @@ class MANGOS_DLL_SPEC Group
         BoundInstancesMap   m_boundInstances[MAX_DIFFICULTY];
         uint8*              m_subGroupsCounts;
         LFGGroupState*      m_LFGState;
+        Unit*               tankTarget;
+        Unit*               assistTarget;
 };
 #endif

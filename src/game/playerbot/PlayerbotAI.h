@@ -234,6 +234,8 @@ public:
 
     Unit* GetFollowTarget() { return m_followTarget; }
 
+    void Pull();
+
 private:
     // ****** Closed Actions ********************************
     // it is safe to keep these back reference pointers because m_bot

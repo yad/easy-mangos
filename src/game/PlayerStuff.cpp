@@ -2597,6 +2597,155 @@ bool ChatHandler::HandleGMStartUpCommand(char* args)
     return true;
 }
 
+bool ChatHandler::HandleBotTank(char* args)
+{
+    Player* pl = m_session->GetPlayer();
+    Unit* target = getSelectedUnit();
+
+    if (!pl->GetSelectionGuid().IsEmpty() && target)
+    {
+        if (target->GetTypeId() == TYPEID_UNIT)
+        {
+            SendSysMessage(1);
+            SetSentErrorMessage(true);
+            return false;
+        }
+
+        Player *p_target = (Player *)target;
+        Group *p_group = p_target->GetGroup();
+
+        if (pl->GetGroup() != p_group)
+        {
+            PSendSysMessage("Vous devez etre en groupe avec un bot");
+            SetSentErrorMessage(true);
+            return false;
+        }
+
+        if (p_target->IsBot())
+            p_group->SetGroupUniqueFlag(p_target->GetObjectGuid(), GROUP_ASSIGN_MAINTANK, 1);
+    }
+
+    return true;
+}
+
+bool ChatHandler::HandleBotAssist(char* args)
+{
+    Player* pl = m_session->GetPlayer();
+    Unit* target = getSelectedUnit();
+
+    if (!pl->GetSelectionGuid().IsEmpty() && target)
+    {
+        if (target->GetTypeId() == TYPEID_UNIT)
+        {
+            SendSysMessage(1);
+            SetSentErrorMessage(true);
+            return false;
+        }
+
+        Player *p_target = (Player *)target;
+        Group *p_group = p_target->GetGroup();
+
+        if (pl->GetGroup() != p_group)
+        {
+            PSendSysMessage("Vous devez etre en groupe avec un bot");
+            SetSentErrorMessage(true);
+            return false;
+        }
+
+        if (p_target->IsBot())
+            p_group->SetGroupUniqueFlag(p_target->GetObjectGuid(), GROUP_ASSIGN_ASSISTANT, 1);
+    }
+
+    return true;
+}
+
+bool ChatHandler::HandleBotTankTarget(char* args)
+{
+    Player* pl = m_session->GetPlayer();
+    Unit* target = getSelectedUnit();
+
+    if (!pl->GetSelectionGuid().IsEmpty() && target)
+    {
+        if (target->GetTypeId() != TYPEID_UNIT)
+        {
+            SendSysMessage(2);
+            SetSentErrorMessage(true);
+            return false;
+        }
+
+        Group *gr = pl->GetGroup();
+
+        if (!gr)
+        {
+            PSendSysMessage("Vous devez etre en groupe avec un bot");
+            SetSentErrorMessage(true);
+            return false;
+        }
+
+        gr->SetTankTarget(target);
+    }
+
+    return true;
+}
+
+bool ChatHandler::HandleBotAssistTarget(char* args)
+{
+    Player* pl = m_session->GetPlayer();
+    Unit* target = getSelectedUnit();
+
+    if (!pl->GetSelectionGuid().IsEmpty() && target)
+    {
+        if (target->GetTypeId() != TYPEID_UNIT)
+        {
+            SendSysMessage(2);
+            SetSentErrorMessage(true);
+            return false;
+        }
+
+        Group *gr = pl->GetGroup();
+
+        if (!gr)
+        {
+            PSendSysMessage("Vous devez etre en groupe avec un bot");
+            SetSentErrorMessage(true);
+            return false;
+        }
+
+        gr->SetAssistTarget(target);
+    }
+
+    return true;
+}
+
+bool ChatHandler::HandleBotPull(char* args)
+{
+    Player* pl = m_session->GetPlayer();
+
+    if (!pl->GetGroup())
+    {
+        PSendSysMessage("Vous devez etre en groupe avec un bot");
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    Group *m_group = pl->GetGroup();
+    GroupReference *ref = (m_group) ? m_group->GetFirstMember() : NULL;
+
+    do
+    {
+        Player *g_member = (ref) ? ref->getSource() : pl;
+
+        if (!g_member->isAlive())
+            continue;
+            
+        if (g_member->IsBot())
+            g_member->GetPlayerbotAI()->Pull();
+
+    }while(ref = (ref) ? ref->next() : NULL);
+
+    return true;
+}
+
 bool ChatHandler::HandleBotInvite(char* args)
 {
     if (!*args)

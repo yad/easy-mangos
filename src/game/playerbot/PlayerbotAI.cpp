@@ -3367,3 +3367,24 @@ void PlayerbotAI::GetTaxi(ObjectGuid guid, BotTaxiNode& nodes)
     m_taxiMaster = guid;
     SetState(BOTSTATE_FLYING);
 }
+
+void PlayerbotAI::Pull()
+{
+    Group *gr = m_bot->GetGroup();
+
+    if (gr && !IsInCombat())
+    {
+        if (gr->IsAssistant(m_bot->GetObjectGuid()))
+            m_targetCombat = gr->GetAssistTarget();
+        else
+            m_targetCombat = gr->GetTankTarget();
+
+        m_followTarget = m_targetCombat;
+
+        GetCombatTarget(m_targetCombat);
+        SetInFront(m_targetCombat);
+        SetMovementTarget(m_targetCombat);
+        m_bot->Attack(m_targetCombat, true);
+        GetClassAI()->DoFirstCombatManeuver(m_targetCombat);
+    }
+}

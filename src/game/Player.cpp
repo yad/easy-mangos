@@ -16011,8 +16011,13 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder *holder )
     }
 
     uint32 difficulty = fields[38].GetUInt32();
+    
+    if (IsBot())
+        difficulty = DUNGEON_DIFFICULTY_HEROIC;
+
     if(difficulty >= MAX_DUNGEON_DIFFICULTY)
         difficulty = DUNGEON_DIFFICULTY_NORMAL;
+
     SetDungeonDifficulty(Difficulty(difficulty));           // may be changed in _LoadGroup
 
     _LoadGroup(holder->GetResult(PLAYER_LOGIN_QUERY_LOADGROUP));

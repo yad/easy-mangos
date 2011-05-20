@@ -143,6 +143,12 @@ class ChatHandler
         bool HandleBotInvite(char* args);
         bool HandleBotInviteArena(char* args);
 
+        bool HandleBotPull(char* args);
+        bool HandleBotTank(char* args);
+        bool HandleBotAssist(char* args);
+        bool HandleBotTankTarget(char* args);
+        bool HandleBotAssistTarget(char* args);
+
         bool HandleAuctionAllianceCommand(char* args);
         bool HandleAuctionGoblinCommand(char* args);
         bool HandleAuctionHordeCommand(char* args);

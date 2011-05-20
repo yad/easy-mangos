@@ -697,11 +697,24 @@ ChatCommand * ChatHandler::getCommandTable()
         { NULL,             0,                  false, NULL,                                           "", NULL }
     };
 
+    static ChatCommand botCommandTable[] =
+    {
+        { "invite",         SEC_PLAYER,         false, &ChatHandler::HandleBotInvite,                  "", NULL },
+        { "invitearena",    SEC_PLAYER,         false, &ChatHandler::HandleBotInviteArena,             "", NULL },
+        { "pull",           SEC_PLAYER,         false, &ChatHandler::HandleBotPull,                    "", NULL },
+        { "tank",           SEC_PLAYER,         false, &ChatHandler::HandleBotTank,                    "", NULL },
+        { "assist",         SEC_PLAYER,         false, &ChatHandler::HandleBotAssist,                  "", NULL },
+        { "tanktarget",     SEC_PLAYER,         false, &ChatHandler::HandleBotTankTarget,              "", NULL },
+        { "assisttarget",   SEC_PLAYER,         false, &ChatHandler::HandleBotAssistTarget,            "", NULL },
+        { NULL,             0,                  false, NULL,                                           "", NULL }
+    };
+
     static ChatCommand commandTable[] =
     {
         { "account",        SEC_PLAYER,         true,  NULL,                                           "", accountCommandTable  },
         { "achievement",    SEC_ADMINISTRATOR,  true,  NULL,                                           "", achievementCommandTable },
         { "auction",        SEC_ADMINISTRATOR,  false, NULL,                                           "", auctionCommandTable  },
+        { "bot",            SEC_PLAYER,         false, NULL,                                           "", botCommandTable      },
         { "cast",           SEC_ADMINISTRATOR,  false, NULL,                                           "", castCommandTable     },
         { "character",      SEC_GAMEMASTER,     true,  NULL,                                           "", characterCommandTable},
         { "debug",          SEC_MODERATOR,      true,  NULL,                                           "", debugCommandTable    },
@@ -784,8 +797,6 @@ ChatCommand * ChatHandler::getCommandTable()
         { "damage",         SEC_ADMINISTRATOR,  false, &ChatHandler::HandleDamageCommand,              "", NULL },
         { "combatstop",     SEC_GAMEMASTER,     false, &ChatHandler::HandleCombatStopCommand,          "", NULL },
         { "ahbot",          SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleAHBotOptionsCommand,        "", NULL },
-        { "botinvite",      SEC_PLAYER,         false, &ChatHandler::HandleBotInvite,                  "", NULL },
-        { "botinvitearena", SEC_PLAYER,         false, &ChatHandler::HandleBotInviteArena,             "", NULL },
         { "flusharenapoints",SEC_ADMINISTRATOR, false, &ChatHandler::HandleFlushArenaPointsCommand,    "", NULL },
         { "repairitems",    SEC_GAMEMASTER,     true,  &ChatHandler::HandleRepairitemsCommand,         "", NULL },
         { "stable",         SEC_ADMINISTRATOR,  false, &ChatHandler::HandleStableCommand,              "", NULL },
