@@ -198,39 +198,26 @@ void GameObject::Update(uint32 update_diff, uint32 diff)
 
             float radius = info->capturePoint.radius;
 
-            // search for new players in range
-            std::list<Unit*> units;
-            CellPair p(MaNGOS::ComputeCellPair(this->GetPositionX(), this->GetPositionY()));
-            Cell cell(p);
-            cell.SetNoCreate();
+            std::list<Player*> pointPlayers;
 
-            MaNGOS::AnyUnitInObjectRangeCheck u_check(this, radius);
-            MaNGOS::UnitListSearcher<MaNGOS::AnyUnitInObjectRangeCheck> searcher(units, u_check);
+            MaNGOS::AnyPlayerInObjectRangeCheck u_check(this, radius);
+            MaNGOS::PlayerListSearcher<MaNGOS::AnyPlayerInObjectRangeCheck > checker(pointPlayers, u_check);
+            Cell::VisitWorldObjects(this, checker, radius);
 
-            TypeContainerVisitor<MaNGOS::UnitListSearcher<MaNGOS::AnyUnitInObjectRangeCheck>, WorldTypeMapContainer > world_unit_searcher(searcher);
-            TypeContainerVisitor<MaNGOS::UnitListSearcher<MaNGOS::AnyUnitInObjectRangeCheck>, GridTypeMapContainer >  grid_unit_searcher(searcher);
-
-            cell.Visit(p, world_unit_searcher, *this->GetMap(), *this, radius);
-            cell.Visit(p, grid_unit_searcher, *this->GetMap(), *this, radius);
-
-            // insert the new players into the object guid set
-            for (std::list<Unit*>::iterator itr = units.begin(); itr != units.end(); ++itr)
+            for (std::list<Player*>::iterator itr = pointPlayers.begin(); itr != pointPlayers.end(); ++itr)
             {
-                if ((*itr)->GetTypeId() == TYPEID_PLAYER)
+                if (m_CapturePlayersSet.find((*itr)->GetObjectGuid()) != m_CapturePlayersSet.end())
+                    continue;
+                else
                 {
-                    if (m_CapturePlayersSet.find((*itr)->GetObjectGuid()) != m_CapturePlayersSet.end())
-                        continue;
-                    else
-                    {
-                        // each faction in its list
-                        if (((Player*)(*itr))->GetTeam() == ALLIANCE)
-                            m_AlliancePlayersSet.insert((*itr)->GetObjectGuid());
-                        else if (((Player*)(*itr))->GetTeam() == HORDE)
-                            m_HordePlayersSet.insert((*itr)->GetObjectGuid());
+                    // each faction in its list
+                    if (((Player*)(*itr))->GetTeam() == ALLIANCE)
+                        m_AlliancePlayersSet.insert((*itr)->GetObjectGuid());
+                    else if (((Player*)(*itr))->GetTeam() == HORDE)
+                        m_HordePlayersSet.insert((*itr)->GetObjectGuid());
 
-                        // also use a general list to make things easy for now
-                        m_CapturePlayersSet.insert((*itr)->GetObjectGuid());
-                    }
+                    // also use a general list to make things easy for now
+                    m_CapturePlayersSet.insert((*itr)->GetObjectGuid());
                 }
             }
 
@@ -1736,17 +1723,15 @@ void GameObject::Use(Unit* user)
             // sWorldStateMgr (system to store and keep track of states) so that we at all times
             // know the state of every part of the world.
 
-
             // Call every event, which is obviously wrong, but can help in further development. For
             // the time being script side can process events and determine which one to use. It
             // require of course that some object call go->Use()
-
             // win event can happen when a faction captures the tower with the slider at max range
 
             // win event ally
             // ally wins tower with max points
             if ((uint32)m_captureTicks == CAPTURE_SLIDER_ALLIANCE && m_captureState == CAPTURE_STATE_PROGRESS)
-             {
+            {
                 if (info->capturePoint.winEventID1)
                 {
                     if (!sScriptMgr.OnProcessEvent(info->capturePoint.winEventID1, user, this, true))
@@ -1784,7 +1769,7 @@ void GameObject::Use(Unit* user)
             }
             // contest event horde
             // alliance attack tower which is in progress or is won by horde
-            if (m_ownerFaction == HORDE && m_progressFaction == ALLIANCE && m_captureState != CAPTURE_STATE_CONTEST && (m_captureState == CAPTURE_STATE_PROGRESS || m_captureState == CAPTURE_STATE_WIN))
+            else if (m_ownerFaction == HORDE && m_progressFaction == ALLIANCE && m_captureState != CAPTURE_STATE_CONTEST && (m_captureState == CAPTURE_STATE_PROGRESS || m_captureState == CAPTURE_STATE_WIN))
             {
                 if (info->capturePoint.contestedEventID2)
                 {
@@ -1813,7 +1798,7 @@ void GameObject::Use(Unit* user)
             }
             // progress event horde
             // horde takes the tower from neutral to horde OR horde takes the tower from contested to horde
-            if (((uint32)m_captureTicks == CAPTURE_SLIDER_NEUTRAL - m_neutralPercent/2 - 1 && m_captureState == CAPTURE_STATE_NEUTRAL && m_progressFaction == HORDE) || (m_captureState == CAPTURE_STATE_CONTEST && player->GetTeam() == HORDE))
+            else if (((uint32)m_captureTicks == CAPTURE_SLIDER_NEUTRAL - m_neutralPercent/2 - 1 && m_captureState == CAPTURE_STATE_NEUTRAL && m_progressFaction == HORDE) || (m_captureState == CAPTURE_STATE_CONTEST && player->GetTeam() == HORDE))
             {
                 if (info->capturePoint.progressEventID2)
                 {
@@ -1853,7 +1838,7 @@ void GameObject::Use(Unit* user)
                     m_captureState = CAPTURE_STATE_NEUTRAL;
                     m_ownerFaction = TEAM_NONE;
                 }
-            }
+           }
 
             // Some has spell, need to process those further.
             return;
