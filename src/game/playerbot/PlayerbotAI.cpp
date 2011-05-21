@@ -499,7 +499,10 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
                 m_bot->GetSession()->HandleGroupAcceptOpcode(p);
                 MovementClear();
                 if (!inviter->IsBot())
+                {
+                    m_bot->SetDungeonDifficulty(inviter->GetDungeonDifficulty());
                     SetMovementTarget(inviter);
+                }
                 m_ignoreAIUpdatesUntilTime = time(0);
             }
             return;
