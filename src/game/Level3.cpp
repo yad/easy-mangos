@@ -31,6 +31,7 @@
 #include "Chat.h"
 #include "Log.h"
 #include "Guild.h"
+#include "GuildMgr.h"
 #include "ObjectAccessor.h"
 #include "MapManager.h"
 #include "MassMailMgr.h"
@@ -999,7 +1000,7 @@ bool ChatHandler::HandleReloadSpellScriptTargetCommand(char* /*args*/)
 
 bool ChatHandler::HandleReloadSpellTargetPositionCommand(char* /*args*/)
 {
-    sLog.outString( "Re-Loading Spell target coordinates..." );
+    sLog.outString( "Re-Loading spell target destination coordinates..." );
     sSpellMgr.LoadSpellTargetPositions();
     SendGlobalSysMessage("DB table `spell_target_position` (destination coordinates for spell targets) reloaded.");
     return true;
@@ -2533,8 +2534,8 @@ bool ChatHandler::HandleLearnAllMySpellsCommand(char* /*args*/)
         if((cinfo->npcflag & UNIT_NPC_FLAG_TRAINER) || (cinfo->npcflag & UNIT_NPC_FLAG_TRAINER_CLASS)
             || (cinfo->npcflag & UNIT_NPC_FLAG_TRAINER_PROFESSION))
         {
-            TrainerSpellData const* cSpells = sObjectMgr.GetNpcTrainerSpells(id);
-            TrainerSpellData const* tSpells = sObjectMgr.GetNpcTrainerTemplateSpells(id);
+            TrainerSpellData const* cSpells = sObjectMgr.GetNpcTrainerSpells(cinfo->Entry);
+            TrainerSpellData const* tSpells = sObjectMgr.GetNpcTrainerTemplateSpells(cinfo->trainerId);
 
             if (!cSpells && !tSpells)
                 continue;
@@ -4269,16 +4270,16 @@ bool ChatHandler::HandleGuildCreateCommand(char* args)
         return true;
     }
 
-    Guild *guild = new Guild;
-    if (!guild->Create (target,guildname))
+    Guild* guild = new Guild;
+    if (!guild->Create(target, guildname))
     {
         delete guild;
-        SendSysMessage (LANG_GUILD_NOT_CREATED);
-        SetSentErrorMessage (true);
+        SendSysMessage(LANG_GUILD_NOT_CREATED);
+        SetSentErrorMessage(true);
         return false;
     }
 
-    sObjectMgr.AddGuild (guild);
+    sGuildMgr.AddGuild(guild);
     return true;
 }
 
@@ -4297,7 +4298,7 @@ bool ChatHandler::HandleGuildInviteCommand(char *args)
         return false;
 
     std::string glName = guildStr;
-    Guild* targetGuild = sObjectMgr.GetGuildByName (glName);
+    Guild* targetGuild = sGuildMgr.GetGuildByName(glName);
     if (!targetGuild)
         return false;
 
@@ -4319,7 +4320,7 @@ bool ChatHandler::HandleGuildUninviteCommand(char *args)
     if (!glId)
         return false;
 
-    Guild* targetGuild = sObjectMgr.GetGuildById (glId);
+    Guild* targetGuild = sGuildMgr.GetGuildById(glId);
     if (!targetGuild)
         return false;
 
@@ -4341,7 +4342,7 @@ bool ChatHandler::HandleGuildRankCommand(char *args)
     if (!glId)
         return false;
 
-    Guild* targetGuild = sObjectMgr.GetGuildById (glId);
+    Guild* targetGuild = sGuildMgr.GetGuildById(glId);
     if (!targetGuild)
         return false;
 
@@ -4371,7 +4372,7 @@ bool ChatHandler::HandleGuildDeleteCommand(char* args)
 
     std::string gld = guildStr;
 
-    Guild* targetGuild = sObjectMgr.GetGuildByName (gld);
+    Guild* targetGuild = sGuildMgr.GetGuildByName(gld);
     if (!targetGuild)
         return false;
 
@@ -4386,8 +4387,7 @@ bool ChatHandler::HandleGetDistanceCommand(char* args)
 
     if (*args)
     {
-        ObjectGuid guid = ExtractGuidFromLink(&args);
-        if (!guid.IsEmpty())
+        if (ObjectGuid guid = ExtractGuidFromLink(&args))
             obj = (WorldObject*)m_session->GetPlayer()->GetObjectByTypeMask(guid, TYPEMASK_CREATURE_OR_GAMEOBJECT);
 
         if(!obj)
@@ -4425,20 +4425,20 @@ bool ChatHandler::HandleDieCommand(char* /*args*/)
 {
     Unit* target = getSelectedUnit();
 
-    if(!target || m_session->GetPlayer()->GetSelectionGuid().IsEmpty())
+    if (!target || !m_session->GetPlayer()->GetSelectionGuid())
     {
         SendSysMessage(LANG_SELECT_CHAR_OR_CREATURE);
         SetSentErrorMessage(true);
         return false;
     }
 
-    if(target->GetTypeId()==TYPEID_PLAYER)
+    if (target->GetTypeId()==TYPEID_PLAYER)
     {
         if (HasLowerSecurity((Player*)target, ObjectGuid(), false))
             return false;
     }
 
-    if( target->isAlive() )
+    if (target->isAlive())
     {
         m_session->GetPlayer()->DealDamage(target, target->GetHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, NULL, false);
     }
@@ -4453,7 +4453,7 @@ bool ChatHandler::HandleDamageCommand(char* args)
 
     Unit* target = getSelectedUnit();
 
-    if (!target || m_session->GetPlayer()->GetSelectionGuid().IsEmpty())
+    if (!target || !m_session->GetPlayer()->GetSelectionGuid())
     {
         SendSysMessage(LANG_SELECT_CHAR_OR_CREATURE);
         SetSentErrorMessage(true);
@@ -5614,7 +5614,7 @@ bool ChatHandler::HandleResetSpecsCommand(char* args)
             target->SendTalentsInfoData(true);
         return true;
     }
-    else if (!target_guid.IsEmpty())
+    else if (target_guid)
     {
         uint32 at_flags = AT_LOGIN_RESET_TALENTS | AT_LOGIN_RESET_PET_TALENTS;
         CharacterDatabase.PExecute("UPDATE characters SET at_login = at_login | '%u' WHERE guid = '%u'", at_flags, target_guid.GetCounter());
@@ -5711,7 +5711,7 @@ bool ChatHandler::HandleResetAllCommand(char* args)
 
     CharacterDatabase.PExecute("UPDATE characters SET at_login = at_login | '%u' WHERE (at_login & '%u') = '0'", atLogin, atLogin);
     HashMapHolder<Player>::MapType const& plist = sObjectAccessor.GetPlayers();
-    for(HashMapHolder<Player>::MapType::const_iterator itr = plist.begin(); itr != plist.end(); ++itr)
+    for (HashMapHolder<Player>::MapType::const_iterator itr = plist.begin(); itr != plist.end(); ++itr)
         itr->second->SetAtLoginFlag(atLogin);
 
     return true;
@@ -6581,7 +6581,7 @@ bool ChatHandler::HandleRespawnCommand(char* /*args*/)
 
     // accept only explicitly selected target (not implicitly self targeting case)
     Unit* target = getSelectedUnit();
-    if (!pl->GetSelectionGuid().IsEmpty() && target)
+    if (pl->GetSelectionGuid() && target)
     {
         if (target->GetTypeId() != TYPEID_UNIT)
         {
@@ -6731,8 +6731,8 @@ bool ChatHandler::HandlePDumpWriteCommand(char *args)
             return false;
         }
 
-        guid = sObjectMgr.GetPlayerGUIDByName(name);
-        if (guid.IsEmpty())
+        guid = sObjectMgr.GetPlayerGuidByName(name);
+        if (!guid)
         {
             PSendSysMessage(LANG_PLAYER_NOT_FOUND);
             SetSentErrorMessage(true);

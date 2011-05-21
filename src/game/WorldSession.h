@@ -327,8 +327,8 @@ class MANGOS_DLL_SPEC WorldSession
         AuctionHouseEntry const* GetCheckedAuctionHouseForAuctioneer(ObjectGuid guid);
 
         //Item Enchantment
-        void SendEnchantmentLog(uint64 Target, uint64 Caster,uint32 ItemID,uint32 SpellID);
-        void SendItemEnchantTimeUpdate(uint64 Playerguid, uint64 Itemguid,uint32 slot,uint32 Duration);
+        void SendEnchantmentLog(ObjectGuid targetGuid, ObjectGuid casterGuid, uint32 itemId, uint32 spellId);
+        void SendItemEnchantTimeUpdate(ObjectGuid playerGuid, ObjectGuid itemGuid, uint32 slot, uint32 duration);
 
         //Taxi
         void SendTaxiStatus(ObjectGuid guid);
@@ -815,8 +815,8 @@ class MANGOS_DLL_SPEC WorldSession
         void HandleCalendarGetNumPending(WorldPacket& recv_data);
 
         void HandleSpellClick(WorldPacket& recv_data);
-        void HandleMirrorImageDataRequest( WorldPacket & recv_data );
         void HandleUpdateProjectilePosition(WorldPacket & recv_data);
+        void HandleGetMirrorimageData(WorldPacket& recv_data);
         void HandleAlterAppearanceOpcode(WorldPacket& recv_data);
         void HandleRemoveGlyphOpcode(WorldPacket& recv_data);
         void HandleCharCustomizeOpcode(WorldPacket& recv_data);
@@ -848,9 +848,10 @@ class MANGOS_DLL_SPEC WorldSession
         void SendLfgUpdateSearch(bool update);
         void SendLfgJoinResult(LFGJoinResult checkResult, uint8 checkValue = 0, bool withLockMap = false);
         void SendLfgPlayerReward(LFGDungeonEntry const* dungeon, const LFGReward* reward, const Quest* qRew, bool isSecond = false);
-        void SendLfgQueueStatus(LFGQueueStatus* status);
+        void SendLfgQueueStatus(LFGDungeonEntry const* dungeon, LFGQueueStatus* status);
         void SendLfgRoleChosen(ObjectGuid guid, uint8 roles);
-        void SendLfgBootPlayer(LFGPlayerBoot* pBoot);
+        void SendLfgRoleCheckUpdate();
+        void SendLfgBootPlayer();
         void SendLfgUpdateProposal(LFGProposal* proposal);
         void SendLfgOfferContinue(LFGDungeonEntry const* dungeon);
         void SendLfgTeleportError(LFGTeleportError msg);

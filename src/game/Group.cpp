@@ -148,19 +148,31 @@ bool Group::Create(ObjectGuid guid, const char * name)
 
         Player::ConvertInstancesToGroup(leader, this, guid);
 
+        uint32 nbRealPlayers = 0;
+        GroupReference *ref = GetFirstMember();
+        while (ref)
+        {
+            if (!ref->getSource()->IsBot())
+                ++nbRealPlayers;
+            ref = ref->next();
+        }
+
         // store group in database
         CharacterDatabase.BeginTransaction();
         CharacterDatabase.PExecute("DELETE FROM groups WHERE groupId ='%u'", m_Guid.GetCounter());
         CharacterDatabase.PExecute("DELETE FROM group_member WHERE groupId ='%u'", m_Guid.GetCounter());
-        CharacterDatabase.PExecute("INSERT INTO groups (groupId,leaderGuid,lootMethod,looterGuid,lootThreshold,icon1,icon2,icon3,icon4,icon5,icon6,icon7,icon8,groupType,difficulty,raiddifficulty) "
-            "VALUES ('%u','%u','%u','%u','%u','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','%u','%u','%u')",
-            m_Guid.GetCounter(), m_leaderGuid.GetCounter(), uint32(m_lootMethod),
-            m_looterGuid.GetCounter(), uint32(m_lootThreshold),
-            m_targetIcons[0].GetRawValue(), m_targetIcons[1].GetRawValue(),
-            m_targetIcons[2].GetRawValue(), m_targetIcons[3].GetRawValue(),
-            m_targetIcons[4].GetRawValue(), m_targetIcons[5].GetRawValue(),
-            m_targetIcons[6].GetRawValue(), m_targetIcons[7].GetRawValue(),
-            uint8(m_groupType), uint32(m_dungeonDifficulty), uint32(m_raidDifficulty));
+        if (nbRealPlayers < 2)
+        {
+            CharacterDatabase.PExecute("INSERT INTO groups (groupId,leaderGuid,lootMethod,looterGuid,lootThreshold,icon1,icon2,icon3,icon4,icon5,icon6,icon7,icon8,groupType,difficulty,raiddifficulty) "
+                "VALUES ('%u','%u','%u','%u','%u','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','%u','%u','%u')",
+                m_Guid.GetCounter(), m_leaderGuid.GetCounter(), uint32(m_lootMethod),
+                m_looterGuid.GetCounter(), uint32(m_lootThreshold),
+                m_targetIcons[0].GetRawValue(), m_targetIcons[1].GetRawValue(),
+                m_targetIcons[2].GetRawValue(), m_targetIcons[3].GetRawValue(),
+                m_targetIcons[4].GetRawValue(), m_targetIcons[5].GetRawValue(),
+                m_targetIcons[6].GetRawValue(), m_targetIcons[7].GetRawValue(),
+                uint8(m_groupType), uint32(m_dungeonDifficulty), uint32(m_raidDifficulty));
+        }
     }
     else
         m_Guid =  ObjectGuid(HIGHGUID_GROUP,uint32(0));
@@ -317,6 +329,9 @@ bool Group::AddMember(ObjectGuid guid, const char* name)
 
     SendUpdate();
 
+    if (isLFDGroup())
+        sLFGMgr.AddMemberToLFDGroup(guid);
+
     if (Player *player = sObjectMgr.GetPlayer(guid))
     {
         if (!IsLeader(player->GetObjectGuid()) && !isBGGroup())
@@ -347,7 +362,6 @@ bool Group::AddMember(ObjectGuid guid, const char* name)
         if(isRaidGroup())
             player->UpdateForQuestWorldObjects();
 
-        sLFGMgr.Leave(player);
     }
 
     return true;
@@ -393,7 +407,8 @@ uint32 Group::RemoveMember(ObjectGuid guid, uint8 method)
 
             _homebindIfInstance(player);
 
-            sLFGMgr.Leave(player);
+            if (isLFDGroup())
+                sLFGMgr.RemoveMemberFromLFDGroup(this,guid);
         }
 
         if (leaderChanged)
@@ -457,6 +472,9 @@ void Group::Disband(bool hideDestroy)
 
         if(!player->GetSession())
             continue;
+
+        if (isLFDGroup())
+            sLFGMgr.RemoveMemberFromLFDGroup(this, player->GetObjectGuid());
 
         WorldPacket data;
         if(!hideDestroy)
@@ -767,7 +785,7 @@ void Group::StartLootRool(WorldObject* lootTarget, LootMethod method, Loot* loot
 
     LootItem const& lootItem =  loot->items[itemSlot];
 
-    Roll* r = new Roll(lootTarget->GetGUID(), method, lootItem);
+    Roll* r = new Roll(lootTarget->GetObjectGuid(), method, lootItem);
 
     //a vector is filled with only near party members
     for(GroupReference *itr = GetFirstMember(); itr != NULL; itr = itr->next())
@@ -780,8 +798,13 @@ void Group::StartLootRool(WorldObject* lootTarget, LootMethod method, Loot* loot
         {
             if (playerToRoll->IsWithinDist(lootTarget, sWorld.getConfig(CONFIG_FLOAT_GROUP_XP_DISTANCE), false))
             {
-                r->playerVote[playerToRoll->GetObjectGuid()] = ROLL_NOT_EMITED_YET;
-                ++r->totalPlayersRolling;
+                if (playerToRoll->IsBot())
+                    r->playerVote[playerToRoll->GetObjectGuid()] = ROLL_PASS;
+                else
+                {
+                    r->playerVote[playerToRoll->GetObjectGuid()] = ROLL_NOT_EMITED_YET;
+                    ++r->totalPlayersRolling;
+                }
             }
         }
     }
@@ -962,7 +985,7 @@ void Group::SetTargetIcon(uint8 id, ObjectGuid whoGuid, ObjectGuid targetGuid)
         return;
 
     // clean other icons
-    if (!targetGuid.IsEmpty())
+    if (targetGuid)
         for(int i = 0; i < TARGET_ICON_COUNT; ++i)
             if (m_targetIcons[i] == targetGuid)
                 SetTargetIcon(i, ObjectGuid(), ObjectGuid());
@@ -1028,7 +1051,7 @@ void Group::SendTargetIconList(WorldSession *session)
 
     for(int i = 0; i < TARGET_ICON_COUNT; ++i)
     {
-        if (m_targetIcons[i].IsEmpty())
+        if (!m_targetIcons[i])
             continue;
 
         data << uint8(i);
@@ -1053,10 +1076,11 @@ void Group::SendUpdate()
         data << uint8(citr->group);                         // groupid
         data << uint8(citr->flags);                         // group flags
         data << uint8(citr->roles);                         // roles mask
-        if(m_groupType & GROUPTYPE_LFD)
+        if(isLFGGroup())
         {
-            data << uint8(0);
-            data << uint32(0);
+            uint32 dungeonID = GetLFGState()->GetDungeon() ? GetLFGState()->GetDungeon()->ID : 0;
+            data << uint8(GetLFGState()->GetState() == LFG_STATE_FINISHED_DUNGEON ? 2 : 0);
+            data << uint32(dungeonID);
         }
         data << uint64(0x50000000FFFFFFFELL);               // related to voice chat?
         data << uint32(0);                                  // 3.3, this value increments every time SMSG_GROUP_LIST is sent
@@ -1113,7 +1137,7 @@ void Group::BroadcastPacket(WorldPacket *packet, bool ignorePlayersInBGRaid, int
     for(GroupReference *itr = GetFirstMember(); itr != NULL; itr = itr->next())
     {
         Player *pl = itr->getSource();
-        if (!pl || (!ignore.IsEmpty() && pl->GetObjectGuid() == ignore) || (ignorePlayersInBGRaid && pl->GetGroup() != this) )
+        if (!pl || (ignore && pl->GetObjectGuid() == ignore) || (ignorePlayersInBGRaid && pl->GetGroup() != this) )
             continue;
 
         if (pl->GetSession() && (group == -1 || itr->getSubGroup() == group))
@@ -1153,6 +1177,10 @@ bool Group::_addMember(ObjectGuid guid, const char* name)
     uint8 groupid = 0;
     GroupFlagMask flags   = GROUP_MEMBER;
     uint8 roles   = 0;
+
+    if (isLFGGroup() && sObjectMgr.GetPlayer(guid))
+        roles = sObjectMgr.GetPlayer(guid)->GetLFGState()->GetRoles();
+
     if (m_subGroupsCounts)
     {
         bool groupFound = false;
@@ -1177,7 +1205,7 @@ bool Group::_addMember(ObjectGuid guid, const char* name, uint8 group, GroupFlag
     if(IsFull())
         return false;
 
-    if (guid.IsEmpty())
+    if (!guid)
         return false;
 
     Player *player = sObjectMgr.GetPlayer(guid);
@@ -1219,9 +1247,12 @@ bool Group::_addMember(ObjectGuid guid, const char* name, uint8 group, GroupFlag
 
     if (!isBGGroup())
     {
-        // insert into group table
-        CharacterDatabase.PExecute("INSERT INTO group_member(groupId,memberGuid,memberFlags,subgroup,roles) VALUES('%u','%u','%u','%u','%u')",
-            m_Guid.GetCounter(), member.guid.GetCounter(), member.flags, member.group, member.roles);
+        if (!player || !player->IsBot())
+        {
+            // insert into group table
+            CharacterDatabase.PExecute("INSERT INTO group_member(groupId,memberGuid,memberFlags,subgroup,roles) VALUES('%u','%u','%u','%u','%u')",
+                m_Guid.GetCounter(), member.guid.GetCounter(), member.flags, member.group, member.roles);
+        }
     }
 
     return true;
@@ -1399,7 +1430,7 @@ void Group::SetGroupUniqueFlag(ObjectGuid guid, GroupFlagsAssignment assignment,
             return;
     };
 
-    if (!guid.IsEmpty())
+    if (guid)
     {
         SqlStatement stmt = CharacterDatabase.CreateStatement(updGgoupMember, "UPDATE group_member SET memberFlags = ? WHERE memberGuid = ?");
 
@@ -1556,7 +1587,7 @@ void Group::UpdateLooterGuid( WorldObject* object, bool ifneed )
             {
                 if (pl->IsWithinDist(object, sWorld.getConfig(CONFIG_FLOAT_GROUP_XP_DISTANCE), false))
                 {
-                    bool refresh = pl->GetLootGUID() == object->GetGUID();
+                    bool refresh = pl->GetLootGuid() == object->GetObjectGuid();
 
                     //if(refresh)                           // update loot for new looter
                     //    pl->GetSession()->DoLootRelease(pl->GetLootGUID());
@@ -1577,7 +1608,7 @@ void Group::UpdateLooterGuid( WorldObject* object, bool ifneed )
         {
             if (pl->IsWithinDist(object, sWorld.getConfig(CONFIG_FLOAT_GROUP_XP_DISTANCE), false))
             {
-                bool refresh = pl->GetLootGUID() == object->GetGUID();
+                bool refresh = pl->GetLootGuid() == object->GetObjectGuid();
 
                 //if(refresh)                               // update loot for new looter
                 //    pl->GetSession()->DoLootRelease(pl->GetLootGUID());
@@ -1863,7 +1894,7 @@ void Group::_homebindIfInstance(Player *player)
     if (player && !player->isGameMaster())
     {
         Map* map = player->GetMap();
-        if (map->IsDungeon())
+        if (map && map->IsDungeon())
         {
             // leaving the group in an instance, the homebind timer is started
             // unless the player is permanently saved to the instance
@@ -2001,6 +2032,60 @@ void Group::RewardGroupAtKill(Unit* pVictim, Player* player_tap)
             // member (alive or dead) or his corpse at req. distance
             if(player_tap->IsAtGroupRewardDistance(pVictim))
                 RewardGroupAtKill_helper(player_tap, pVictim, count, PvP, group_rate, sum_level, is_dungeon, not_gray_member_with_max_level, member_with_max_level, xp);
+        }
+    }
+}
+
+bool Group::ConvertToLFG(LFGType type)
+{
+    if (isBGGroup())
+        return false;
+
+    switch(type)
+    {
+        case LFG_TYPE_DUNGEON:
+        case LFG_TYPE_QUEST:
+        case LFG_TYPE_ZONE:
+        case LFG_TYPE_HEROIC_DUNGEON:
+            if (isRaidGroup())
+                return false;
+            m_groupType = GroupType(m_groupType | GROUPTYPE_LFD);
+            break;
+        case LFG_TYPE_RANDOM_DUNGEON:
+            if (isRaidGroup())
+                return false;
+            m_groupType = GroupType(m_groupType | GROUPTYPE_LFD | GROUPTYPE_UNK1);
+            break;
+        case LFG_TYPE_RAID:
+            if (!isRaidGroup())
+                ConvertToRaid();
+            m_groupType = GroupType(m_groupType | GROUPTYPE_LFD);
+            break;
+        default:
+            return false;
+    }
+
+    m_lootMethod = NEED_BEFORE_GREED;
+    SendUpdate();
+
+    static SqlStatementID updGgoup;
+    SqlStatement stmt = CharacterDatabase.CreateStatement(updGgoup, "UPDATE groups SET groupType= ? WHERE groupId= ?");
+    stmt.PExecute(uint8(m_groupType), GetObjectGuid().GetCounter());
+    return true;
+}
+
+void Group::SetGroupRoles(ObjectGuid guid, uint8 roles)
+{
+    for (member_witerator itr = m_memberSlots.begin(); itr != m_memberSlots.end(); ++itr)
+    {
+        if (itr->guid == guid )
+        {
+            itr->roles = roles;
+            static SqlStatementID updGgoupMember;
+            SqlStatement stmt = CharacterDatabase.CreateStatement(updGgoupMember, "UPDATE group_member SET roles = ? WHERE memberGuid = ?");
+            stmt.PExecute(uint8(itr->roles), itr->guid.GetCounter());
+            SendUpdate();
+            return;
         }
     }
 }

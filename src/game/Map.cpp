@@ -1005,7 +1005,7 @@ void Map::RemoveAllObjectsInRemoveList()
             case TYPEID_CORPSE:
             {
                 // ??? WTF
-                Corpse* corpse = GetCorpse(obj->GetGUID());
+                Corpse* corpse = GetCorpse(obj->GetObjectGuid());
                 if (!corpse)
                     sLog.outError("Try delete corpse/bones %u that not in map", obj->GetGUIDLow());
                 else
@@ -1619,7 +1619,7 @@ void Map::ScriptsStart(ScriptMapMap const& scripts, uint32 id, Object* source, O
     // prepare static data
     ObjectGuid sourceGuid = source->GetObjectGuid();
     ObjectGuid targetGuid = target ? target->GetObjectGuid() : ObjectGuid();
-    ObjectGuid ownerGuid  = (source->GetTypeId()==TYPEID_ITEM) ? ((Item*)source)->GetOwnerGuid() : ObjectGuid();
+    ObjectGuid ownerGuid  = source->isType(TYPEMASK_ITEM) ? ((Item*)source)->GetOwnerGuid() : ObjectGuid();
 
     ///- Schedule script execution for all scripts in the script map
     ScriptMap const *s2 = &(s->second);
@@ -1650,7 +1650,7 @@ void Map::ScriptCommandStart(ScriptInfo const& script, uint32 delay, Object* sou
     // prepare static data
     ObjectGuid sourceGuid = source->GetObjectGuid();
     ObjectGuid targetGuid = target ? target->GetObjectGuid() : ObjectGuid();
-    ObjectGuid ownerGuid  = (source->GetTypeId()==TYPEID_ITEM) ? ((Item*)source)->GetOwnerGuid() : ObjectGuid();
+    ObjectGuid ownerGuid  = source->isType(TYPEMASK_ITEM) ? ((Item*)source)->GetOwnerGuid() : ObjectGuid();
 
     ScriptAction sa;
     sa.sourceGuid = sourceGuid;
@@ -1682,7 +1682,7 @@ void Map::ScriptsProcess()
 
         Object* source = NULL;
 
-        if (!step.sourceGuid.IsEmpty())
+        if (step.sourceGuid)
         {
             switch(step.sourceGuid.GetHigh())
             {
@@ -1720,7 +1720,7 @@ void Map::ScriptsProcess()
 
         Object* target = NULL;
 
-        if (!step.targetGuid.IsEmpty())
+        if (step.targetGuid)
         {
             switch(step.targetGuid.GetHigh())
             {
@@ -2912,7 +2912,7 @@ Creature* Map::GetCreature(ObjectGuid guid)
 {
     __try
     {
-       return m_objectsStore.find<Creature>(guid.GetRawValue(), (Creature*)NULL);
+       return m_objectsStore.find<Creature>(guid, (Creature*)NULL);
     }
     __except ( EXCEPTION_EXECUTE_HANDLER )
     {
@@ -2971,7 +2971,7 @@ GameObject* Map::GetGameObject(ObjectGuid guid)
 {
     __try
     {
-       return m_objectsStore.find<GameObject>(guid.GetRawValue(), (GameObject*)NULL);
+       return m_objectsStore.find<GameObject>(guid, (GameObject*)NULL);
     }
     __except ( EXCEPTION_EXECUTE_HANDLER )
     {
@@ -2988,7 +2988,7 @@ DynamicObject* Map::GetDynamicObject(ObjectGuid guid)
 {
     __try
     {
-       return m_objectsStore.find<DynamicObject>(guid.GetRawValue(), (DynamicObject*)NULL);
+       return m_objectsStore.find<DynamicObject>(guid, (DynamicObject*)NULL);
     }
     __except ( EXCEPTION_EXECUTE_HANDLER )
     {

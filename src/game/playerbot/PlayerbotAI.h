@@ -105,9 +105,8 @@ public:
     uint32 getSpellId(const char* args, bool master = false) const;
     uint32 getPetSpellId(const char* args) const;
     // Initialize spell using rank 1 spell id
-    uint32 initSpell(uint32 spellId);
+    uint32 initSpell(uint32 spellId, bool ignorePossession = false);
     uint32 initPetSpell(uint32 spellIconId);
-    uint32 initSP(uint32 spellId);
 
     // extracts item ids from links
     void extractItemIds(const std::string& text, std::list<uint32>& itemIds) const;
@@ -234,6 +233,8 @@ public:
     uint8 GetFreeBagSpace() const;
 
     Unit* GetFollowTarget() { return m_followTarget; }
+
+    void Pull();
 
 private:
     // ****** Closed Actions ********************************

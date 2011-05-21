@@ -40,15 +40,7 @@ void EventProcessor::Update(uint32 p_time)
     {
         // get and remove event from queue
         BasicEvent* Event = i->second;
-        __try 
-        {
-            m_events.erase(i);
-        }
-        __except ( EXCEPTION_EXECUTE_HANDLER )
-        {
-           return;
-        }
-
+        m_events.erase(i);
         if (!Event->to_Abort)
         {
             if (Event->Execute(m_time, p_time))
@@ -101,15 +93,7 @@ void EventProcessor::AddEvent(BasicEvent* Event, uint64 e_time, bool set_addtime
         Event->m_addTime = m_time;
 
     Event->m_execTime = e_time;
-    
-    __try 
-    {
-       m_events.insert(std::pair<uint64, BasicEvent*>(e_time, Event));
-    }
-    __except ( EXCEPTION_EXECUTE_HANDLER )
-    {
-       return;
-    } 
+    m_events.insert(std::pair<uint64, BasicEvent*>(e_time, Event));
 }
 
 uint64 EventProcessor::CalculateTime(uint64 t_offset)

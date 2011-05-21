@@ -38,30 +38,30 @@ class Aura;
 
 enum SpellCastFlags
 {
-    CAST_FLAG_NONE               = 0x00000000,
-    CAST_FLAG_UNKNOWN0           = 0x00000001,              // may be pending spell cast
-    CAST_FLAG_UNKNOWN1           = 0x00000002,
-    CAST_FLAG_UNKNOWN11          = 0x00000004,
-    CAST_FLAG_UNKNOWN12          = 0x00000008,
-    CAST_FLAG_UNKNOWN2           = 0x00000010,
-    CAST_FLAG_AMMO               = 0x00000020,              // Projectiles visual
-    CAST_FLAG_UNKNOWN8           = 0x00000040,
-    CAST_FLAG_UNKNOWN9           = 0x00000080,
-    CAST_FLAG_UNKNOWN3           = 0x00000100,
-    CAST_FLAG_UNKNOWN13          = 0x00000200,
-    CAST_FLAG_UNKNOWN14          = 0x00000400,
-    CAST_FLAG_UNKNOWN6           = 0x00000800,              // wotlk, trigger rune cooldown
-    CAST_FLAG_UNKNOWN15          = 0x00001000,
-    CAST_FLAG_UNKNOWN16          = 0x00002000,
-    CAST_FLAG_UNKNOWN17          = 0x00004000,
-    CAST_FLAG_UNKNOWN18          = 0x00008000,
-    CAST_FLAG_UNKNOWN19          = 0x00010000,
-    CAST_FLAG_UNKNOWN4           = 0x00020000,              // wotlk
-    CAST_FLAG_UNKNOWN10          = 0x00040000,
-    CAST_FLAG_UNKNOWN5           = 0x00080000,              // wotlk
-    CAST_FLAG_UNKNOWN20          = 0x00100000,
-    CAST_FLAG_UNKNOWN7           = 0x00200000,              // wotlk, rune cooldown list
-    CAST_FLAG_UNKNOWN21          = 0x04000000
+    CAST_FLAG_NONE              = 0x00000000,
+    CAST_FLAG_HIDDEN_COMBATLOG  = 0x00000001,               // hide in combat log?
+    CAST_FLAG_UNKNOWN2          = 0x00000002,
+    CAST_FLAG_UNKNOWN3          = 0x00000004,
+    CAST_FLAG_UNKNOWN4          = 0x00000008,
+    CAST_FLAG_UNKNOWN5          = 0x00000010,
+    CAST_FLAG_AMMO              = 0x00000020,               // Projectiles visual
+    CAST_FLAG_UNKNOWN7          = 0x00000040,               // !0x41 mask used to call CGTradeSkillInfo::DoRecast
+    CAST_FLAG_UNKNOWN8          = 0x00000080,
+    CAST_FLAG_UNKNOWN9          = 0x00000100,
+    CAST_FLAG_UNKNOWN10         = 0x00000200,
+    CAST_FLAG_UNKNOWN11         = 0x00000400,
+    CAST_FLAG_PREDICTED_POWER   = 0x00000800,               // wotlk, trigger rune cooldown
+    CAST_FLAG_UNKNOWN13         = 0x00001000,
+    CAST_FLAG_UNKNOWN14         = 0x00002000,
+    CAST_FLAG_UNKNOWN15         = 0x00004000,
+    CAST_FLAG_UNKNOWN16         = 0x00008000,
+    CAST_FLAG_UNKNOWN17         = 0x00010000,
+    CAST_FLAG_ADJUST_MISSILE    = 0x00020000,               // wotlk
+    CAST_FLAG_UNKNOWN19         = 0x00040000,               // spell cooldown related (may be category cooldown)
+    CAST_FLAG_VISUAL_CHAIN      = 0x00080000,               // wotlk
+    CAST_FLAG_UNKNOWN21         = 0x00100000,
+    CAST_FLAG_PREDICTED_RUNES   = 0x00200000,               // wotlk, rune cooldown list
+    CAST_FLAG_IMMUNITY          = 0x04000000                // spell cast school imminity info
 };
 
 enum SpellNotifyPushType
@@ -135,19 +135,20 @@ class SpellCastTargets
             return *this;
         }
 
-        uint64 getUnitTargetGUID() const { return m_unitTargetGUID.GetRawValue(); }
+        ObjectGuid getUnitTargetGuid() const { return m_unitTargetGUID; }
         Unit *getUnitTarget() const { return m_unitTarget; }
         void setUnitTarget(Unit *target);
         void setDestination(float x, float y, float z);
         void setSource(float x, float y, float z);
 
-        uint64 getGOTargetGUID() const { return m_GOTargetGUID.GetRawValue(); }
+        ObjectGuid getGOTargetGuid() const { return m_GOTargetGUID; }
         GameObject *getGOTarget() const { return m_GOTarget; }
         void setGOTarget(GameObject *target);
 
-        uint64 getCorpseTargetGUID() const { return m_CorpseTargetGUID.GetRawValue(); }
+        ObjectGuid getCorpseTargetGuid() const { return m_CorpseTargetGUID; }
         void setCorpseTarget(Corpse* corpse);
-        uint64 getItemTargetGUID() const { return m_itemTargetGUID.GetRawValue(); }
+
+        ObjectGuid getItemTargetGuid() const { return m_itemTargetGUID; }
         Item* getItemTarget() const { return m_itemTarget; }
         uint32 getItemTargetEntry() const { return m_itemTargetEntry; }
         void setItemTarget(Item* item);
@@ -156,12 +157,12 @@ class SpellCastTargets
         {
             if(m_itemTarget && (m_targetMask & TARGET_FLAG_TRADE_ITEM))
             {
-                m_itemTargetGUID = m_itemTarget->GetGUID();
+                m_itemTargetGUID = m_itemTarget->GetObjectGuid();
                 m_itemTargetEntry = m_itemTarget->GetEntry();
             }
         }
 
-        bool IsEmpty() const { return m_GOTargetGUID.IsEmpty() && m_unitTargetGUID.IsEmpty() && m_itemTarget==NULL && m_CorpseTargetGUID.IsEmpty(); }
+        bool IsEmpty() const { return !m_GOTargetGUID && !m_unitTargetGUID && !m_itemTarget && !m_CorpseTargetGUID; }
 
         void Update(Unit* caster);
 
@@ -412,7 +413,7 @@ class Spell
         bool FillCustomTargetMap(SpellEffectIndex effIndex, UnitList &targetUnitMap);
         void SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList &targetUnitMap);
 
-        void FillAreaTargets(UnitList &targetUnitMap, float x, float y, float radius, SpellNotifyPushType pushType, SpellTargets spellTargets, WorldObject* originalCaster = NULL);
+        void FillAreaTargets(UnitList &targetUnitMap, float radius, SpellNotifyPushType pushType, SpellTargets spellTargets, WorldObject* originalCaster = NULL);
         void FillRaidOrPartyTargets(UnitList &targetUnitMap, Unit* member, Unit* center, float radius, bool raid, bool withPets, bool withcaster);
         void FillRaidOrPartyManaPriorityTargets(UnitList &targetUnitMap, Unit* member, Unit* center, float radius, uint32 count, bool raid, bool withPets, bool withcaster);
         void FillRaidOrPartyHealthPriorityTargets(UnitList &targetUnitMap, Unit* member, Unit* center, float radius, uint32 count, bool raid, bool withPets, bool withcaster);
@@ -481,7 +482,7 @@ class Spell
         // real source of cast affects, explicit caster, or DoT/HoT applier, or GO owner, or wild GO itself. Can be NULL
         WorldObject* GetAffectiveCasterObject() const;
         // limited version returning NULL in cases wild gameobject caster object, need for Aura (auras currently not support non-Unit caster)
-        Unit* GetAffectiveCaster() const { return !m_originalCasterGUID.IsEmpty() ? m_originalCaster : m_caster; }
+        Unit* GetAffectiveCaster() const { return m_originalCasterGUID ? m_originalCaster : m_caster; }
         // m_originalCasterGUID can store GO guid, and in this case this is visual caster
         WorldObject* GetCastingObject() const;
 
@@ -507,7 +508,7 @@ class Spell
         void TriggerGlobalCooldown();
         void CancelGlobalCooldown();
 
-        void SendLoot(uint64 guid, LootType loottype);
+        void SendLoot(ObjectGuid guid, LootType loottype, LockType lockType);
         bool IgnoreItemRequirements() const;                        // some item use spells have unexpected reagent data
         void UpdateOriginalCasterPointer();
 
@@ -619,9 +620,9 @@ class Spell
         ItemTargetList m_UniqueItemInfo;
 
         void AddUnitTarget(Unit* target, SpellEffectIndex effIndex);
-        void AddUnitTarget(uint64 unitGUID, SpellEffectIndex effIndex);
+        void AddUnitTarget(ObjectGuid unitGuid, SpellEffectIndex effIndex);
         void AddGOTarget(GameObject* target, SpellEffectIndex effIndex);
-        void AddGOTarget(uint64 goGUID, SpellEffectIndex effIndex);
+        void AddGOTarget(ObjectGuid goGuid, SpellEffectIndex effIndex);
         void AddItemTarget(Item* target, SpellEffectIndex effIndex);
         void DoAllEffectOnTarget(TargetInfo *target);
         void HandleDelayedSpellLaunch(TargetInfo *target);
@@ -707,23 +708,58 @@ namespace MaNGOS
         float i_radius;
         SpellTargets i_TargetType;
         WorldObject* i_originalCaster;
+        WorldObject* i_castingObject;
         bool i_playerControlled;
+        float i_centerX;
+        float i_centerY;
+
+        float GetCenterX() const { return i_centerX; }
+        float GetCenterY() const { return i_centerY; }
 
         SpellNotifierCreatureAndPlayer(Spell &spell, Spell::UnitList &data, float radius, SpellNotifyPushType type,
             SpellTargets TargetType = SPELL_TARGETS_NOT_FRIENDLY, WorldObject* originalCaster = NULL)
             : i_data(&data), i_spell(spell), i_push_type(type), i_radius(radius), i_TargetType(TargetType),
-            i_originalCaster(originalCaster)
+            i_originalCaster(originalCaster), i_castingObject(i_spell.GetCastingObject())
         {
             if (!i_originalCaster)
                 i_originalCaster = i_spell.GetAffectiveCasterObject();
             i_playerControlled = i_originalCaster  ? i_originalCaster->IsControlledByPlayer() : false;
+
+            switch(i_push_type)
+            {
+                case PUSH_IN_FRONT:
+                case PUSH_IN_FRONT_90:
+                case PUSH_IN_FRONT_30:
+                case PUSH_IN_FRONT_15:
+                case PUSH_IN_BACK:
+                case PUSH_SELF_CENTER:
+                    if (i_castingObject)
+                    {
+                        i_centerX = i_castingObject->GetPositionX();
+                        i_centerY = i_castingObject->GetPositionY();
+                    }
+                    break;
+                case PUSH_DEST_CENTER:
+                    i_centerX = i_spell.m_targets.m_destX;
+                    i_centerY = i_spell.m_targets.m_destY;
+                    break;
+                case PUSH_TARGET_CENTER:
+                    if (Unit* target = i_spell.m_targets.getUnitTarget())
+                    {
+                        i_centerX = target->GetPositionX();
+                        i_centerY = target->GetPositionY();
+                    }
+                    break;
+                default:
+                    sLog.outError("SpellNotifierCreatureAndPlayer: unsupported PUSH_* case %u.", i_push_type);
+            }
         }
 
         template<class T> inline void Visit(GridRefManager<T>  &m)
         {
             MANGOS_ASSERT(i_data);
 
-            if(!i_originalCaster)
+            if (!i_originalCaster || !i_castingObject)
                 return;
 
             for(typename GridRefManager<T>::iterator itr = m.begin(); itr != m.end(); ++itr)
@@ -779,35 +815,35 @@ namespace MaNGOS
                 switch(i_push_type)
                 {
                     case PUSH_IN_FRONT:
-                        if(i_spell.GetCaster()->isInFront((Unit*)(itr->getSource()), i_radius, 2*M_PI_F/3 ))
+                        if (i_castingObject->isInFront((Unit*)(itr->getSource()), i_radius, 2*M_PI_F/3 ))
                             i_data->push_back(itr->getSource());
                         break;
                     case PUSH_IN_FRONT_90:
-                        if(i_spell.GetCaster()->isInFront((Unit*)(itr->getSource()), i_radius, M_PI_F/2 ))
+                        if (i_castingObject->isInFront((Unit*)(itr->getSource()), i_radius, M_PI_F/2 ))
                             i_data->push_back(itr->getSource());
                         break;
                     case PUSH_IN_FRONT_30:
-                        if(i_spell.GetCaster()->isInFront((Unit*)(itr->getSource()), i_radius, M_PI_F/6 ))
+                        if (i_castingObject->isInFront((Unit*)(itr->getSource()), i_radius, M_PI_F/6 ))
                             i_data->push_back(itr->getSource());
                         break;
                     case PUSH_IN_FRONT_15:
-                        if(i_spell.GetCaster()->isInFront((Unit*)(itr->getSource()), i_radius, M_PI_F/12 ))
+                        if (i_castingObject->isInFront((Unit*)(itr->getSource()), i_radius, M_PI_F/12 ))
                             i_data->push_back(itr->getSource());
                         break;
                     case PUSH_IN_BACK:
-                        if(i_spell.GetCaster()->isInBack((Unit*)(itr->getSource()), i_radius, 2*M_PI_F/3 ))
+                        if (i_castingObject->isInBack((Unit*)(itr->getSource()), i_radius, 2*M_PI_F/3 ))
                             i_data->push_back(itr->getSource());
                         break;
                     case PUSH_SELF_CENTER:
-                        if(i_spell.GetCaster()->IsWithinDist((Unit*)(itr->getSource()), i_radius))
+                        if (i_castingObject->IsWithinDist((Unit*)(itr->getSource()), i_radius))
                             i_data->push_back(itr->getSource());
                         break;
                     case PUSH_DEST_CENTER:
-                        if(itr->getSource()->IsWithinDist3d(i_spell.m_targets.m_destX, i_spell.m_targets.m_destY, i_spell.m_targets.m_destZ,i_radius))
+                        if (itr->getSource()->IsWithinDist3d(i_spell.m_targets.m_destX, i_spell.m_targets.m_destY, i_spell.m_targets.m_destZ,i_radius))
                             i_data->push_back(itr->getSource());
                         break;
                     case PUSH_TARGET_CENTER:
-                        if(i_spell.m_targets.getUnitTarget()->IsWithinDist((Unit*)(itr->getSource()), i_radius))
+                        if (i_spell.m_targets.getUnitTarget() && i_spell.m_targets.getUnitTarget()->IsWithinDist((Unit*)(itr->getSource()), i_radius))
                             i_data->push_back(itr->getSource());
                         break;
                 }

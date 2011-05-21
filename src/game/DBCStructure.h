@@ -479,6 +479,13 @@ struct AchievementCriteriaEntry
             uint32  killCount;                              // 4
         } honorable_kill;
 
+        // ACHIEVEMENT_CRITERIA_TYPE_USE_LFD_TO_GROUP_WITH_PLAYERS    = 119
+        struct
+        {
+            uint32  unused;                                 // 3
+            uint32  dungeonsComplete;                       // 4
+        } use_lfg;
+
         struct
         {
             uint32  value;                                  // 3        m_asset_id
@@ -1560,7 +1567,7 @@ struct SpellEntry
     uint32    Category;                                     // 1        m_category
     uint32    Dispel;                                       // 2        m_dispelType
     uint32    Mechanic;                                     // 3        m_mechanic
-    uint32    Attributes;                                   // 4        m_attribute
+    uint32    Attributes;                                   // 4        m_attributes
     uint32    AttributesEx;                                 // 5        m_attributesEx
     uint32    AttributesEx2;                                // 6        m_attributesExB
     uint32    AttributesEx3;                                // 7        m_attributesExC
@@ -1710,15 +1717,15 @@ struct SpellRadiusEntry
 {
     uint32    ID;                                           //          m_ID
     float     Radius;                                       //          m_radius
-    float     Radius2;                                      //          m_radiusPerLevel
-                                                            //          m_radiusMax
+                                                            //          m_radiusPerLevel
+    //float     RadiusMax;                                  //          m_radiusMax
 };
 
 struct SpellRangeEntry
 {
     uint32    ID;                                           // 0        m_ID
     float     minRange;                                     // 1        m_rangeMin[2]
-    float     minRangeFriendly;                             // 2
+    float     minRangeFriendly;                             // 2 
     float     maxRange;                                     // 3        m_rangeMax[2]
     float     maxRangeFriendly;                             // 4
     //uint32  Flags;                                        // 5        m_flags
@@ -2013,6 +2020,7 @@ struct WMOAreaTableEntry
     uint32 areaId;                                          // 10       m_AreaTableID (AreaTable.dbc)
     //char *Name[16];                                       //          m_AreaName_lang
     //uint32 nameFlags;
+
 };
 
 struct WorldMapAreaEntry

@@ -20,6 +20,7 @@
 #include "Chat.h"
 #include "ArenaTeam.h"
 #include "SpellMgr.h"
+#include "ObjectMgr.h"
 #include "playerbot/PlayerbotAI.h"
 
 void Player::GiveMeBestItemForMyLevel()
@@ -1837,8 +1838,8 @@ bool Player::LearnAllMySpellsForMyLevel()
         if((cinfo->npcflag & UNIT_NPC_FLAG_TRAINER) || (cinfo->npcflag & UNIT_NPC_FLAG_TRAINER_CLASS)
             || (cinfo->npcflag & UNIT_NPC_FLAG_TRAINER_PROFESSION))
         {
-            TrainerSpellData const* cSpells = sObjectMgr.GetNpcTrainerSpells(id);
-            TrainerSpellData const* tSpells = sObjectMgr.GetNpcTrainerTemplateSpells(id);
+            TrainerSpellData const* cSpells = sObjectMgr.GetNpcTrainerSpells(cinfo->Entry);
+            TrainerSpellData const* tSpells = sObjectMgr.GetNpcTrainerTemplateSpells(cinfo->trainerId);
 
             if (!cSpells && !tSpells)
                 continue;
@@ -2226,65 +2227,25 @@ bool Player::LearnAllMyTalentsForMyLevel()
             continue;
 
         TalentTabEntry const *talentTabInfo = sTalentTabStore.LookupEntry( talentInfo->TalentTab );
-        if(!talentTabInfo || talentTabInfo->TalentTabID != getRole())
+        if(!talentTabInfo)
+            continue;
+
+        if(!IsBot() && talentTabInfo->TalentTabID != getRole())
             continue;
 
         if( (classMask & talentTabInfo->ClassMask) == 0 )
             continue;
 
-        // search highest talent rank
-        uint32 spellid = 0;
-
-        for(int rank = MAX_TALENT_RANK-1; rank >= 0; --rank)
+        if(talentInfo->Row < ((level-5) / 5))
+            learnSpellHighRank(talentInfo->RankID[0]);
+        else
         {
-            if(talentInfo->RankID[rank]!=0)
-            {
-                spellid = talentInfo->RankID[rank];
-                break;
-            }
+            for (int i = 0; i < MAX_TALENT_RANK; ++i)
+                if (talentInfo->RankID[i] && HasSpell(talentInfo->RankID[i]))
+                    removeSpell(talentInfo->RankID[i], false, false);
         }
-
-        if(!spellid)                                        // ??? none spells in talent
-            continue;
-
-        SpellEntry const* spellInfo = sSpellStore.LookupEntry(spellid);
-        if(!spellInfo || !SpellMgr::IsSpellValid(spellInfo,m_session->GetPlayer(),false))
-            continue;
-
-        if(level < 10)
-            continue;
-
-        if(level < 20 && talentInfo->Row > 0)
-            continue;
-
-        if(level < 30 && talentInfo->Row > 1)
-            continue;
-
-        if(level < 38 && talentInfo->Row > 2)
-            continue;
-
-        if(level < 46 && talentInfo->Row > 3)
-            continue;
-
-        if(level < 53 && talentInfo->Row > 4)
-            continue;
-
-        if(level < 60 && talentInfo->Row > 5)
-            continue;
-
-        if(level < 66 && talentInfo->Row > 6)
-            continue;
-
-        if(level < 71 && talentInfo->Row > 7)
-            continue;
-
-        if(level < 77 && talentInfo->Row > 8)
-            continue;
-
-        // learn highest rank of talent and learn all non-talent spell ranks (recursive by tree)
-        learnSpellHighRank(spellid);
     }
-
+    
     SendTalentsInfoData(false);
     return true;
 }
@@ -2633,6 +2594,155 @@ bool ChatHandler::HandleGMStartUpCommand(char* args)
         return true;
 
     player->GMStartup();
+    return true;
+}
+
+bool ChatHandler::HandleBotTank(char* args)
+{
+    Player* pl = m_session->GetPlayer();
+    Unit* target = getSelectedUnit();
+
+    if (!pl->GetSelectionGuid().IsEmpty() && target)
+    {
+        if (target->GetTypeId() == TYPEID_UNIT)
+        {
+            SendSysMessage(1);
+            SetSentErrorMessage(true);
+            return false;
+        }
+
+        Player *p_target = (Player *)target;
+        Group *p_group = p_target->GetGroup();
+
+        if (pl->GetGroup() != p_group)
+        {
+            PSendSysMessage("Vous devez etre en groupe avec un bot");
+            SetSentErrorMessage(true);
+            return false;
+        }
+
+        if (p_target->IsBot())
+            p_group->SetGroupUniqueFlag(p_target->GetObjectGuid(), GROUP_ASSIGN_MAINTANK, 1);
+    }
+
+    return true;
+}
+
+bool ChatHandler::HandleBotAssist(char* args)
+{
+    Player* pl = m_session->GetPlayer();
+    Unit* target = getSelectedUnit();
+
+    if (!pl->GetSelectionGuid().IsEmpty() && target)
+    {
+        if (target->GetTypeId() == TYPEID_UNIT)
+        {
+            SendSysMessage(1);
+            SetSentErrorMessage(true);
+            return false;
+        }
+
+        Player *p_target = (Player *)target;
+        Group *p_group = p_target->GetGroup();
+
+        if (pl->GetGroup() != p_group)
+        {
+            PSendSysMessage("Vous devez etre en groupe avec un bot");
+            SetSentErrorMessage(true);
+            return false;
+        }
+
+        if (p_target->IsBot())
+            p_group->SetGroupUniqueFlag(p_target->GetObjectGuid(), GROUP_ASSIGN_ASSISTANT, 1);
+    }
+
+    return true;
+}
+
+bool ChatHandler::HandleBotTankTarget(char* args)
+{
+    Player* pl = m_session->GetPlayer();
+    Unit* target = getSelectedUnit();
+
+    if (!pl->GetSelectionGuid().IsEmpty() && target)
+    {
+        if (target->GetTypeId() != TYPEID_UNIT)
+        {
+            SendSysMessage(2);
+            SetSentErrorMessage(true);
+            return false;
+        }
+
+        Group *gr = pl->GetGroup();
+
+        if (!gr)
+        {
+            PSendSysMessage("Vous devez etre en groupe avec un bot");
+            SetSentErrorMessage(true);
+            return false;
+        }
+
+        gr->SetTankTarget(target);
+    }
+
+    return true;
+}
+
+bool ChatHandler::HandleBotAssistTarget(char* args)
+{
+    Player* pl = m_session->GetPlayer();
+    Unit* target = getSelectedUnit();
+
+    if (!pl->GetSelectionGuid().IsEmpty() && target)
+    {
+        if (target->GetTypeId() != TYPEID_UNIT)
+        {
+            SendSysMessage(2);
+            SetSentErrorMessage(true);
+            return false;
+        }
+
+        Group *gr = pl->GetGroup();
+
+        if (!gr)
+        {
+            PSendSysMessage("Vous devez etre en groupe avec un bot");
+            SetSentErrorMessage(true);
+            return false;
+        }
+
+        gr->SetAssistTarget(target);
+    }
+
+    return true;
+}
+
+bool ChatHandler::HandleBotPull(char* args)
+{
+    Player* pl = m_session->GetPlayer();
+
+    if (!pl->GetGroup())
+    {
+        PSendSysMessage("Vous devez etre en groupe avec un bot");
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    Group *m_group = pl->GetGroup();
+    GroupReference *ref = (m_group) ? m_group->GetFirstMember() : NULL;
+
+    do
+    {
+        Player *g_member = (ref) ? ref->getSource() : pl;
+
+        if (!g_member->isAlive())
+            continue;
+            
+        if (g_member->IsBot())
+            g_member->GetPlayerbotAI()->Pull();
+
+    }while(ref = (ref) ? ref->next() : NULL);
+
     return true;
 }
 

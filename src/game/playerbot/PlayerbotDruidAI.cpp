@@ -558,41 +558,6 @@ void PlayerbotDruidAI::DoNonCombatActions()
     if (!m_master)
         return;
 
-    // mana check
-    if (m_bot->getStandState() != UNIT_STAND_STATE_STAND)
-        m_bot->SetStandState(UNIT_STAND_STATE_STAND);
-
-    Item* pItem = ai->FindDrink();
-    Item* fItem = ai->FindBandage();
-
-    if (pItem != NULL && ai->GetManaPercent() < 30)
-    {
-
-        ai->UseItem(pItem);
-        return;
-    }
-    else if (!pItem && INNERVATE > 0 && !m_bot->HasAura(INNERVATE) && ai->GetManaPercent() <= 20 && ai->CastSpell(INNERVATE, m_bot))
-        return;
-
-    // hp check
-    if (m_bot->getStandState() != UNIT_STAND_STATE_STAND)
-        m_bot->SetStandState(UNIT_STAND_STATE_STAND);
-
-    pItem = ai->FindFood();
-
-    if (pItem != NULL && ai->GetHealthPercent() < 30)
-    {
-
-        ai->UseItem(pItem);
-        return;
-    }
-    else if (pItem == NULL && fItem != NULL && !m_bot->HasAura(RECENTLY_BANDAGED, EFFECT_INDEX_0) && ai->GetHealthPercent() < 70)
-    {
-
-        ai->UseItem(fItem);
-        return;
-    }
-
     // buff and heal master's group
     if (m_master->GetGroup())
     {

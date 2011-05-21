@@ -28,6 +28,7 @@
 #include "ObjectMgr.h"
 #include "Player.h"
 #include "Guild.h"
+#include "GuildMgr.h"
 #include "UpdateMask.h"
 #include "Auth/md5.h"
 #include "ObjectAccessor.h"
@@ -79,7 +80,7 @@ bool LoginQueryHolder::Initialize()
     res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADBOUNDINSTANCES,  "SELECT id, permanent, map, difficulty, extend, resettime FROM character_instance LEFT JOIN instance ON instance = id WHERE guid = '%u'", m_guid.GetCounter());
     res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADAURAS,           "SELECT caster_guid,item_guid,spell,stackcount,remaincharges,basepoints0,basepoints1,basepoints2,periodictime0,periodictime1,periodictime2,maxduration,remaintime,effIndexMask FROM character_aura WHERE guid = '%u'", m_guid.GetCounter());
     res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADSPELLS,          "SELECT spell,active,disabled FROM character_spell WHERE guid = '%u'", m_guid.GetCounter());
-    res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADQUESTSTATUS,     "SELECT quest,status,rewarded,explored,timer,mobcount1,mobcount2,mobcount3,mobcount4,itemcount1,itemcount2,itemcount3,itemcount4 FROM character_queststatus WHERE guid = '%u'", m_guid.GetCounter());
+    res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADQUESTSTATUS,     "SELECT quest,status,rewarded,explored,timer,mobcount1,mobcount2,mobcount3,mobcount4,itemcount1,itemcount2,itemcount3,itemcount4,itemcount5,itemcount6 FROM character_queststatus WHERE guid = '%u'", m_guid.GetCounter());
     res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADDAILYQUESTSTATUS,"SELECT quest FROM character_queststatus_daily WHERE guid = '%u'", m_guid.GetCounter());
     res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADWEEKLYQUESTSTATUS,"SELECT quest FROM character_queststatus_weekly WHERE guid = '%u'", m_guid.GetCounter());
     res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADMONTHLYQUESTSTATUS,"SELECT quest FROM character_queststatus_monthly WHERE guid = '%u'", m_guid.GetCounter());
@@ -143,13 +144,7 @@ class CharacterHandler
                 return;
 
             LoginQueryHolder* lqh = (LoginQueryHolder*) holder;
-            WorldSession* masterSession = sWorld.FindSession(lqh->GetAccountId());
-            if (! masterSession || sObjectMgr.GetPlayer(lqh->GetGuid()))
-            {
-                delete holder;
-                return;
-            }
-            WorldSession *botSession = new WorldSession(lqh->GetAccountId(), NULL, SEC_ADMINISTRATOR, masterSession->Expansion(), 0, masterSession->GetSessionDbcLocale());
+            WorldSession *botSession = new WorldSession(lqh->GetAccountId(), NULL, SEC_ADMINISTRATOR, 3, 0, LOCALE_enUS);
             botSession->m_Address = "bot";
             botSession->HandlePlayerLogin(lqh);
         }
@@ -305,7 +300,7 @@ void WorldSession::HandleCharCreateOpcode( WorldPacket & recv_data )
         return;
     }
 
-    if (sObjectMgr.GetPlayerGUIDByName(name))
+    if (sObjectMgr.GetPlayerGuidByName(name))
     {
         data << (uint8)CHAR_CREATE_NAME_IN_USE;
         SendPacket( &data );
@@ -514,7 +509,7 @@ void WorldSession::HandleCharDeleteOpcode( WorldPacket & recv_data )
     std::string name;
 
     // is guild leader
-    if(sObjectMgr.GetGuildByLeader(guid))
+    if (sGuildMgr.GetGuildByLeader(guid))
     {
         WorldPacket data(SMSG_CHAR_DELETE, 1);
         data << (uint8)CHAR_DELETE_FAILED_GUILD_LEADER;
@@ -641,7 +636,7 @@ void PlayerbotMgr::AddAllBots()
     else
     {
 
-        QueryResult *result = CharacterDatabase.PQuery("SELECT guid, race FROM characters WHERE account = '%u'", accountId);
+        QueryResult *result = CharacterDatabase.PQuery("SELECT guid, race FROM characters WHERE account = '%u' ORDER BY RAND()", accountId);
         if( result )
         {
             int itrAlliance = 0;
@@ -799,7 +794,7 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
 
     if(pCurrChar->GetGuildId() != 0)
     {
-        Guild* guild = sObjectMgr.GetGuildById(pCurrChar->GetGuildId());
+        Guild* guild = sGuildMgr.GetGuildById(pCurrChar->GetGuildId());
         if(guild)
         {
             data.Initialize(SMSG_GUILD_EVENT, (1+1+guild->GetMOTD().size()+1));
@@ -1345,8 +1340,8 @@ void WorldSession::HandleCharCustomizeOpcode(WorldPacket& recv_data)
     }
 
     // character with this name already exist
-    ObjectGuid newguid = sObjectMgr.GetPlayerGUIDByName(newname);
-    if (!newguid.IsEmpty() && newguid != guid)
+    ObjectGuid newguid = sObjectMgr.GetPlayerGuidByName(newname);
+    if (newguid && newguid != guid)
     {
         WorldPacket data(SMSG_CHAR_CUSTOMIZE, 1);
         data << uint8(CHAR_CREATE_NAME_IN_USE);
@@ -1407,7 +1402,7 @@ void WorldSession::HandleEquipmentSetSaveOpcode(WorldPacket &recv_data)
 
         Item *item = _player->GetItemByPos(INVENTORY_SLOT_BAG_0, i);
 
-        if(!item && !itemGuid.IsEmpty())                    // cheating check 1
+        if(!item && itemGuid)                               // cheating check 1
             return;
 
         if(item && item->GetObjectGuid() != itemGuid)       // cheating check 2

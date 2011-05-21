@@ -191,7 +191,7 @@ bool ArenaTeam::AddMember(ObjectGuid playerGuid)
 
 bool ArenaTeam::AddMemberNoSave(Player* pl)
 {
-    if (GetMembersSize() >= GetType() * 2)
+    if (GetMembersSize() >= GetMaxMembersSize())
         return false;
 
     if (pl->GetArenaTeamId(GetSlot()))
@@ -200,11 +200,11 @@ bool ArenaTeam::AddMemberNoSave(Player* pl)
         return false;
     }
 
-    Player::RemovePetitionsAndSigns(pl->GetGUID(), GetType());
+    Player::RemovePetitionsAndSigns(pl->GetObjectGuid(), GetType());
 
     ArenaTeamMember newmember;
     newmember.name              = pl->GetName();
-    newmember.guid              = pl->GetGUID();
+    newmember.guid              = pl->GetObjectGuid();
     newmember.Class             = pl->getClass();
     newmember.games_season      = 0;
     newmember.games_week        = 0;
@@ -238,7 +238,7 @@ bool ArenaTeam::AddMemberNoSave(Player* pl)
         pl->SetArenaTeamIdInvited(0);
         pl->SetArenaTeamInfoField(arenaSlot, ARENA_TEAM_ID, m_TeamId);
         pl->SetArenaTeamInfoField(arenaSlot, ARENA_TEAM_TYPE, GetType());
-        pl->SetArenaTeamInfoField(arenaSlot, ARENA_TEAM_MEMBER, (GetCaptainGuid() == pl->GetGUID()) ? 0 : 1);
+        pl->SetArenaTeamInfoField(arenaSlot, ARENA_TEAM_MEMBER, (GetCaptainGuid() == pl->GetObjectGuid()) ? 0 : 1);
         pl->SetArenaTeamInfoField(arenaSlot, ARENA_TEAM_GAMES_WEEK, newmember.games_week);
         pl->SetArenaTeamInfoField(arenaSlot, ARENA_TEAM_GAMES_SEASON, newmember.games_season);
         pl->SetArenaTeamInfoField(arenaSlot, ARENA_TEAM_WINS_SEASON, newmember.wins_season);
@@ -618,7 +618,7 @@ void ArenaTeam::BroadcastEvent(ArenaTeamEvents event, ObjectGuid guid, char cons
 {
     uint8 strCount = !str1 ? 0 : (!str2 ? 1 : (!str3 ? 2 : 3));
 
-    WorldPacket data(SMSG_ARENA_TEAM_EVENT, 1 + 1 + 1*strCount + (guid.IsEmpty() ? 0 : 8));
+    WorldPacket data(SMSG_ARENA_TEAM_EVENT, 1 + 1 + 1*strCount + (!guid ? 0 : 8));
     data << uint8(event);
     data << uint8(strCount);
 
@@ -636,8 +636,8 @@ void ArenaTeam::BroadcastEvent(ArenaTeamEvents event, ObjectGuid guid, char cons
     else if (str1)
         data << str1;
 
-    if (!guid.IsEmpty())
-        data << guid;
+    if (guid)
+        data << ObjectGuid(guid);
 
     BroadcastPacket(&data);
 
@@ -661,7 +661,7 @@ uint8 ArenaTeam::GetSlotByType(ArenaType type )
 bool ArenaTeam::HaveMember(ObjectGuid guid) const
 {
     for (MemberList::const_iterator itr = m_members.begin(); itr != m_members.end(); ++itr)
-        if(itr->guid == guid.GetRawValue())
+        if(itr->guid == guid)
             return true;
 
     return false;

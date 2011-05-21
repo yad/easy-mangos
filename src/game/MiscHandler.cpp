@@ -25,6 +25,7 @@
 #include "Log.h"
 #include "Player.h"
 #include "World.h"
+#include "GuildMgr.h"
 #include "ObjectMgr.h"
 #include "WorldSession.h"
 #include "Auth/BigNumber.h"
@@ -143,25 +144,27 @@ void WorldSession::HandleWhoOpcode( WorldPacket & recv_data )
 
     // TODO: Guard Player map
     HashMapHolder<Player>::MapType& m = sObjectAccessor.GetPlayers();
-    for(HashMapHolder<Player>::MapType::const_iterator itr = m.begin(); itr != m.end(); ++itr)
+    for (HashMapHolder<Player>::MapType::const_iterator itr = m.begin(); itr != m.end(); ++itr)
     {
+        Player* pl = itr->second;
+
         if (security == SEC_PLAYER)
         {
             // player can see member of other team only if CONFIG_BOOL_ALLOW_TWO_SIDE_WHO_LIST
-            if (itr->second->GetTeam() != team && !allowTwoSideWhoList )
+            if (pl->GetTeam() != team && !allowTwoSideWhoList )
                 continue;
 
             // player can see MODERATOR, GAME MASTER, ADMINISTRATOR only if CONFIG_GM_IN_WHO_LIST
-            if (itr->second->GetSession()->GetSecurity() > gmLevelInWhoList)
+            if (pl->GetSession()->GetSecurity() > gmLevelInWhoList)
                 continue;
         }
 
         // do not process players which are not in world
-        if(!(itr->second->IsInWorld()))
+        if (!pl->IsInWorld())
             continue;
 
         // check if target is globally visible for player
-        if (!(itr->second->IsVisibleGloballyFor(_player)))
+        if (!pl->IsVisibleGloballyFor(_player))
             continue;
 
         if (itr->second->GetTeam() != team && itr->second->IsBot())
@@ -171,25 +174,25 @@ void WorldSession::HandleWhoOpcode( WorldPacket & recv_data )
             continue;
 
         // check if target's level is in level range
-        uint32 lvl = itr->second->getLevel();
+        uint32 lvl = pl->getLevel();
         if (lvl < level_min || lvl > level_max)
             continue;
 
         // check if class matches classmask
-        uint32 class_ = itr->second->getClass();
+        uint32 class_ = pl->getClass();
         if (!(classmask & (1 << class_)))
             continue;
 
         // check if race matches racemask
-        uint32 race = itr->second->getRace();
+        uint32 race = pl->getRace();
         if (!(racemask & (1 << race)))
             continue;
 
-        uint32 pzoneid = itr->second->GetZoneId();
-        uint8 gender = itr->second->getGender();
+        uint32 pzoneid = pl->GetZoneId();
+        uint8 gender = pl->getGender();
 
         bool z_show = true;
-        for(uint32 i = 0; i < zones_count; ++i)
+        for (uint32 i = 0; i < zones_count; ++i)
         {
             if(zoneids[i] == pzoneid)
             {
@@ -202,7 +205,7 @@ void WorldSession::HandleWhoOpcode( WorldPacket & recv_data )
         if (!z_show)
             continue;
 
-        std::string pname = itr->second->GetName();
+        std::string pname = pl->GetName();
         std::wstring wpname;
         if(!Utf8toWStr(pname,wpname))
             continue;
@@ -211,9 +214,9 @@ void WorldSession::HandleWhoOpcode( WorldPacket & recv_data )
         if (!(wplayer_name.empty() || wpname.find(wplayer_name) != std::wstring::npos))
             continue;
 
-        std::string gname = sObjectMgr.GetGuildNameById(itr->second->GetGuildId());
+        std::string gname = sGuildMgr.GetGuildNameById(pl->GetGuildId());
         std::wstring wgname;
-        if(!Utf8toWStr(gname,wgname))
+        if (!Utf8toWStr(gname,wgname))
             continue;
         wstrToLower(wgname);
 
@@ -221,11 +224,11 @@ void WorldSession::HandleWhoOpcode( WorldPacket & recv_data )
             continue;
 
         std::string aname;
-        if(AreaTableEntry const* areaEntry = GetAreaEntryByAreaID(itr->second->GetZoneId()))
+        if (AreaTableEntry const* areaEntry = GetAreaEntryByAreaID(pzoneid))
             aname = areaEntry->area_name[GetSessionDbcLocale()];
 
         bool s_show = true;
-        for(uint32 i = 0; i < str_count; ++i)
+        for (uint32 i = 0; i < str_count; ++i)
         {
             if (!str[i].empty())
             {
@@ -267,8 +270,8 @@ void WorldSession::HandleLogoutRequestOpcode( WorldPacket & /*recv_data*/ )
 {
     DEBUG_LOG( "WORLD: Recvd CMSG_LOGOUT_REQUEST Message, security - %u", GetSecurity() );
 
-    if (uint64 lguid = GetPlayer()->GetLootGUID())
-        DoLootRelease(lguid);
+    if (ObjectGuid lootGuid = GetPlayer()->GetLootGuid())
+        DoLootRelease(lootGuid);
 
     //Can not logout if...
     if( GetPlayer()->isInCombat() ||                        //...is in combat
@@ -474,7 +477,7 @@ void WorldSession::HandleAddFriendOpcodeCallBack(QueryResult *result, uint32 acc
         return;
 
     FriendsResult friendResult = FRIEND_NOT_FOUND;
-    if (!friendGuid.IsEmpty())
+    if (friendGuid)
     {
         if (friendGuid == session->GetPlayer()->GetObjectGuid())
             friendResult = FRIEND_SELF;
@@ -507,7 +510,7 @@ void WorldSession::HandleAddFriendOpcodeCallBack(QueryResult *result, uint32 acc
 
 void WorldSession::HandleDelFriendOpcode( WorldPacket & recv_data )
 {
-    uint64 friendGuid;
+    ObjectGuid friendGuid;
 
     DEBUG_LOG( "WORLD: Received CMSG_DEL_FRIEND" );
 
@@ -554,7 +557,7 @@ void WorldSession::HandleAddIgnoreOpcodeCallBack(QueryResult *result, uint32 acc
         return;
 
     FriendsResult ignoreResult = FRIEND_IGNORE_NOT_FOUND;
-    if (!ignoreGuid.IsEmpty())
+    if (ignoreGuid)
     {
         if (ignoreGuid == session->GetPlayer()->GetObjectGuid())
             ignoreResult = FRIEND_IGNORE_SELF;
@@ -577,7 +580,7 @@ void WorldSession::HandleAddIgnoreOpcodeCallBack(QueryResult *result, uint32 acc
 
 void WorldSession::HandleDelIgnoreOpcode( WorldPacket & recv_data )
 {
-    uint64 ignoreGuid;
+    ObjectGuid ignoreGuid;
 
     DEBUG_LOG( "WORLD: Received CMSG_DEL_IGNORE" );
 
@@ -719,7 +722,7 @@ void WorldSession::HandleAreaTriggerOpcode(WorldPacket & recv_data)
         return;
 
     uint32 quest_id = sObjectMgr.GetQuestForAreaTrigger( Trigger_ID );
-    if( quest_id && pl->isAlive() && pl->IsActiveQuest(quest_id) )
+    if ( quest_id && pl->isAlive() && pl->IsActiveQuest(quest_id) )
     {
         Quest const* pQuest = sObjectMgr.GetQuestTemplate(quest_id);
         if( pQuest )
@@ -730,7 +733,7 @@ void WorldSession::HandleAreaTriggerOpcode(WorldPacket & recv_data)
     }
 
     // enter to tavern, not overwrite city rest
-    if(sObjectMgr.IsTavernAreaTrigger(Trigger_ID))
+    if (sObjectMgr.IsTavernAreaTrigger(Trigger_ID))
     {
         // set resting flag we are in the inn
         if (pl->GetRestType() != REST_TYPE_IN_CITY)
@@ -738,7 +741,7 @@ void WorldSession::HandleAreaTriggerOpcode(WorldPacket & recv_data)
         return;
     }
 
-    if(pl->InBattleGround())
+    if (pl->InBattleGround())
     {
         if (BattleGround* bg = pl->GetBattleGround())
             bg->HandleAreaTrigger(pl, Trigger_ID);
@@ -749,11 +752,57 @@ void WorldSession::HandleAreaTriggerOpcode(WorldPacket & recv_data)
     if (!at)
         return;
 
-    MapEntry const* mapEntry = sMapStore.LookupEntry(at->target_mapId);
-    if (!mapEntry)
+    MapEntry const* targetMapEntry = sMapStore.LookupEntry(at->target_mapId);
+    if (!targetMapEntry)
         return;
 
-    switch (GetPlayer()->GetAreaTriggerLockStatus(at, GetPlayer()->GetDifficulty(mapEntry->IsRaid())))
+    if (!pl->isGameMaster())
+    {
+        // ghost resurrected at enter attempt to dungeon with corpse (including fail enter cases)
+        if (!pl->isAlive() && targetMapEntry->IsDungeon())
+        {
+            int32 corpseMapId = 0;
+            if (Corpse *corpse = pl->GetCorpse())
+                corpseMapId = corpse->GetMapId();
+
+            // check back way from corpse to entrance
+            uint32 instance_map = corpseMapId;
+            do
+            {
+                // most often fast case
+                if (instance_map==targetMapEntry->MapID)
+                    break;
+
+                InstanceTemplate const* instance = ObjectMgr::GetInstanceTemplate(instance_map);
+                instance_map = instance ? instance->parent : 0;
+            }
+            while (instance_map);
+
+            // corpse not in dungeon or some linked deep dungeons
+            if (!instance_map)
+            {
+                WorldPacket data(SMSG_AREA_TRIGGER_NO_CORPSE);
+                pl->GetSession()->SendPacket(&data);
+                return;
+            }
+
+            // need find areatrigger to inner dungeon for landing point
+            if (at->target_mapId != corpseMapId)
+            {
+                if (AreaTrigger const* corpseAt = sObjectMgr.GetMapEntranceTrigger(corpseMapId))
+                {
+                    at = corpseAt;
+                    targetMapEntry = sMapStore.LookupEntry(at->target_mapId);
+                }
+            }
+
+            // now we can resurrect player, and then check teleport requirements
+            pl->ResurrectPlayer(0.5f);
+            pl->SpawnCorpseBones();
+        }
+    }
+
+    switch (GetPlayer()->GetAreaTriggerLockStatus(at, GetPlayer()->GetDifficulty(targetMapEntry->IsRaid())))
     {
         case AREA_LOCKSTATUS_OK:
             GetPlayer()->TeleportTo(at->target_mapId, at->target_X, at->target_Y, at->target_Z, at->target_Orientation, TELE_TO_NOT_LEAVE_TRANSPORT);
@@ -770,23 +819,23 @@ void WorldSession::HandleAreaTriggerOpcode(WorldPacket & recv_data)
             // No break here!
         case AREA_LOCKSTATUS_MISSING_ITEM:
             {
-                MapDifficultyEntry const* mapDiff = GetMapDifficultyData(mapEntry->MapID,GetPlayer()->GetDifficulty(mapEntry->IsRaid()));
+                MapDifficultyEntry const* mapDiff = GetMapDifficultyData(targetMapEntry->MapID,GetPlayer()->GetDifficulty(targetMapEntry->IsRaid()));
                 if (mapDiff && mapDiff->mapDifficultyFlags & MAP_DIFFICULTY_FLAG_CONDITION)
                 {
                     SendAreaTriggerMessage(mapDiff->areaTriggerText[GetSessionDbcLocale()]);
                 }
                 // do not report anything for quest areatriggers
-                DEBUG_LOG("HandleAreaTriggerOpcode:  LockAreaStatus %u, do action", uint8(GetPlayer()->GetAreaTriggerLockStatus(at, GetPlayer()->GetDifficulty(mapEntry->IsRaid()))));
+                DEBUG_LOG("HandleAreaTriggerOpcode:  LockAreaStatus %u, do action", uint8(GetPlayer()->GetAreaTriggerLockStatus(at, GetPlayer()->GetDifficulty(targetMapEntry->IsRaid()))));
                 return;
             }
         case AREA_LOCKSTATUS_MISSING_DIFFICULTY:
             {
-                Difficulty difficulty = GetPlayer()->GetDifficulty(mapEntry->IsRaid());
+                Difficulty difficulty = GetPlayer()->GetDifficulty(targetMapEntry->IsRaid());
                 GetPlayer()->SendTransferAborted(at->target_mapId, TRANSFER_ABORT_DIFFICULTY, difficulty > RAID_DIFFICULTY_10MAN_HEROIC ? RAID_DIFFICULTY_10MAN_HEROIC : difficulty);
                 return;
             }
         case AREA_LOCKSTATUS_INSUFFICIENT_EXPANSION:
-            GetPlayer()->SendTransferAborted(at->target_mapId, TRANSFER_ABORT_INSUF_EXPAN_LVL, mapEntry->Expansion());
+            GetPlayer()->SendTransferAborted(at->target_mapId, TRANSFER_ABORT_INSUF_EXPAN_LVL, targetMapEntry->Expansion());
             return;
         case AREA_LOCKSTATUS_NOT_ALLOWED:
             GetPlayer()->SendTransferAborted(at->target_mapId, TRANSFER_ABORT_MAP_NOT_ALLOWED);
@@ -799,7 +848,7 @@ void WorldSession::HandleAreaTriggerOpcode(WorldPacket & recv_data)
                 return;
             }
         default:
-            DEBUG_LOG("HandleAreaTriggerOpcode: unhandled LockAreaStatus %u, do nothing", uint8(GetPlayer()->GetAreaTriggerLockStatus(at, GetPlayer()->GetDifficulty(mapEntry->IsRaid()))));
+            DEBUG_LOG("HandleAreaTriggerOpcode: unhandled LockAreaStatus %u, do nothing", uint8(GetPlayer()->GetAreaTriggerLockStatus(at, GetPlayer()->GetDifficulty(targetMapEntry->IsRaid()))));
             return;
     }
 }
@@ -990,7 +1039,7 @@ void WorldSession::HandleMoveUnRootAck(WorldPacket& recv_data)
     recv_data >> guid;
 
     // now can skip not our packet
-    if(_player->GetGUID() != guid)
+    if(_player->GetObjectGuid() != guid)
     {
         recv_data.rpos(recv_data.wpos());                   // prevent warnings spam
         return;

@@ -25,6 +25,7 @@
 #include "Log.h"
 #include "Opcodes.h"
 #include "Guild.h"
+#include "GuildMgr.h"
 #include "ArenaTeam.h"
 #include "GossipDef.h"
 #include "SocialMgr.h"
@@ -146,7 +147,7 @@ void WorldSession::HandlePetitionBuyOpcode(WorldPacket & recv_data)
 
     if(type == 9)
     {
-        if(sObjectMgr.GetGuildByName(name))
+        if (sGuildMgr.GetGuildByName(name))
         {
             SendGuildCommandResult(GUILD_CREATE_S, name, ERR_GUILD_NAME_EXISTS_S);
             return;
@@ -403,7 +404,7 @@ void WorldSession::HandlePetitionRenameOpcode(WorldPacket & recv_data)
 
     if(type == 9)
     {
-        if(sObjectMgr.GetGuildByName(newname))
+        if (sGuildMgr.GetGuildByName(newname))
         {
             SendGuildCommandResult(GUILD_CREATE_S, newname, ERR_GUILD_NAME_EXISTS_S);
             return;
@@ -797,7 +798,7 @@ void WorldSession::HandleTurnInPetitionOpcode(WorldPacket & recv_data)
 
     if(type == 9)
     {
-        if(sObjectMgr.GetGuildByName(name))
+        if (sGuildMgr.GetGuildByName(name))
         {
             SendGuildCommandResult(GUILD_CREATE_S, name, ERR_GUILD_NAME_EXISTS_S);
             delete result;
@@ -838,7 +839,7 @@ void WorldSession::HandleTurnInPetitionOpcode(WorldPacket & recv_data)
         }
 
         // register guild and add guildmaster
-        sObjectMgr.AddGuild(guild);
+        sGuildMgr.AddGuild(guild);
 
         // add members
         for(uint8 i = 0; i < signs; ++i)
@@ -846,7 +847,7 @@ void WorldSession::HandleTurnInPetitionOpcode(WorldPacket & recv_data)
             Field* fields = result->Fetch();
 
             ObjectGuid signGuid = ObjectGuid(HIGHGUID_PLAYER, fields[0].GetUInt32());
-            if (signGuid.IsEmpty())
+            if (!signGuid)
                 continue;
 
             guild->AddMember(signGuid, guild->GetLowestRank());
@@ -878,7 +879,7 @@ void WorldSession::HandleTurnInPetitionOpcode(WorldPacket & recv_data)
         {
             Field* fields = result->Fetch();
             ObjectGuid memberGUID = ObjectGuid(HIGHGUID_PLAYER, fields[0].GetUInt32());
-            if (memberGUID.IsEmpty())
+            if (!memberGUID)
                 continue;
 
             DEBUG_LOG("PetitionsHandler: adding arena member %s", memberGUID.GetString().c_str());

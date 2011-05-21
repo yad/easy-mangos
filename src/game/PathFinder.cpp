@@ -39,7 +39,7 @@ PathInfo::PathInfo(const Unit* owner, const float destX, const float destY, cons
     PathNode startPoint(x, y, z);
     setStartPosition(startPoint);
 
-    DEBUG_FILTER_LOG(LOG_FILTER_PATHFINDING, "++ PathInfo::PathInfo for %u \n", m_sourceUnit->GetGUID());
+    DEBUG_FILTER_LOG(LOG_FILTER_PATHFINDING, "++ PathInfo::PathInfo for %u \n", m_sourceUnit->GetObjectGuid());
 
     uint32 mapId = m_sourceUnit->GetMapId();
     if (MMAP::MMapFactory::IsPathfindingEnabled(mapId))
@@ -65,7 +65,7 @@ PathInfo::PathInfo(const Unit* owner, const float destX, const float destY, cons
 
 PathInfo::~PathInfo()
 {
-    DEBUG_FILTER_LOG(LOG_FILTER_PATHFINDING, "++ PathInfo::~PathInfo() for %u \n", m_sourceUnit->GetGUID());
+    DEBUG_FILTER_LOG(LOG_FILTER_PATHFINDING, "++ PathInfo::~PathInfo() for %u \n", m_sourceUnit->GetObjectGuid());
 }
 
 bool PathInfo::Update(const float destX, const float destY, const float destZ,
@@ -84,7 +84,7 @@ bool PathInfo::Update(const float destX, const float destY, const float destZ,
     m_useStraightPath = useStraightPath;
     m_forceDestination = forceDest;
 
-    DEBUG_FILTER_LOG(LOG_FILTER_PATHFINDING, "++ PathInfo::Update() for %u \n", m_sourceUnit->GetGUID());
+    DEBUG_FILTER_LOG(LOG_FILTER_PATHFINDING, "++ PathInfo::Update() for %u \n", m_sourceUnit->GetObjectGuid());
 
     // make sure navMesh works - we can run on map w/o mmap
     if (!m_navMesh || !m_navMeshQuery || !HaveTiles(newDest) ||
@@ -206,7 +206,8 @@ void PathInfo::BuildPolyPath(PathNode startPos, PathNode endPos)
     {
         DEBUG_FILTER_LOG(LOG_FILTER_PATHFINDING, "++ BuildPolyPath :: (startPoly == 0 || endPoly == 0)\n");
         BuildShortcut();
-        m_type = (m_sourceUnit->GetTypeId() == TYPEID_UNIT && ((Creature*)m_sourceUnit)->CanFly())
+        m_type = ((m_sourceUnit->GetTypeId() == TYPEID_UNIT && ((Creature*)m_sourceUnit)->CanFly()) ||
+                (m_sourceUnit->GetTypeId() == TYPEID_PLAYER && ((Player*)m_sourceUnit)->IsBot() && ((Player*)m_sourceUnit)->IsFreeFlying()))
                     ? PathType(PATHFIND_NORMAL | PATHFIND_NOT_USING_PATH) : PATHFIND_NOPATH;
         return;
     }
@@ -233,6 +234,18 @@ void PathInfo::BuildPolyPath(PathNode startPos, PathNode endPos)
             {
                 DEBUG_FILTER_LOG(LOG_FILTER_PATHFINDING, "++ BuildPolyPath :: flying case\n");
                 if (owner->CanFly())
+                    buildShotrcut = true;
+            }
+        }
+        else if (m_sourceUnit->GetTypeId() == TYPEID_PLAYER)
+        {
+            Player* owner = (Player*)m_sourceUnit;
+
+            PathNode p = (distToStartPoly > 7.0f) ? startPos : endPos;
+            if (!m_sourceUnit->GetTerrain()->IsUnderWater(p.x, p.y, p.z))
+            {
+                DEBUG_FILTER_LOG(LOG_FILTER_PATHFINDING, "++ BuildPolyPath :: flying case\n");
+                if (owner->IsFreeFlying())
                     buildShotrcut = true;
             }
         }
@@ -340,7 +353,7 @@ void PathInfo::BuildPolyPath(PathNode startPos, PathNode endPos)
         if (DT_SUCCESS != m_navMeshQuery->closestPointOnPoly(suffixStartPoly, endPoint, suffixEndPoint))
         {
             // suffixStartPoly is invalid somehow, or the navmesh is broken => error state
-            sLog.outError("%u's Path Build failed: invalid polyRef in path", m_sourceUnit->GetGUID());
+            sLog.outError("%u's Path Build failed: invalid polyRef in path", m_sourceUnit->GetObjectGuid());
 
             BuildShortcut();
             m_type = PATHFIND_NOPATH;
@@ -364,7 +377,7 @@ void PathInfo::BuildPolyPath(PathNode startPos, PathNode endPos)
             // this is probably an error state, but we'll leave it
             // and hopefully recover on the next Update
             // we still need to copy our preffix
-            sLog.outError("%u's Path Build failed: 0 length path", m_sourceUnit->GetGUID());
+            sLog.outError("%u's Path Build failed: 0 length path", m_sourceUnit->GetObjectGuid());
         }
 
         DEBUG_FILTER_LOG(LOG_FILTER_PATHFINDING, "++  m_polyLength=%u prefixPolyLength=%u suffixPolyLength=%u \n",m_polyLength, prefixPolyLength, suffixPolyLength);
@@ -396,7 +409,7 @@ void PathInfo::BuildPolyPath(PathNode startPos, PathNode endPos)
         if (!m_polyLength || dtResult != DT_SUCCESS)
         {
             // only happens if we passed bad data to findPath(), or navmesh is messed up
-            sLog.outError("%u's Path Build failed: 0 length path", m_sourceUnit->GetGUID());
+            sLog.outError("%u's Path Build failed: 0 length path", m_sourceUnit->GetObjectGuid());
             BuildShortcut();
             m_type = PATHFIND_NOPATH;
             return;

@@ -85,7 +85,7 @@ void PlayerbotPaladinAI::InitSpells(PlayerbotAI* const ai)
     RECENTLY_BANDAGED             = 11196; // first aid check
 
     // racial
-    ARCANE_TORRENT                = ai->initSpell(ARCANE_TORRENT_MANA_CLASSES);
+    ARCANE_TORRENT                = ai->initSpell(ARCANE_TORRENT_MANA_CLASSES); // blood elf
     GIFT_OF_THE_NAARU             = ai->initSpell(GIFT_OF_THE_NAARU_PALADIN); // draenei
     STONEFORM                     = ai->initSpell(STONEFORM_ALL); // dwarf
     EVERY_MAN_FOR_HIMSELF         = ai->initSpell(EVERY_MAN_FOR_HIMSELF_ALL); // human
@@ -162,26 +162,32 @@ void PlayerbotPaladinAI::DoNextCombatManeuver(Unit *pTarget)
     if (RIGHTEOUS_FURY > 0 && !m_bot->HasAura(RIGHTEOUS_FURY, EFFECT_INDEX_0))
         ai->CastSpell (RIGHTEOUS_FURY, m_bot);
 
-    if (SHADOW_RESISTANCE_AURA > 0 && !m_bot->HasAura(SHADOW_RESISTANCE_AURA, EFFECT_INDEX_0) && pTarget->getClass() == CLASS_WARLOCK)
-        ai->CastSpell (SHADOW_RESISTANCE_AURA, m_bot);
-
-    if (DEVOTION_AURA > 0 && !m_bot->HasAura(DEVOTION_AURA, EFFECT_INDEX_0) && pTarget->getClass() == CLASS_WARRIOR)
-        ai->CastSpell (DEVOTION_AURA, m_bot);
-
-    if (FIRE_RESISTANCE_AURA > 0 && !m_bot->HasAura(FIRE_RESISTANCE_AURA, EFFECT_INDEX_0) && pTarget->getClass() == CLASS_MAGE)
-        ai->CastSpell (FIRE_RESISTANCE_AURA, m_bot);
-
-    if (RETRIBUTION_AURA > 0 && !m_bot->HasAura(RETRIBUTION_AURA, EFFECT_INDEX_0) && pTarget->getClass() == CLASS_PRIEST)
-        ai->CastSpell (RETRIBUTION_AURA, m_bot);
-
-    if (DEVOTION_AURA > 0 && !m_bot->HasAura(DEVOTION_AURA, EFFECT_INDEX_0) && pTarget->getClass() == CLASS_SHAMAN)
-        ai->CastSpell (DEVOTION_AURA, m_bot);
-
-    if (DEVOTION_AURA > 0 && !m_bot->HasAura(DEVOTION_AURA, EFFECT_INDEX_0) && pTarget->getClass() == CLASS_ROGUE)
-        ai->CastSpell (DEVOTION_AURA, m_bot);
-
-    if (DEVOTION_AURA > 0 && !m_bot->HasAura(DEVOTION_AURA, EFFECT_INDEX_0) && pTarget->getClass() == CLASS_PALADIN)
-        ai->CastSpell (DEVOTION_AURA, m_bot);
+    switch (pTarget->getClass())
+    {
+    case CLASS_WARLOCK:
+    case CLASS_PRIEST:
+        if (!m_bot->HasAura(SHADOW_RESISTANCE_AURA) && ai->CastSpell(SHADOW_RESISTANCE_AURA))
+            return;
+        break;
+    case CLASS_MAGE:
+        if (pTarget->GetTypeId() == TYPEID_PLAYER)
+        {
+            if (((Player*)pTarget)->getRole() == MageFire && !m_bot->HasAura(FIRE_RESISTANCE_AURA) && ai->CastSpell(FIRE_RESISTANCE_AURA))
+                return;
+            else if (((Player*)pTarget)->getRole() == MageFrost && !m_bot->HasAura(FROST_RESISTANCE_AURA) && ai->CastSpell(FROST_RESISTANCE_AURA))
+                return;
+        }
+        else if (!m_bot->HasAura(FIRE_RESISTANCE_AURA) && ai->CastSpell(FIRE_RESISTANCE_AURA))
+            return;
+        break;
+    case CLASS_HUNTER:
+        if (!m_bot->HasAura(RETRIBUTION_AURA) && ai->CastSpell(RETRIBUTION_AURA))
+            return;
+        break;
+    default:
+        if (!m_bot->HasAura(DEVOTION_AURA) && ai->CastSpell(DEVOTION_AURA))
+            return;
+    }
 
     if (ai->GetHealthPercent() <= 40 || m_master->GetHealth() <= m_master->GetMaxHealth() * 0.4)
         SpellSequence = Healing;
@@ -191,9 +197,26 @@ void PlayerbotPaladinAI::DoNextCombatManeuver(Unit *pTarget)
     switch (SpellSequence)
     {
         case Combat:
-            if (JUDGEMENT_OF_LIGHT > 0 && !pTarget->HasAura(JUDGEMENT_OF_LIGHT, EFFECT_INDEX_0) && CombatCounter < 1 && ai->GetManaPercent() >= 5)
+            if (CombatCounter < 1 && ai->GetManaPercent() >= 5)
             {
-                ai->CastSpell (JUDGEMENT_OF_LIGHT, pTarget);
+                if(m_bot->GetGroup())
+                {
+                    if (!pTarget->HasAura(JUDGEMENT_OF_LIGHT) && (ai->GetManaPercent() > 30 || pTarget->HasAura(JUDGEMENT_OF_WISDOM)) && ai->CastSpell(JUDGEMENT_OF_LIGHT, pTarget))
+                        return;
+                    else if (!pTarget->HasAura(JUDGEMENT_OF_WISDOM) && ai->CastSpell(JUDGEMENT_OF_WISDOM, pTarget))
+                        return;
+                    else if (!pTarget->HasAura(JUDGEMENT_OF_JUSTICE) && ai->CastSpell(JUDGEMENT_OF_JUSTICE, pTarget))
+                        return;
+                    else if (ai->CastSpell(JUDGEMENT_OF_LIGHT, pTarget))
+                        return;
+                }
+                else
+                {
+                    if (!pTarget->HasAura(JUDGEMENT_OF_LIGHT) && ai->GetManaPercent() > 30 && ai->CastSpell(JUDGEMENT_OF_LIGHT, pTarget))
+                        return;
+                    else if (!pTarget->HasAura(JUDGEMENT_OF_WISDOM) && ai->GetManaPercent() <= 30 && ai->CastSpell (JUDGEMENT_OF_WISDOM, pTarget))
+                        return;
+                }
 
                 CombatCounter++;
                 break;
@@ -356,39 +379,6 @@ void PlayerbotPaladinAI::DoNonCombatActions()
 
     if (DEVOTION_AURA > 0 && !m_bot->HasAura(DEVOTION_AURA, EFFECT_INDEX_0))
         ai->CastSpell (DEVOTION_AURA, m_bot);
-
-    // mana check
-    if (m_bot->getStandState() != UNIT_STAND_STATE_STAND)
-        m_bot->SetStandState(UNIT_STAND_STATE_STAND);
-
-    Item* pItem = ai->FindDrink();
-    Item* fItem = ai->FindBandage();
-
-    if (pItem != NULL && ai->GetManaPercent() < 40)
-    {
-
-        ai->UseItem(pItem);
-        return;
-    }
-
-    // hp check original
-    if (m_bot->getStandState() != UNIT_STAND_STATE_STAND)
-        m_bot->SetStandState(UNIT_STAND_STATE_STAND);
-
-    pItem = ai->FindFood();
-
-    if (pItem != NULL && ai->GetHealthPercent() < 40)
-    {
-
-        ai->UseItem(pItem);
-        return;
-    }
-    else if (pItem == NULL && fItem != NULL && !m_bot->HasAura(RECENTLY_BANDAGED, EFFECT_INDEX_0) && ai->GetHealthPercent() < 70)
-    {
-
-        ai->UseItem(fItem);
-        return;
-    }
 
     // heal and buff group
     if (m_master->GetGroup())

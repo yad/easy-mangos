@@ -488,7 +488,7 @@ bool BattleGroundQueue::InviteGroupToBG(GroupQueueInfo * ginfo, BattleGround * b
             BGQueueInviteEvent* inviteEvent = new BGQueueInviteEvent(plr->GetObjectGuid(), ginfo->IsInvitedToBGInstanceGUID, bgTypeId, ginfo->arenaType, ginfo->RemoveInviteTime);
             plr->m_Events.AddEvent(inviteEvent, plr->m_Events.CalculateTime(INVITATION_REMIND_TIME));
             // create automatic remove events
-            BGQueueRemoveEvent* removeEvent = new BGQueueRemoveEvent(plr->GetGUID(), ginfo->IsInvitedToBGInstanceGUID, bgTypeId, bgQueueTypeId, ginfo->RemoveInviteTime);
+            BGQueueRemoveEvent* removeEvent = new BGQueueRemoveEvent(plr->GetObjectGuid(), ginfo->IsInvitedToBGInstanceGUID, bgTypeId, bgQueueTypeId, ginfo->RemoveInviteTime);
             plr->m_Events.AddEvent(removeEvent, plr->m_Events.CalculateTime(INVITE_ACCEPT_WAIT_TIME));
 
             WorldPacket data;
@@ -964,6 +964,8 @@ void BattleGroundQueue::Update(BattleGroundTypeId bgTypeId, BattleGroundBracketI
                 for(std::list<Player *>::iterator tIter = team.begin(); tIter != team.end(); ++tIter)
                 {
                     Player* p = *tIter;
+                    p->GiveLevel(leader->getLevel());
+                    p->GetPlayerbotAI()->CheckStuff();
 
                     if (team.front()->GetGroup() && !team.front()->GetGroup()->isRaidGroup() && team.front()->GetGroup()->IsFull())
                     {
@@ -982,16 +984,8 @@ void BattleGroundQueue::Update(BattleGroundTypeId bgTypeId, BattleGroundBracketI
 
                 if (team.front()->GetGroup())
                 {
-                    GroupReference *ref = team.front()->GetGroup()->GetFirstMember();
-                    while (ref)
-                    {
-                        Player* p = ref->getSource();
-                        p->GiveLevel(leader->getLevel());
-                        p->GetPlayerbotAI()->CheckStuff();
-                        ref = ref->next();
-                    }
                     WorldPacket packet(CMSG_BATTLEMASTER_JOIN, 8+4+4+1);
-                    packet << uint64(team.front()->GetGUID());
+                    packet << uint64(team.front()->GetObjectGuid());
                     packet << uint32(bgTypeId);
                     packet << uint32(bg_template->GetInstanceID());
                     packet << uint8(1);
@@ -1205,11 +1199,16 @@ void BattleGroundQueue::Update(BattleGroundTypeId bgTypeId, BattleGroundBracketI
 
                 for(std::list<Player *>::iterator tIter = team.begin(); tIter != team.end(); ++tIter)
                 {
+                    WorldPacket pk1;
                     Player* p = *tIter;
+                    p->GiveLevel(leader->getLevel());
+                    p->GetPlayerbotAI()->CheckStuff();
+                    p->SetArenaTeamIdInvited(at->GetId());
+                    p->GetSession()->HandleArenaTeamAcceptOpcode(pk1);
 
                     if (team.front() == p)
                     {
-                        at->ForceCaptain(team.front()->GetGUID());
+                        at->ForceCaptain(team.front()->GetObjectGuid());
                         at->ForceName("ArenaBoT");
                         at->ForceType(arenaType);
                         at->ForceTeamId(sObjectMgr.GenerateArenaTeamId());
@@ -1218,26 +1217,15 @@ void BattleGroundQueue::Update(BattleGroundTypeId bgTypeId, BattleGroundBracketI
                     }
                     else
                     {
-                        WorldPacket pk1(CMSG_GROUP_INVITE, 10);                // guess size
-                        pk1 << p->GetName();                                   // max len 48
-                        pk1 << uint32(0);
-                        team.front()->GetSession()->HandleGroupInviteOpcode(pk1);
+                        WorldPacket pk2(CMSG_GROUP_INVITE, 10);                // guess size
+                        pk2 << p->GetName();                                   // max len 48
+                        pk2 << uint32(0);
+                        team.front()->GetSession()->HandleGroupInviteOpcode(pk2);
                     }
                 }
 
                 if (team.front()->GetGroup())
                 {
-                    GroupReference *ref = team.front()->GetGroup()->GetFirstMember();
-                    while (ref)
-                    {
-                        Player* p = ref->getSource();
-                        p->GiveLevel(leader->getLevel());
-                        p->GetPlayerbotAI()->CheckStuff();
-                        p->SetArenaTeamIdInvited(at->GetId());
-                        WorldPacket pk2;
-                        p->GetSession()->HandleArenaTeamAcceptOpcode(pk2);
-                        ref = ref->next();
-                    }
                     WorldPacket packet(CMSG_BATTLEMASTER_JOIN_ARENA,8+1+1+1);
                     packet << uint64(0);           // arena Battlemaster guid
                     packet << uint8(arenaSlot);    // 2v2, 3v3 or 5v5
@@ -1414,12 +1402,12 @@ BattleGroundMgr::~BattleGroundMgr()
 void BattleGroundMgr::DeleteAllBattleGrounds()
 {
     // will also delete template bgs:
-    for(uint32 i = BATTLEGROUND_TYPE_NONE; i < MAX_BATTLEGROUND_TYPE_ID; i++)
+    for(uint32 i = BATTLEGROUND_TYPE_NONE; i < MAX_BATTLEGROUND_TYPE_ID; ++i)
     {
         for(BattleGroundSet::iterator itr = m_BattleGrounds[i].begin(); itr != m_BattleGrounds[i].end();)
         {
             BattleGround * bg = itr->second;
-            itr++;
+            ++itr;                                          // step from invalidate iterator pos in result element remove in ~BattleGround call
             delete bg;
         }
     }
@@ -1728,13 +1716,14 @@ uint32 BattleGroundMgr::CreateClientVisibleInstanceId(BattleGroundTypeId bgTypeI
     // the following works, because std::set is default ordered with "<"
     // the optimalization would be to use as bitmask std::vector<uint32> - but that would only make code unreadable
     uint32 lastId = 0;
-    for(std::set<uint32>::iterator itr = m_ClientBattleGroundIds[bgTypeId][bracket_id].begin(); itr != m_ClientBattleGroundIds[bgTypeId][bracket_id].end();)
+    ClientBattleGroundIdSet& ids = m_ClientBattleGroundIds[bgTypeId][bracket_id];
+    for(ClientBattleGroundIdSet::const_iterator itr = ids.begin(); itr != ids.end();)
     {
         if( (++lastId) != *itr)                             //if there is a gap between the ids, we will break..
             break;
         lastId = *itr;
     }
-    m_ClientBattleGroundIds[bgTypeId][bracket_id].insert(lastId + 1);
+    ids.insert(lastId + 1);
     return lastId + 1;
 }
 
@@ -2126,7 +2115,8 @@ void BattleGroundMgr::BuildBattleGroundListPacket(WorldPacket *data, ObjectGuid 
             if(PvPDifficultyEntry const* bracketEntry = GetBattlegroundBracketByLevel(bgTemplate->GetMapId(),plr->getLevel()))
             {
                 BattleGroundBracketId bracketId = bracketEntry->GetBracketId();
-                for(std::set<uint32>::iterator itr = m_ClientBattleGroundIds[bgTypeId][bracketId].begin(); itr != m_ClientBattleGroundIds[bgTypeId][bracketId].end();++itr)
+                ClientBattleGroundIdSet const& ids = m_ClientBattleGroundIds[bgTypeId][bracketId];
+                for(ClientBattleGroundIdSet::const_iterator itr = ids.begin(); itr != ids.end();++itr)
                 {
                     *data << uint32(*itr);
                     ++count;

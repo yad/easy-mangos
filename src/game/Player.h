@@ -110,9 +110,9 @@ struct PlayerSpell
 
 struct PlayerTalent
 {
-    PlayerSpellState state;
-    TalentEntry const *m_talentEntry;
+    TalentEntry const *talentEntry;
     uint32 currentRank;
+    PlayerSpellState state;
 };
 
 typedef UNORDERED_MAP<uint32, PlayerSpell> PlayerSpellMap;
@@ -960,7 +960,7 @@ std::ostringstream& operator<< (std::ostringstream& ss, PlayerTaxi const& taxi);
 struct BGData
 {
     BGData() : bgInstanceID(0), bgTypeID(BATTLEGROUND_TYPE_NONE), bgAfkReportedCount(0), bgAfkReportedTimer(0),
-        bgTeam(TEAM_NONE), mountSpell(0), m_needSave(false) { ClearTaxiPath(); }
+        bgTeam(TEAM_NONE), mountSpell(0), m_needSave(false), forLFG(false) { ClearTaxiPath(); }
 
     uint32 bgInstanceID;                                    ///< This variable is set to bg->m_InstanceID, saved
                                                             ///  when player is teleported to BG - (it is battleground's GUID)
@@ -979,6 +979,8 @@ struct BGData
     WorldLocation joinPos;                                  ///< From where player entered BG, saved
 
     bool m_needSave;                                        ///< true, if saved to DB fields modified after prev. save (marked as "saved" above)
+
+    bool forLFG;                                            // true, if data used for LFG entry point set ( fields modified after prev. save (instanceID = 0!)
 
     void ClearTaxiPath()     { taxiPath[0] = taxiPath[1] = 0; }
     bool HasTaxiPath() const { return taxiPath[0] && taxiPath[1]; }
@@ -1172,7 +1174,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         void Say(const std::string& text, const uint32 language);
         void Yell(const std::string& text, const uint32 language);
         void TextEmote(const std::string& text);
-        void Whisper(const std::string& text, const uint32 language,uint64 receiver);
+        void Whisper(const std::string& text, const uint32 language, ObjectGuid receiver);
         void BuildPlayerChat(WorldPacket *data, uint8 msgtype, const std::string& text, uint32 language) const;
 
         /*********************************************************/
@@ -1189,6 +1191,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         Item* GetItemByLimitedCategory(uint32 limitedCategory) const;
         Item* GetItemByPos( uint16 pos ) const;
         Item* GetItemByPos( uint8 bag, uint8 slot ) const;
+        uint32 GetItemDisplayIdInSlot(uint8 bag, uint8 slot) const;
         Item* GetWeaponForAttack(WeaponAttackType attackType) const { return GetWeaponForAttack(attackType,false,false); }
         Item* GetWeaponForAttack(WeaponAttackType attackType, bool nonbroken, bool useable) const;
         Item* GetShield(bool useable = false) const;
@@ -1388,7 +1391,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         uint32 GetMaxKeyringSize() const { return KEYRING_SLOT_END-KEYRING_SLOT_START; }
         void SendEquipError( InventoryResult msg, Item* pItem, Item *pItem2 = NULL, uint32 itemid = 0 ) const;
         void SendBuyError( BuyResult msg, Creature* pCreature, uint32 item, uint32 param );
-        void SendSellError( SellResult msg, Creature* pCreature, uint64 guid, uint32 param );
+        void SendSellError( SellResult msg, Creature* pCreature, ObjectGuid itemGuid, uint32 param );
         void AddWeaponProficiency(uint32 newflag) { m_WeaponProficiency |= newflag; }
         void AddArmorProficiency(uint32 newflag) { m_ArmorProficiency |= newflag; }
         uint32 GetWeaponProficiency() const { return m_WeaponProficiency; }
@@ -1485,8 +1488,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         bool SatisfyQuestDay( Quest const* qInfo, bool msg ) const;
         bool SatisfyQuestWeek( Quest const* qInfo, bool msg ) const;
         bool SatisfyQuestMonth(Quest const* qInfo, bool msg) const;
-        bool CanGiveQuestSourceItem( Quest const *pQuest, ItemPosCountVec* dest = NULL) const;
-        void GiveQuestSourceItem( Quest const *pQuest );
+        bool CanGiveQuestSourceItemIfNeed( Quest const *pQuest, ItemPosCountVec* dest = NULL) const;
+        void GiveQuestSourceItemIfNeed(Quest const *pQuest);
         bool TakeQuestSourceItem( uint32 quest_id, bool msg );
         bool GetQuestRewardStatus( uint32 quest_id ) const;
         QuestStatus GetQuestStatus( uint32 quest_id ) const;
@@ -1555,8 +1558,9 @@ class MANGOS_DLL_SPEC Player : public Unit
         void SendPushToPartyResponse( Player *pPlayer, uint32 msg );
         void SendQuestUpdateAddCreatureOrGo(Quest const* pQuest, ObjectGuid guid, uint32 creatureOrGO_idx, uint32 count);
 
-        uint64 GetDivider() { return m_divider; }
-        void SetDivider( uint64 guid ) { m_divider = guid; }
+        ObjectGuid GetDividerGuid() const { return m_dividerGuid; }
+        void SetDividerGuid(ObjectGuid guid) { m_dividerGuid = guid; }
+        void ClearDividerGuid() { m_dividerGuid.Clear(); }
 
         uint32 GetInGameTime() { return m_ingametime; }
 
@@ -1949,8 +1953,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         void ApplyManaRegenBonus(int32 amount, bool apply);
         void UpdateManaRegen();
 
-        const uint64& GetLootGUID() const { return m_lootGuid.GetRawValue(); }
-        void SetLootGUID(ObjectGuid const& guid) { m_lootGuid = guid; }
+        ObjectGuid const& GetLootGuid() const { return m_lootGuid; }
+        void SetLootGuid(ObjectGuid const& guid) { m_lootGuid = guid; }
 
         void RemovedInsignia(Player* looterPlr);
 
@@ -2248,7 +2252,7 @@ class MANGOS_DLL_SPEC Player : public Unit
             return false;
         }
         WorldLocation const& GetBattleGroundEntryPoint() const { return m_bgData.joinPos; }
-        void SetBattleGroundEntryPoint();
+        void SetBattleGroundEntryPoint(bool forLFG = false);
 
         void SetBGTeam(Team team) { m_bgData.bgTeam = team; m_bgData.m_needSave = true; }
         Team GetBGTeam() const { return m_bgData.bgTeam ? m_bgData.bgTeam : GetTeam(); }
@@ -2343,7 +2347,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         // currently visible objects at player client
         ObjectGuidSet m_clientGUIDs;
 
-        bool HaveAtClient(WorldObject const* u) { return u==this || m_clientGUIDs.find(u->GetGUID())!=m_clientGUIDs.end(); }
+        bool HaveAtClient(WorldObject const* u) { return u==this || m_clientGUIDs.find(u->GetObjectGuid())!=m_clientGUIDs.end(); }
 
         bool IsVisibleInGridForPlayer(Player* pl) const;
         bool IsVisibleGloballyFor(Player* pl) const;
@@ -2370,9 +2374,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         void UnsummonPetTemporaryIfAny();
         void ResummonPetTemporaryUnSummonedIfAny();
         bool IsPetNeedBeTemporaryUnsummoned() const { return !IsInWorld() || !isAlive() || IsMounted() /*+in flight*/; }
-        KnownPetNames m_knownPetNames;
-        std::string GetKnownPetName(uint32 petnumber);
-        void AddKnownPetName(uint32 petnumber, std::string name);
 
         void SendCinematicStart(uint32 CinematicSequenceId);
         void SendMovieStart(uint32 MovieId);
@@ -2410,8 +2411,10 @@ class MANGOS_DLL_SPEC Player : public Unit
         // LFG
         LFGPlayerState* GetLFGState() { return m_LFGState;};
         uint32 GetEquipGearScore(bool withBags = true, bool withBank = false);
+        void   ResetEquipGearScore() { m_cachedGS = 0;};
         typedef std::vector<uint32/*item level*/> GearScoreMap;
         uint8 GetTalentsCount(uint8 tab);
+        void  ResetTalentsCount() { m_cachedTC[0] = 0; m_cachedTC[1] = 0; m_cachedTC[2] = 0;};
 
         /*********************************************************/
         /***                   GROUP SYSTEM                    ***/
@@ -2533,7 +2536,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         QuestSet m_weeklyquests;
         QuestSet m_monthlyquests;
 
-        uint64 m_divider;
+        ObjectGuid m_dividerGuid;
         uint32 m_ingametime;
 
         /*********************************************************/
@@ -2733,6 +2736,10 @@ class MANGOS_DLL_SPEC Player : public Unit
         Runes *m_runes;
         EquipmentSets m_EquipmentSets;
         ItemPrototype const *bIFromSet;
+
+        /// class dependent melee diminishing constant for dodge/parry/missed chances
+        static const float m_diminishing_k[MAX_CLASSES];
+
     private:
         void _HandleDeadlyPoison(Unit* Target, WeaponAttackType attType, SpellEntry const *spellInfo);
         // internal common parts for CanStore/StoreItem functions
@@ -2817,6 +2824,9 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         DungeonPersistentState* _pendingBind;
         uint32 _pendingBindTimer;
+
+        uint32 m_cachedGS;
+        uint8  m_cachedTC[3];
 
         // LFG
         LFGPlayerState* m_LFGState;

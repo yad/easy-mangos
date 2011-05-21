@@ -32,6 +32,7 @@
 #include "Creature.h"
 #include "Pet.h"
 #include "Guild.h"
+#include "GuildMgr.h"
 #include "Chat.h"
 
 enum StableResultCode
@@ -854,7 +855,7 @@ void WorldSession::HandleRepairItemOpcode( WorldPacket & recv_data )
     float discountMod = _player->GetReputationPriceDiscount(unit);
 
     uint32 TotalCost = 0;
-    if (!itemGuid.IsEmpty())
+    if (itemGuid)
     {
         DEBUG_LOG("ITEM: %s repair of %s", npcGuid.GetString().c_str(), itemGuid.GetString().c_str());
 
@@ -874,7 +875,7 @@ void WorldSession::HandleRepairItemOpcode( WorldPacket & recv_data )
         uint32 GuildId = _player->GetGuildId();
         if (!GuildId)
             return;
-        Guild *pGuild = sObjectMgr.GetGuildById(GuildId);
+        Guild* pGuild = sGuildMgr.GetGuildById(GuildId);
         if (!pGuild)
             return;
         pGuild->LogBankEvent(GUILD_BANK_LOG_REPAIR_MONEY, 0, _player->GetGUIDLow(), TotalCost);

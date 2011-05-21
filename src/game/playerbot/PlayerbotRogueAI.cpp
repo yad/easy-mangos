@@ -294,26 +294,6 @@ void PlayerbotRogueAI::DoNonCombatActions()
     if (m_bot->HasAura(STEALTH))
         m_bot->RemoveSpellsCausingAura(SPELL_AURA_MOD_STEALTH);
 
-    // hp check
-    if (m_bot->getStandState() != UNIT_STAND_STATE_STAND)
-        m_bot->SetStandState(UNIT_STAND_STATE_STAND);
-
-    Item* pItem = ai->FindFood();
-    Item* fItem = ai->FindBandage();
-
-    if (pItem != NULL && ai->GetHealthPercent() < 30)
-    {
-
-        ai->UseItem(pItem);
-        return;
-    }
-    else if (pItem == NULL && fItem != NULL && !m_bot->HasAura(RECENTLY_BANDAGED, EFFECT_INDEX_0) && ai->GetHealthPercent() < 70)
-    {
-
-        ai->UseItem(fItem);
-        return;
-    }
-
     // Search and apply poisons to weapons
     // Mainhand ...
     Item * poison, * weapon;

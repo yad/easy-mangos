@@ -697,11 +697,24 @@ ChatCommand * ChatHandler::getCommandTable()
         { NULL,             0,                  false, NULL,                                           "", NULL }
     };
 
+    static ChatCommand botCommandTable[] =
+    {
+        { "invite",         SEC_PLAYER,         false, &ChatHandler::HandleBotInvite,                  "", NULL },
+        { "invitearena",    SEC_PLAYER,         false, &ChatHandler::HandleBotInviteArena,             "", NULL },
+        { "pull",           SEC_PLAYER,         false, &ChatHandler::HandleBotPull,                    "", NULL },
+        { "tank",           SEC_PLAYER,         false, &ChatHandler::HandleBotTank,                    "", NULL },
+        { "assist",         SEC_PLAYER,         false, &ChatHandler::HandleBotAssist,                  "", NULL },
+        { "tanktarget",     SEC_PLAYER,         false, &ChatHandler::HandleBotTankTarget,              "", NULL },
+        { "assisttarget",   SEC_PLAYER,         false, &ChatHandler::HandleBotAssistTarget,            "", NULL },
+        { NULL,             0,                  false, NULL,                                           "", NULL }
+    };
+
     static ChatCommand commandTable[] =
     {
         { "account",        SEC_PLAYER,         true,  NULL,                                           "", accountCommandTable  },
         { "achievement",    SEC_ADMINISTRATOR,  true,  NULL,                                           "", achievementCommandTable },
         { "auction",        SEC_ADMINISTRATOR,  false, NULL,                                           "", auctionCommandTable  },
+        { "bot",            SEC_PLAYER,         false, NULL,                                           "", botCommandTable      },
         { "cast",           SEC_ADMINISTRATOR,  false, NULL,                                           "", castCommandTable     },
         { "character",      SEC_GAMEMASTER,     true,  NULL,                                           "", characterCommandTable},
         { "debug",          SEC_MODERATOR,      true,  NULL,                                           "", debugCommandTable    },
@@ -784,8 +797,6 @@ ChatCommand * ChatHandler::getCommandTable()
         { "damage",         SEC_ADMINISTRATOR,  false, &ChatHandler::HandleDamageCommand,              "", NULL },
         { "combatstop",     SEC_GAMEMASTER,     false, &ChatHandler::HandleCombatStopCommand,          "", NULL },
         { "ahbot",          SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleAHBotOptionsCommand,        "", NULL },
-        { "botinvite",      SEC_PLAYER,         false, &ChatHandler::HandleBotInvite,                  "", NULL },
-        { "botinvitearena", SEC_PLAYER,         false, &ChatHandler::HandleBotInviteArena,             "", NULL },
         { "flusharenapoints",SEC_ADMINISTRATOR, false, &ChatHandler::HandleFlushArenaPointsCommand,    "", NULL },
         { "repairitems",    SEC_GAMEMASTER,     true,  &ChatHandler::HandleRepairitemsCommand,         "", NULL },
         { "stable",         SEC_ADMINISTRATOR,  false, &ChatHandler::HandleStableCommand,              "", NULL },
@@ -860,7 +871,7 @@ bool ChatHandler::HasLowerSecurity(Player* target, ObjectGuid guid, bool strong)
 
     if (target)
         target_session = target->GetSession();
-    else if (!guid.IsEmpty())
+    else if (guid)
         target_account = sObjectMgr.GetPlayerAccountIdByGUID(guid);
 
     if(!target_session && !target_account)
@@ -2019,7 +2030,7 @@ valid examples:
 }
 
 //Note: target_guid used only in CHAT_MSG_WHISPER_INFORM mode (in this case channelName ignored)
-void ChatHandler::FillMessageData( WorldPacket *data, WorldSession* session, uint8 type, uint32 language, const char *channelName, uint64 target_guid, const char *message, Unit *speaker)
+void ChatHandler::FillMessageData( WorldPacket *data, WorldSession* session, uint8 type, uint32 language, const char *channelName, ObjectGuid targetGuid, const char *message, Unit *speaker)
 {
     uint32 messageLength = (message ? strlen(message) : 0) + 1;
 
@@ -2048,7 +2059,7 @@ void ChatHandler::FillMessageData( WorldPacket *data, WorldSession* session, uin
         case CHAT_MSG_BG_SYSTEM_HORDE:
         case CHAT_MSG_BATTLEGROUND:
         case CHAT_MSG_BATTLEGROUND_LEADER:
-            target_guid = session ? session->GetPlayer()->GetGUID() : 0;
+            targetGuid = session ? session->GetPlayer()->GetObjectGuid() : ObjectGuid();
             break;
         case CHAT_MSG_MONSTER_SAY:
         case CHAT_MSG_MONSTER_PARTY:
@@ -2059,13 +2070,13 @@ void ChatHandler::FillMessageData( WorldPacket *data, WorldSession* session, uin
         case CHAT_MSG_RAID_BOSS_EMOTE:
         case CHAT_MSG_BATTLENET:
         {
-            *data << speaker->GetObjectGuid();
+            *data << ObjectGuid(speaker->GetObjectGuid());
             *data << uint32(0);                             // 2.1.0
             *data << uint32(strlen(speaker->GetName()) + 1);
             *data << speaker->GetName();
             ObjectGuid listener_guid;
             *data << listener_guid;
-            if (!listener_guid.IsEmpty() && !listener_guid.IsPlayer())
+            if (listener_guid && !listener_guid.IsPlayer())
             {
                 *data << uint32(1);                         // string listener_name_length
                 *data << uint8(0);                          // string listener_name
@@ -2077,11 +2088,11 @@ void ChatHandler::FillMessageData( WorldPacket *data, WorldSession* session, uin
         }
         default:
             if (type != CHAT_MSG_WHISPER_INFORM && type != CHAT_MSG_IGNORED && type != CHAT_MSG_DND && type != CHAT_MSG_AFK)
-                target_guid = 0;                            // only for CHAT_MSG_WHISPER_INFORM used original value target_guid
+                targetGuid.Clear();                         // only for CHAT_MSG_WHISPER_INFORM used original value target_guid
             break;
     }
 
-    *data << uint64(target_guid);                           // there 0 for BG messages
+    *data << ObjectGuid(targetGuid);                        // there 0 for BG messages
     *data << uint32(0);                                     // can be chat msg group or something
 
     if (type == CHAT_MSG_CHANNEL)
@@ -2090,7 +2101,7 @@ void ChatHandler::FillMessageData( WorldPacket *data, WorldSession* session, uin
         *data << channelName;
     }
 
-    *data << uint64(target_guid);
+    *data << ObjectGuid(targetGuid);
     *data << uint32(messageLength);
     *data << message;
     if(session != 0 && type != CHAT_MSG_WHISPER_INFORM && type != CHAT_MSG_DND && type != CHAT_MSG_AFK)
@@ -2106,7 +2117,7 @@ Player * ChatHandler::getSelectedPlayer()
 
     ObjectGuid guid  = m_session->GetPlayer()->GetSelectionGuid();
 
-    if (guid.IsEmpty())
+    if (!guid)
         return m_session->GetPlayer();
 
     return sObjectMgr.GetPlayer(guid);
@@ -2119,7 +2130,7 @@ Unit* ChatHandler::getSelectedUnit()
 
     ObjectGuid guid = m_session->GetPlayer()->GetSelectionGuid();
 
-    if (guid.IsEmpty())
+    if (!guid)
         return m_session->GetPlayer();
 
     // can be selected player at another map
@@ -2922,10 +2933,7 @@ ObjectGuid ChatHandler::ExtractGuidFromLink(char** text)
             if (Player* player = sObjectMgr.GetPlayer(name.c_str()))
                 return player->GetObjectGuid();
 
-            if (uint64 guid = sObjectMgr.GetPlayerGUIDByName(name))
-                return ObjectGuid(guid);
-
-            return ObjectGuid();
+            return sObjectMgr.GetPlayerGuidByName(name);
         }
         case GUID_LINK_CREATURE:
         {
@@ -3018,8 +3026,7 @@ bool ChatHandler::ExtractLocationFromLink(char** text, uint32& mapid, float& x, 
                 return true;
             }
 
-            ObjectGuid guid = sObjectMgr.GetPlayerGUIDByName(name);
-            if (!guid.IsEmpty())
+            if (ObjectGuid guid = sObjectMgr.GetPlayerGuidByName(name))
             {
                 // to point where player stay (if loaded)
                 float o;
@@ -3244,14 +3251,14 @@ bool ChatHandler::ExtractPlayerTarget(char** args, Player** player /*= NULL*/, O
             *player = pl;
 
         // if need guid value from DB (in name case for check player existence)
-        ObjectGuid guid = !pl && (player_guid || player_name) ? sObjectMgr.GetPlayerGUIDByName(name) : uint64(0);
+        ObjectGuid guid = !pl && (player_guid || player_name) ? sObjectMgr.GetPlayerGuidByName(name) : ObjectGuid();
 
         // if allowed player guid (if no then only online players allowed)
         if(player_guid)
             *player_guid = pl ? pl->GetObjectGuid() : guid;
 
         if(player_name)
-            *player_name = pl || !guid.IsEmpty() ? name : "";
+            *player_name = pl || guid ? name : "";
     }
     else
     {
@@ -3268,7 +3275,7 @@ bool ChatHandler::ExtractPlayerTarget(char** args, Player** player /*= NULL*/, O
     }
 
     // some from req. data must be provided (note: name is empty if player not exist)
-    if((!player || !*player) && (!player_guid || player_guid->IsEmpty()) && (!player_name || player_name->empty()))
+    if((!player || !*player) && (!player_guid || !*player_guid) && (!player_name || player_name->empty()))
     {
         SendSysMessage(LANG_PLAYER_NOT_FOUND);
         SetSentErrorMessage(true);

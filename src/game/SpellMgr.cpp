@@ -77,6 +77,9 @@ int32 CalculateSpellDuration(SpellEntry const *spellInfo, Unit const* caster)
         {
             modOwner->ApplySpellMod(spellInfo->Id, SPELLMOD_DURATION, duration);
 
+            if ((spellInfo->AttributesEx5 & SPELL_ATTR_EX5_AFFECTED_BY_HASTE) != 0)
+                duration = (int32)(duration * modOwner->GetFloatValue(UNIT_MOD_CAST_SPEED));
+
             if (duration < 0)
                 duration = 0;
         }
@@ -744,6 +747,7 @@ bool IsPositiveEffect(SpellEntry const *spellproto, SpellEffectIndex effIndex)
                     }
                 }   break;
                 case SPELL_AURA_MOD_DAMAGE_DONE:            // dependent from base point sign (negative -> negative)
+                case SPELL_AURA_MOD_RESISTANCE:
                 case SPELL_AURA_MOD_STAT:
                 case SPELL_AURA_MOD_SKILL:
                 case SPELL_AURA_MOD_DODGE_PERCENT:
@@ -777,7 +781,7 @@ bool IsPositiveEffect(SpellEntry const *spellproto, SpellEffectIndex effIndex)
                             {
                                 // if non-positive trigger cast targeted to positive target this main cast is non-positive
                                 // this will place this spell auras as debuffs
-                                if (IsPositiveTarget(spellTriggeredProto->EffectImplicitTargetA[effIndex], spellTriggeredProto->EffectImplicitTargetB[effIndex]) &&
+                                if (IsPositiveTarget(spellTriggeredProto->EffectImplicitTargetA[i], spellTriggeredProto->EffectImplicitTargetB[i]) &&
                                     !IsPositiveEffect(spellTriggeredProto, SpellEffectIndex(i)))
                                     return false;
                             }
@@ -1048,7 +1052,7 @@ void SpellMgr::LoadSpellTargetPositions()
         bar.step();
 
         sLog.outString();
-        sLog.outString( ">> Loaded %u spell target coordinates", count );
+        sLog.outString(">> Loaded %u spell target destination coordinates", count);
         return;
     }
 
@@ -1125,7 +1129,7 @@ void SpellMgr::LoadSpellTargetPositions()
     delete result;
 
     sLog.outString();
-    sLog.outString( ">> Loaded %u spell teleport coordinates", count );
+    sLog.outString(">> Loaded %u spell target destination coordinates", count);
 }
 
 template <typename EntryType, typename WorkerType, typename StorageType>
@@ -2123,6 +2127,16 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                     ((spellInfo_2->SpellIconID == 313 || spellInfo_2->SpellIconID == 2039) && (spellInfo_1->SpellIconID == 544  || spellInfo_1->SpellIconID == 91)))
                     return false;
 
+                // Shadowflame and Curse of Agony
+                if( spellInfo_1->SpellIconID == 544 && spellInfo_2->SpellIconID == 3317 ||
+                    spellInfo_2->SpellIconID == 544 && spellInfo_1->SpellIconID == 3317 )
+                    return false;
+
+                // Shadowflame and Curse of Doom
+                if( spellInfo_1->SpellIconID == 91 && spellInfo_2->SpellIconID == 3317 ||
+                    spellInfo_2->SpellIconID == 91 && spellInfo_1->SpellIconID == 3317 )
+                    return false;
+
                 // Metamorphosis, diff effects
                 if (spellInfo_1->SpellIconID == 3314 && spellInfo_2->SpellIconID == 3314)
                     return false;
@@ -2179,6 +2193,10 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                 //Devouring Plague and Shadow Vulnerability
                 if (((spellInfo_1->SpellFamilyFlags & UI64LIT(0x2000000)) && (spellInfo_2->SpellFamilyFlags & UI64LIT(0x800000000))) ||
                     ((spellInfo_2->SpellFamilyFlags & UI64LIT(0x2000000)) && (spellInfo_1->SpellFamilyFlags & UI64LIT(0x800000000))))
+                    return false;
+                
+                // Mind Flay
+                if (spellInfo_1->SpellIconID == 548 && spellInfo_2->SpellIconID == 548)
                     return false;
 
                 //StarShards and Shadow Word: Pain
@@ -2307,6 +2325,10 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                     ((spellInfo_2->SpellFamilyFlags & UI64LIT(0x4)) && (spellInfo_1->SpellFamilyFlags & UI64LIT(0x00000004000))))
                     return false;
 
+                // Deterrence
+                if (spellInfo_1->SpellIconID == 83 && spellInfo_2->SpellIconID == 83)
+                    return false;
+
                 // Bestial Wrath
                 if (spellInfo_1->SpellIconID == 1680 && spellInfo_2->SpellIconID == 1680)
                     return false;
@@ -2350,6 +2372,11 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
 
                 // Divine Sacrifice and Divine Guardian
                 if (spellInfo_1->SpellIconID == 3837 && spellInfo_2->SpellIconID == 3837)
+                    return false;
+
+                // Blood Corruption, Holy Vengeance, Righteous Vengeance
+                if ((spellInfo_1->SpellIconID == 2292 && spellInfo_2->SpellIconID == 3025) ||
+                    (spellInfo_2->SpellIconID == 2292 && spellInfo_1->SpellIconID == 3025))
                     return false;
 
                 // Blessing of Sanctuary (multi-family check, some from 16 spell icon spells)

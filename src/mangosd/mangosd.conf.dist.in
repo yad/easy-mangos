@@ -1630,15 +1630,19 @@ CharDelete.KeepDays = 30
 #        enabling Raid finder
 #    LFG.Enable              = 0
 #        enabling Dungeon finder
-#    LFG.MaxKicks            = 3
-#    LFG.KickVotes           = 3
+#    LFG.Debug              = 0
+#        enabling Dungeon finder debug mode
+#    LFR.Extend              = 0
+#        enabling Raid finder extended operations (not blizzlike!)
+#    LFG.MaxKicks            = 5
 #
 ###################################################################################################################
 
 LFR.Enable              = 1
 LFG.Enable              = 0
-LFG.MaxKicks            = 3
-LFG.KickVotes           = 3
+LFG.Debug               = 0
+LFR.Extend              = 0
+LFG.MaxKicks            = 5
 
 ###################################################################################################################
 #

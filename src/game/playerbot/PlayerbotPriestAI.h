@@ -141,7 +141,10 @@ private:
            VAMPIRIC_TOUCH,
            PRAYER_OF_SHADOW_PROTECTION,
            SHADOWFIEND,
-           MIND_SEAR;
+           MIND_SEAR,
+           SHADOWFORM,
+           VAMPIRIC_EMBRACE,
+           SHADOW_WORD_DEATH;
 
     // discipline
     uint32 POWER_WORD_SHIELD,

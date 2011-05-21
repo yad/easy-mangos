@@ -310,7 +310,7 @@ struct GameObjectInfo
             uint32 radius;                                  //0
             uint32 spell;                                   //1
             uint32 worldState1;                             //2
-            uint32 worldstate2;                             //3
+            uint32 worldState2;                             //3
             uint32 winEventID1;                             //4
             uint32 winEventID2;                             //5
             uint32 contestedEventID1;                       //6
@@ -320,7 +320,7 @@ struct GameObjectInfo
             uint32 neutralEventID1;                         //10
             uint32 neutralEventID2;                         //11
             uint32 neutralPercent;                          //12
-            uint32 worldstate3;                             //13
+            uint32 worldState3;                             //13
             uint32 minSuperiority;                          //14
             uint32 maxSuperiority;                          //15
             uint32 minTime;                                 //16
@@ -581,6 +581,25 @@ enum LootState
     GO_JUST_DEACTIVATED
 };
 
+enum CapturePointState
+{
+    CAPTURE_STATE_NEUTRAL = 0,
+    CAPTURE_STATE_PROGRESS,
+    CAPTURE_STATE_CONTEST,
+    CAPTURE_STATE_WIN
+};
+
+// slider values meaning
+// 0   = full horde
+// 100 = full alliance
+// 50  = middle
+enum CapturePointSlider
+{
+    CAPTURE_SLIDER_ALLIANCE = 100,
+    CAPTURE_SLIDER_HORDE    = 0,
+    CAPTURE_SLIDER_NEUTRAL  = 50
+};
+
 class Unit;
 struct GameObjectDisplayInfoEntry;
 
@@ -734,6 +753,11 @@ class MANGOS_DLL_SPEC GameObject : public WorldObject
         uint32 GetMaxHealth() const { return m_goInfo->destructibleBuilding.intactNumHits + m_goInfo->destructibleBuilding.damagedNumHits; }
 
     protected:
+        uint32      m_captureTime;
+        double      m_captureTicks;
+        uint8       m_captureState;
+        uint32      m_progressFaction;                      // faction which has the most players in range of a capture point
+        uint32      m_ownerFaction;                         // faction which has conquered the capture point
         uint32      m_spellId;
         time_t      m_respawnTime;                          // (secs) time of next respawn (or despawn if GO have owner()),
         uint32      m_respawnDelayTime;                     // (secs) if 0 then current GO state no dependent from timer
@@ -745,6 +769,9 @@ class MANGOS_DLL_SPEC GameObject : public WorldObject
 
         typedef std::set<ObjectGuid> GuidsSet;
 
+        GuidsSet m_CapturePlayersSet;                       // players in the radius of the capture point
+        GuidsSet m_AlliancePlayersSet;                      // player sets for each faction
+        GuidsSet m_HordePlayersSet;
         GuidsSet m_SkillupSet;                              // players that already have skill-up at GO use
 
         uint32 m_useTimes;                                  // amount uses/charges triggered

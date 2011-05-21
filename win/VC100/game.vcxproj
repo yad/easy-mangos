@@ -419,6 +419,7 @@
     <ClCompile Include="..\..\src\game\GuardAI.cpp" />
     <ClCompile Include="..\..\src\game\Guild.cpp" />
     <ClCompile Include="..\..\src\game\GuildHandler.cpp" />
+    <ClCompile Include="..\..\src\game\GuildMgr.cpp" />
     <ClCompile Include="..\..\src\game\HomeMovementGenerator.cpp" />
     <ClCompile Include="..\..\src\game\HostileRefManager.cpp" />
     <ClCompile Include="..\..\src\game\IdleMovementGenerator.cpp" />
@@ -430,15 +431,17 @@
     <ClCompile Include="..\..\src\game\Level1.cpp" />
     <ClCompile Include="..\..\src\game\Level2.cpp" />
     <ClCompile Include="..\..\src\game\Level3.cpp" />
-    <ClCompile Include="..\..\src\game\LFG.cpp" />
     <ClCompile Include="..\..\src\game\LFGHandler.cpp" />
     <ClCompile Include="..\..\src\game\LFGMgr.cpp" />
+    <ClCompile Include="..\..\src\game\LFG.cpp" />
     <ClCompile Include="..\..\src\game\LootHandler.cpp" />
     <ClCompile Include="..\..\src\game\LootMgr.cpp" />
     <ClCompile Include="..\..\src\game\Mail.cpp" />
+    <ClCompile Include="..\..\src\game\MailHandler.cpp" />
     <ClCompile Include="..\..\src\game\Map.cpp" />
     <ClCompile Include="..\..\src\game\MapManager.cpp" />
     <ClCompile Include="..\..\src\game\MapPersistentStateMgr.cpp" />
+    <ClCompile Include="..\..\src\game\MapUpdater.cpp" />
     <ClCompile Include="..\..\src\game\MassMailMgr.cpp" />
     <ClCompile Include="..\..\src\game\MiscHandler.cpp" />
     <ClCompile Include="..\..\src\game\MotionMaster.cpp" />
@@ -599,6 +602,7 @@
     <ClInclude Include="..\..\src\game\GroupRefManager.h" />
     <ClInclude Include="..\..\src\game\GuardAI.h" />
     <ClInclude Include="..\..\src\game\Guild.h" />
+    <ClInclude Include="..\..\src\game\GuildMgr.h" />
     <ClInclude Include="..\..\src\game\HomeMovementGenerator.h" />
     <ClInclude Include="..\..\src\game\HostileRefManager.h" />
     <ClInclude Include="..\..\src\game\IdleMovementGenerator.h" />
@@ -614,6 +618,7 @@
     <ClInclude Include="..\..\src\game\Map.h" />
     <ClInclude Include="..\..\src\game\MapManager.h" />
     <ClInclude Include="..\..\src\game\MapPersistentStateMgr.h" />
+    <ClInclude Include="..\..\src\game\MapUpdater.h" />
     <ClInclude Include="..\..\src\game\MapReference.h" />
     <ClInclude Include="..\..\src\game\MapRefManager.h" />
     <ClInclude Include="..\..\src\game\MassMailMgr.h" />

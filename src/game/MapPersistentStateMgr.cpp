@@ -146,7 +146,8 @@ void MapPersistentState::ClearRespawnTimes()
     m_goRespawnTimes.clear();
     m_creatureRespawnTimes.clear();
 
-    UnloadIfEmpty();
+    if (GetMap())
+        UnloadIfEmpty();
 }
 
 void MapPersistentState::AddCreatureToGrid( uint32 guid, CreatureData const* data )
@@ -297,14 +298,20 @@ void DungeonPersistentState::UpdateEncounterState(EncounterCreditType type, uint
                 if (dungeonId)
                     DEBUG_LOG("DungeonPersistentState:: Dungeon %s (Id %u) completed last encounter %s", GetMap()->GetMapName(), GetInstanceId(), (*itr)->dbcEntry->encounterName[sWorld.GetDefaultDbcLocale()]);
 
-                if (IsCompleted())
-                    sLFGMgr.SendLFGRewards(player);
-
                 DungeonMap* dungeon = (DungeonMap*)GetMap();
 
                 if (dungeon && player)
                     dungeon->PermBindAllPlayers(player, dungeon->IsRaidOrHeroicDungeon());
+
                 SaveToDB();
+
+                if (dungeon && player->GetGroup() && player->GetGroup()->isLFGGroup())
+                {
+                    sLFGMgr.DungeonEncounterReached(player->GetGroup());
+
+                    if (IsCompleted())
+                        sLFGMgr.SendLFGRewards(player->GetGroup());
+                }
             }
             return;
         }

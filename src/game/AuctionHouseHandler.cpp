@@ -178,11 +178,11 @@ void WorldSession::SendAuctionOutbiddedMail(AuctionEntry *auction)
 
         // Added for AHBot
         if (oldBidder && !_player)
-            oldBidder->GetSession()->SendAuctionBidderNotification( auction);
- 
-         // Modified for AHBot
+            oldBidder->GetSession()->SendAuctionBidderNotification(auction);
+
+        // Modified for AHBot
         if (oldBidder && _player)
-            oldBidder->GetSession()->SendAuctionBidderNotification( auction);
+            oldBidder->GetSession()->SendAuctionBidderNotification(auction);
 
         MailDraft(msgAuctionOutbiddedSubject.str(), "")     // TODO: fix body
             .SetMoney(auction->bid)
@@ -313,7 +313,7 @@ void WorldSession::HandleAuctionSellItem(WorldPacket & recv_data)
     {
         ObjectGuid itemGuid = guids[i];
 
-        if (itemGuid.IsEmpty())
+        if (!itemGuid)
             continue;
 
         uint32 stackSize = stackSizes[i];
@@ -457,14 +457,23 @@ void WorldSession::HandleAuctionPlaceBid(WorldPacket & recv_data)
     }
 
     // cheating
-    if (price <= auction->bid || price < auction->startbid)
+    if (price < auction->startbid)
         return;
+
+    // cheating or client lags
+    if (price <= auction->bid)
+    {
+        // client test but possible in result lags
+        SendAuctionCommandResult(auction, AUCTION_BID_PLACED, AUCTION_ERR_HIGHER_BID);
+        return;
+    }
 
     // price too low for next bid if not buyout
     if ((price < auction->buyout || auction->buyout == 0) &&
         price < auction->bid + auction->GetAuctionOutBid())
     {
-        // auction has already higher bid, client tests it!
+        // client test but possible in result lags
+        SendAuctionCommandResult(auction, AUCTION_BID_PLACED, AUCTION_ERR_BID_INCREMENT);
         return;
     }
 

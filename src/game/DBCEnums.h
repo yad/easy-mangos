@@ -357,7 +357,7 @@ enum SummonPropGroup
     SUMMON_PROP_GROUP_PETS           = 2,
     SUMMON_PROP_GROUP_CONTROLLABLE   = 3,
     SUMMON_PROP_GROUP_VEHICLE        = 4,
-    SUMMON_PROP_GROUP_UNCONTROLLABLE_VEHICLE = 5
+    SUMMON_PROP_GROUP_UNCONTROLLABLE_VEHICLE        = 5
 };
 
 // SummonProperties.dbc, col 3
@@ -421,7 +421,7 @@ enum SpellCastTargetFlags
     TARGET_FLAG_UNK2            = 0x00010000,               // pguid, not used in any spells as of 3.0.3 (can be set dynamically)
     TARGET_FLAG_GLYPH           = 0x00020000,               // used in glyph spells
     TARGET_FLAG_UNK3            = 0x00040000,               //
-    TARGET_FLAG_UNK4            = 0x00080000                // uint32, loop { vec3, guid -> if guid == 0 break }
+    TARGET_FLAG_VISUAL_CHAIN    = 0x00080000                // uint32, loop { vec3, guid -> if guid == 0 break }
 };
 
 enum SpellEffectIndex
@@ -472,6 +472,13 @@ enum VehicleFlags
 
 enum VehicleSeatFlags
 {
+    SEAT_FLAG_NONE                  = 0x00000000,           //
+    SEAT_FLAG_UNK1                  = 0x00000001,           //
+    SEAT_FLAG_UNK2                  = 0x00000002,           //
+    SEAT_FLAG_UNK3                  = 0x00000004,           //
+    SEAT_FLAG_UNK4                  = 0x00000008,           //
+    SEAT_FLAG_UNK5                  = 0x00000010,           //
+    SEAT_FLAG_UNK6                  = 0x00000020,           //
     SEAT_FLAG_HIDE_PASSENGER        = 0x00000200,           // Passenger is hidden
     SEAT_FLAG_CAN_CONTROL           = 0x00000800,           // Lua_UnitInVehicleControlSeat
     SEAT_FLAG_UNCONTROLLED          = 0x00002000,           // Seat uncontrolled for passenger?

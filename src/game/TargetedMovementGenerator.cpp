@@ -84,6 +84,11 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner)
         && owner.hasUnitState(UNIT_STAT_FOLLOW))
         forceDest = true;
 
+    // allow bots following their master to cheat while generating paths
+    if(owner.GetTypeId() == TYPEID_PLAYER && ((Player*)&owner)->IsBot()
+        /*&& owner.hasUnitState(UNIT_STAT_FOLLOW)*/)
+        forceDest = true;
+
     bool newPathCalculated = true;
     if(!i_path)
         i_path = new PathInfo(&owner, x, y, z, false, forceDest);
@@ -228,22 +233,27 @@ bool TargetedMovementGeneratorMedium<T,D>::Update(T &owner, const uint32 & time_
         PathNode next_point(x, y, z);
 
         bool targetMoved = false, needNewDest = false;
-        if (i_path)
+        bool forceRecalc = i_recalculateTravel || owner.IsStopped();
+        if (i_path && !forceRecalc)
         {
             PathNode end_point = i_path->getEndPosition();
             next_point = i_path->getNextPosition();
 
             needNewDest = i_destinationHolder.HasArrived() && !inRange(next_point, i_path->getActualEndPosition(), dist, dist);
-
-            // GetClosePoint() will always return a point on the ground, so we need to
-            // handle the difference in elevation when the creature is flying
-            if (owner.GetTypeId() == TYPEID_UNIT && ((Creature*)&owner)->CanFly())
-                targetMoved = i_target->GetDistanceSqr(end_point.x, end_point.y, end_point.z) >= dist*dist;
-            else
-                targetMoved = i_target->GetDistance2d(end_point.x, end_point.y) >= dist;
+            if(!needNewDest)
+            {
+                // GetClosePoint() will always return a point on the ground, so we need to
+                // handle the difference in elevation when the creature is flying
+                if (owner.GetTypeId() == TYPEID_UNIT && ((Creature*)&owner)->CanFly())
+                    targetMoved = i_target->GetDistanceSqr(end_point.x, end_point.y, end_point.z) > dist*dist;
+                else if (owner.GetTypeId() == TYPEID_PLAYER && ((Player*)&owner)->IsBot() && ((Player*)&owner)->IsFreeFlying())
+                    targetMoved = i_target->GetDistanceSqr(end_point.x, end_point.y, end_point.z) > dist*dist;
+                else
+                    targetMoved = i_target->GetDistance2d(end_point.x, end_point.y) > dist;
+            }
         }
 
-        if (!i_path || targetMoved || needNewDest || i_recalculateTravel || owner.IsStopped())
+        if (!i_path || targetMoved || needNewDest || forceRecalc)
         {
             // (re)calculate path
             _setTargetLocation(owner);
@@ -283,11 +293,6 @@ template<>
 void ChaseMovementGenerator<Player>::Initialize(Player &owner)
 {
     owner.addUnitState(UNIT_STAT_CHASE|UNIT_STAT_CHASE_MOVE);
-    //owner.RemoveSplineFlag(SPLINEFLAG_WALKMODE);
-
-    /*if (((Creature*)&owner)->CanFly())
-        owner.AddSplineFlag(SPLINEFLAG_UNKNOWN7);*/
-
     _setTargetLocation(owner);
 }
 
@@ -365,10 +370,6 @@ void FollowMovementGenerator<Player>::Initialize(Player &owner)
     owner.addUnitState(UNIT_STAT_FOLLOW|UNIT_STAT_FOLLOW_MOVE);
     _updateWalkMode(owner);
     _updateSpeed(owner);
-
-    /*if (((Creature*)&owner)->CanFly())
-        owner.AddSplineFlag(SPLINEFLAG_UNKNOWN7);*/
-
     _setTargetLocation(owner);
 }
 

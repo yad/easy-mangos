@@ -23,6 +23,7 @@
 #include "WorldPacket.h"
 #include "../Chat.h"
 #include "../ObjectMgr.h"
+#include "../GuildMgr.h"
 #include "../GossipDef.h"
 #include "../Chat.h"
 #include "../Language.h"
@@ -268,26 +269,59 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
                     Player* const bot = itr->getSource();
 
                     if (bot->GetQuestStatus(quest) == QUEST_STATUS_COMPLETE)
-                    {
-                    }
-                    else if (!bot->CanTakeQuest(qInfo, false))
-                    {
-                    }
-                    else if (!bot->SatisfyQuestLog(false))
-                    {
-                    }
-                    else if (!bot->CanAddQuest(qInfo, false))
-                    {
-                    }
-                    else
-                    {
-                        p.rpos(0);         // reset reader
-                        bot->GetSession()->HandleQuestgiverAcceptQuestOpcode(p);
-                    }
+                        continue;
+
+                    if (!bot->CanTakeQuest(qInfo, false))
+                        continue;
+
+                    if (!bot->SatisfyQuestLog(false))
+                        continue;
+
+                    if (!bot->CanAddQuest(qInfo, false))
+                        continue;
+
+                    p.rpos(0);         // reset reader
+                    bot->GetSession()->HandleQuestgiverAcceptQuestOpcode(p);
                 }
             }
             return;
         }
+
+        case CMSG_AREATRIGGER:
+        {
+            WorldPacket p(packet);
+
+            for (GroupReference *itr = m_master->GetGroup()->GetFirstMember(); itr != NULL; itr = itr->next())
+            {
+                Player* const bot = itr->getSource();
+
+                p.rpos(0);         // reset reader
+                bot->GetSession()->HandleAreaTriggerOpcode(p);
+            }
+            return;
+        }
+
+        case CMSG_QUESTGIVER_COMPLETE_QUEST:
+        {
+            WorldPacket p(packet);
+            p.rpos(0);    // reset reader
+            uint32 quest;
+            ObjectGuid npcGUID;
+            p >> npcGUID >> quest;
+
+            WorldObject* pNpc = m_master->GetMap()->GetWorldObject(npcGUID);
+            if (!pNpc)
+                return;
+
+            // for all master's bots
+            for (GroupReference *itr = m_master->GetGroup()->GetFirstMember(); itr != NULL; itr = itr->next())
+            {
+                Player* const bot = itr->getSource();
+                bot->GetPlayerbotAI()->TurnInQuests(pNpc);
+            }
+            return;
+        }
+
         case CMSG_LOOT_ROLL:
         {
 
@@ -389,7 +423,7 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
                     uint32 GuildId = bot->GetGuildId();
                     if (!GuildId)
                         return;
-                    Guild *pGuild = sObjectMgr.GetGuildById(GuildId);
+                    Guild* pGuild = sGuildMgr.GetGuildById(GuildId);
                     if (!pGuild)
                         return;
                     pGuild->LogBankEvent(GUILD_BANK_LOG_REPAIR_MONEY, 0, bot->GetGUIDLow(), TotalCost);
@@ -410,7 +444,7 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
                 Player* const bot = itr->getSource();
                 Group *grp = bot->GetGroup();
                 if (grp)
-                    grp->RemoveMember(bot->GetGUID(), 1);
+                    grp->RemoveMember(bot->GetObjectGuid(), 1);
             }
             return;
         }
@@ -425,7 +459,7 @@ void PlayerbotMgr::Stay()
 {
 }
 
-void PlayerbotMgr::LogoutPlayerBot(uint64 guid)
+void PlayerbotMgr::LogoutPlayerBot(ObjectGuid guid)
 {
     Player* bot = GetPlayerBot(guid);
     if (bot)
@@ -453,13 +487,13 @@ void PlayerbotMgr::LogoutPlayerBot(uint64 guid)
     }
 }
 
-Player* PlayerbotMgr::GetPlayerBot(uint64 playerGuid) const
+Player* PlayerbotMgr::GetPlayerBot(ObjectGuid playerGuid) const
 {
     HashMapHolder < Player > ::MapType& m = sObjectAccessor.GetPlayers();
     for (HashMapHolder < Player > ::MapType::const_iterator itr = m.begin(); itr != m.end(); ++itr)
     {
         Player* const bot = itr->second;
-        if (bot && bot->GetGUID() == playerGuid)
+        if (bot && bot->GetObjectGuid() == playerGuid)
             return bot;
     }
     return NULL;
@@ -486,7 +520,7 @@ void PlayerbotMgr::OnBotLogin(Player * const bot)
         if (!at)
            continue;
 
-        at->DelMember(bot->GetGUID());
+        at->DelMember(bot->GetObjectGuid());
     }
 
     if (bot->GetGroup())

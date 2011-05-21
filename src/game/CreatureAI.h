@@ -24,8 +24,10 @@
 #include "Policies/Singleton.h"
 #include "Dynamic/ObjectRegistry.h"
 #include "Dynamic/FactoryHolder.h"
+#include "ObjectGuid.h"
 
 class WorldObject;
+class GameObject;
 class Unit;
 class Creature;
 class Player;
@@ -106,6 +108,9 @@ class MANGOS_DLL_SPEC CreatureAI
         // Called when the creature summon successfully other creature
         virtual void JustSummoned(Creature* ) {}
 
+        // Called when the creature summon successfully a gameobject
+        virtual void JustSummoned(GameObject* ) {}
+
         // Called when the creature summon despawn
         virtual void SummonedCreatureDespawn(Creature* /*unit*/) {}
 
@@ -155,7 +160,7 @@ class MANGOS_DLL_SPEC CreatureAI
 
         ///== Helper functions =============================
         bool DoMeleeAttackIfReady();
-        CanCastResult DoCastSpellIfCan(Unit* pTarget, uint32 uiSpell, uint32 uiCastFlags = 0, uint64 uiOriginalCasterGUID = 0);
+        CanCastResult DoCastSpellIfCan(Unit* pTarget, uint32 uiSpell, uint32 uiCastFlags = 0, ObjectGuid uiOriginalCasterGUID = ObjectGuid());
 
         ///== Fields =======================================
 
