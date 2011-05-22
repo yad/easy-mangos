@@ -597,6 +597,7 @@ void PlayerbotMgr::AddAllBots()
     int nbRealPlayersCurrHorde = 0;
 
     std::vector<uint32> valid_zone;
+    std::vector<Player*> remove_bots;
 
     HashMapHolder<Player>::MapType& m = sObjectAccessor.GetPlayers();
     for(HashMapHolder<Player>::MapType::const_iterator itr = m.begin(); itr != m.end(); ++itr)
@@ -617,25 +618,27 @@ void PlayerbotMgr::AddAllBots()
     if (valid_zone.empty())
         return;
 
-    bool onceAgain = false;
-    do
+    m = sObjectAccessor.GetPlayers();
+    for(HashMapHolder<Player>::MapType::const_iterator itr = m.begin(); itr != m.end(); ++itr)
     {
-        onceAgain = false;
-        m = sObjectAccessor.GetPlayers();
-        for(HashMapHolder<Player>::MapType::const_iterator itr = m.begin(); itr != m.end(); ++itr)
+        Player* bot = itr->second;
+        if (bot && bot->IsBot() && !bot->GetGroup() && !bot->GetSession()->isLogingOut())
         {
-            Player* bot = itr->second;
-            if (bot && bot->IsBot() && !bot->GetGroup() && !bot->GetSession()->isLogingOut())
-            {
-                std::vector<uint32>::iterator it = std::find(valid_zone.begin(), valid_zone.end(), bot->GetZoneId());
-                if ((*it)==bot->GetZoneId())
-                    continue;
-                bot->GetSession()->LogoutPlayer(false);
-                onceAgain = true;
-                break;
-            }
+            std::vector<uint32>::iterator it = std::find(valid_zone.begin(), valid_zone.end(), bot->GetZoneId());
+            if ((*it)==bot->GetZoneId())
+                continue;
+
+            remove_bots.push_back(bot);
         }
-    }while(onceAgain);
+    }
+
+    if (!remove_bots.empty())
+    {
+        for(std::vector<Player*>::const_iterator itr = remove_bots.begin(); itr != remove_bots.end(); ++itr)
+        {
+            (*itr)->GetSession()->LogoutPlayer(false);
+        }
+    }
 
     m = sObjectAccessor.GetPlayers();
     for(HashMapHolder<Player>::MapType::const_iterator itr = m.begin(); itr != m.end(); ++itr)
@@ -710,7 +713,6 @@ void PlayerbotMgr::AddAllBots()
     }
     else
     {
-
         QueryResult *result = CharacterDatabase.PQuery("SELECT guid, race FROM characters WHERE account = '%u' ORDER BY RAND()", accountId);
         if( result )
         {
