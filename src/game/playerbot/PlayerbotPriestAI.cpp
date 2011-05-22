@@ -127,7 +127,7 @@ void PlayerbotPriestAI::DoNextCombatManeuver(Unit *pTarget)
     Player *m_bot = GetPlayerBot();
     Group *m_group = m_bot->GetGroup();
     GroupReference *ref = (m_group) ? m_group->GetFirstMember() : NULL;
-	
+    
     ai->SetInFront(pTarget);
 
     switch (m_bot->getRole())

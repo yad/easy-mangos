@@ -88,7 +88,7 @@ bool ConfusedMovementGenerator<T>::Update(T &unit, const uint32 &diff)
         {
             // start moving
             unit.addUnitState(UNIT_STAT_CONFUSED_MOVE);
-            
+
             float x = i_x + 10.0f*(rand_norm_f() - 0.5f);
             float y = i_y + 10.0f*(rand_norm_f() - 0.5f);
             float z = i_z;

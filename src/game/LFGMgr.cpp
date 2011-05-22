@@ -859,7 +859,7 @@ LFGDungeonSet LFGMgr::ExpandRandomDungeonsForGroup(LFGDungeonEntry const* random
 
                     if (!dungeonEx || GetPlayerLockStatus(player, dungeonEx) != LFG_LOCKSTATUS_OK)
                        checkPassed = false;
-                } 
+                }
                 if (checkPassed)
                     list.insert(dungeonEx);
             }
@@ -1860,7 +1860,7 @@ void LFGMgr::UpdateRoleCheck(Group* group)
 
                 if (uint8(member->GetLFGState()->GetRoles()) < LFG_ROLE_MASK_TANK)
                     newstate = LFG_ROLECHECK_INITIALITING;
-                else 
+                else
                 {
                     newstate = LFG_ROLECHECK_FINISHED;
                     member->GetLFGState()->SetState(LFG_STATE_QUEUED);

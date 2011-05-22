@@ -2488,12 +2488,12 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                     FillRaidOrPartyManaPriorityTargets(targetUnitMap, m_caster, m_caster, radius, 3, true, false, true);
                     break;
                 case 71390:                                 // Pact of the Darkfallen
-                    if (FillCustomTargetMap(effIndex, targetUnitMap)) 
+                    if (FillCustomTargetMap(effIndex, targetUnitMap))
                         break;
                     break;
                 case 71341:                                 // Pact of the Darkfallen
                     if (effIndex == EFFECT_INDEX_1)
-                        if (FillCustomTargetMap(effIndex, targetUnitMap)) 
+                        if (FillCustomTargetMap(effIndex, targetUnitMap))
                           break;
                     break;
                 case 71447:                                 // Bloodbolt Splash 10N

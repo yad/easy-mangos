@@ -2245,7 +2245,7 @@ bool Player::LearnAllMyTalentsForMyLevel()
                     removeSpell(talentInfo->RankID[i], false, false);
         }
     }
-    
+
     SendTalentsInfoData(false);
     return true;
 }
@@ -2737,7 +2737,7 @@ bool ChatHandler::HandleBotPull(char* args)
 
         if (!g_member->isAlive())
             continue;
-            
+
         if (g_member->IsBot())
             g_member->GetPlayerbotAI()->Pull();
 

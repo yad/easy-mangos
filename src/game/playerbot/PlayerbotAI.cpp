@@ -426,9 +426,9 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
 
         case SMSG_FORCE_RUN_SPEED_CHANGE:
         {
-			CheckMount();
-			return;
-		}
+            CheckMount();
+            return;
+        }
 
         case SMSG_MOVE_SET_CAN_FLY:
         {

@@ -635,7 +635,7 @@ bool Unit::HasAuraFromUnit(uint32 spellid, Unit *caster)
     for (SpellAuraHolderMap::const_iterator itr = m_spellAuraHolders.begin(); itr != m_spellAuraHolders.end(); ++itr)
         if (itr->second->GetId() == spellid && itr->second->GetCasterGuid() == caster->GetObjectGuid())
             return true;
-    
+
     return false;
 }
 
