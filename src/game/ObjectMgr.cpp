@@ -4891,11 +4891,11 @@ BotInfoPosition const *ObjectMgr::GetBotInfoPosition(uint32 zoneid) const
     if (maxPOIinZone == 0)
         return NULL;
 
-    uint32 myPOI = urand(0, maxPOIinZone);
+    uint32 myPOI = urand(1, maxPOIinZone);
     sLog.outError("%d", myPOI);
     for (BotInfoPositionMap::const_iterator itr = mBotInfoPosition.begin(); itr != mBotInfoPosition.end(); ++itr)
     {
-        uint32 indexPOI = 0;
+        uint32 indexPOI = 1;
         uint16 area_flag = sTerrainMgr.GetAreaFlag(itr->second.mapid, itr->second.x, itr->second.y, itr->second.z);
         uint32 zone_id = TerrainManager::GetZoneIdByAreaFlag(area_flag, itr->second.mapid);
 
