@@ -13,11 +13,15 @@ ConfVersion=2010062001
 #        Default: 0 - off
 #                 1 - on
 #
-#    PlayerBot.MaxBots.Alliance
-#    PlayerBot.MaxBots.Horde
+#    PlayerBot.MaxBots.ByPlayerInZone
+#        Number max of bots by player in zone
+#        default: 7 bot by player in zone
+#
+#    PlayerBot.MaxBots.AllianceSide
+#    PlayerBot.MaxBots.HordeSide
 #        Number max of bots ingame
 #        Database has 300, it's possible to generate more
-#        default: 20 on each side
+#        default: 100 on each side
 #
 #    PlayerBot.Join.Battleground
 #        Number of seconds before the bots join a battleground
@@ -26,6 +30,7 @@ ConfVersion=2010062001
 ###################################################################################################################
 
 PlayerBot.Enable = 0
-PlayerBot.MaxBots.Alliance = 20
-PlayerBot.MaxBots.Horde = 20
+PlayerBot.MaxBots.ByPlayerInZone = 7
+PlayerBot.MaxBots.AllianceSide = 100
+PlayerBot.MaxBots.HordeSide = 100
 PlayerBot.Join.Battleground = 0

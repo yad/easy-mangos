@@ -15988,26 +15988,88 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder *holder )
     }
     else
     {
-        BotSpawns const* bSpawn = NULL;
-        uint32 itr = 0;
-        while (bSpawn = sObjectMgr.GetBotSpawns(itr))
-            ++itr;
-        --itr;
-
-        uint32 i = urand(0, itr);
-        while (bSpawn = sObjectMgr.GetBotSpawns(i))
+        bool ok = true;
+        std::vector<uint32> invalid_zone;
+        do
         {
-            if ((GetTeam() == bSpawn->statut))
+            ok = true;
+            HashMapHolder<Player>::MapType& m = sObjectAccessor.GetPlayers();
+
+            uint32 ZoneCptRealPlayer = 0;
+            uint32 ZoneCptBotPlayer = 0;
+            uint32 LastZoneId = 0;
+
+            for(HashMapHolder<Player>::MapType::const_iterator itr1 = m.begin(); itr1 != m.end(); ++itr1)
             {
-                Relocate(bSpawn->x, bSpawn->y, bSpawn->z, fields[16].GetFloat());
-                SetLocationMapId(bSpawn->map);
-                SetLevelAtLoading(urand(bSpawn->lvlmin, bSpawn->lvlmax));
-                break;
+                Player* realPlayer = itr1->second;
+                if (realPlayer && !realPlayer->IsBot())
+                {
+                    if (!invalid_zone.empty())
+                    {
+                        std::vector<uint32>::iterator it = std::find(invalid_zone.begin(), invalid_zone.end(), realPlayer->GetZoneId());
+                        if (*it==realPlayer->GetZoneId())
+                            continue;
+                    }
+                    if (LastZoneId == 0)
+                        LastZoneId = realPlayer->GetZoneId();
+                    if (LastZoneId == realPlayer->GetZoneId())
+                        ZoneCptRealPlayer++;
+                }
             }
 
-            ++i;
-            i = i%itr;
-        }
+            if (LastZoneId == 0)
+            {
+                delete result;
+                return false;
+            }
+
+            for(HashMapHolder<Player>::MapType::const_iterator itr2 = m.begin(); itr2 != m.end(); ++itr2)
+            {
+                Player* bot = itr2->second;
+                if (bot && bot->IsBot() && !bot->GetGroup() && !bot->GetSession()->isLogingOut())
+                {
+                    if (bot->GetZoneId() == LastZoneId)
+                        ZoneCptBotPlayer++;
+                }
+            }
+
+            //TODO fix ratio bot...
+            if (ZoneCptRealPlayer * sWorld.getConfig(CONFIG_INT32_MAX_BOT_BY_PLAYER_IN_ZONE) <= ZoneCptBotPlayer)
+            {
+                invalid_zone.push_back(LastZoneId);
+                continue;
+            }
+
+            BotInfoZone const* biz = sObjectMgr.GetBotInfoZone(LastZoneId);
+            BotInfoPosition const* bip = sObjectMgr.GetBotInfoPosition(LastZoneId);
+
+            if (!biz || !bip)
+            {
+                invalid_zone.push_back(LastZoneId);
+                continue;
+            }
+
+            if (GetTeam() == ALLIANCE)
+            {
+                if(biz->territory == 1)
+                {
+                    invalid_zone.push_back(LastZoneId);
+                    continue;
+                }
+            }
+            else
+            {
+                if (biz->territory == 0)
+                {
+                    invalid_zone.push_back(LastZoneId);
+                    continue;
+                }
+            }
+            Relocate(bip->x, bip->y, bip->z, fields[16].GetFloat());
+            SetLocationMapId(bip->mapid);
+            SetLevelAtLoading(urand(biz->minlevel, biz->maxlevel));
+            ok = false;
+        }while (ok);
     }
 
     uint32 difficulty = fields[38].GetUInt32();

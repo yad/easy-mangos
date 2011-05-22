@@ -593,21 +593,96 @@ void PlayerbotMgr::AddAllBots()
     uint32 cycle = 0;
     int nbBotsCurrAlliance = 0;
     int nbBotsCurrHorde = 0;
+    int nbRealPlayersCurrAlliance = 0;
+    int nbRealPlayersCurrHorde = 0;
+
+    std::vector<uint32> valid_zone;
+
     HashMapHolder<Player>::MapType& m = sObjectAccessor.GetPlayers();
     for(HashMapHolder<Player>::MapType::const_iterator itr = m.begin(); itr != m.end(); ++itr)
     {
-        Player* bot = itr->second;
-        if (bot && bot->IsBot() && !bot->GetGroup()  && !bot->GetSession()->isLogingOut())
+        Player* realPlayer = itr->second;
+        if (realPlayer && !realPlayer->IsBot())
         {
-            if (bot->GetTeam() == ALLIANCE)
-                nbBotsCurrAlliance++;
-            else
-                nbBotsCurrHorde++;
+            if (!valid_zone.empty())
+            {
+                std::vector<uint32>::iterator it = std::find(valid_zone.begin(), valid_zone.end(), realPlayer->GetZoneId());
+                if ((*it)==realPlayer->GetZoneId())
+                    continue;
+            }
+            valid_zone.push_back(realPlayer->GetZoneId());
         }
     }
 
-    int nbBotsWantedAlliance = sWorld.getConfig(CONFIG_INT32_MAX_BOT_ALLIANCE) - nbBotsCurrAlliance;
-    int nbBotsWantedHorde    = sWorld.getConfig(CONFIG_INT32_MAX_BOT_HORDE)    - nbBotsCurrHorde;
+    if (valid_zone.empty())
+        return;
+
+    bool onceAgain = false;
+    do
+    {
+        onceAgain = false;
+        m = sObjectAccessor.GetPlayers();
+        for(HashMapHolder<Player>::MapType::const_iterator itr = m.begin(); itr != m.end(); ++itr)
+        {
+            Player* bot = itr->second;
+            if (bot && bot->IsBot() && !bot->GetGroup() && !bot->GetSession()->isLogingOut())
+            {
+                std::vector<uint32>::iterator it = std::find(valid_zone.begin(), valid_zone.end(), bot->GetZoneId());
+                if ((*it)==bot->GetZoneId())
+                    continue;
+                bot->GetSession()->LogoutPlayer(false);
+                onceAgain = true;
+                break;
+            }
+        }
+    }while(onceAgain);
+
+    m = sObjectAccessor.GetPlayers();
+    for(HashMapHolder<Player>::MapType::const_iterator itr = m.begin(); itr != m.end(); ++itr)
+    {
+        Player* player = itr->second;
+        if (!player)
+            continue;
+
+        if (player->IsBot())
+        {
+            if (!player->GetGroup() && !player->GetSession()->isLogingOut())
+            {
+                if (player->GetTeam() == ALLIANCE)
+                    nbBotsCurrAlliance++;
+                else
+                    nbBotsCurrHorde++;
+            }
+        }
+        else
+        {
+            BotInfoZone const* biz = sObjectMgr.GetBotInfoZone(player->GetZoneId());
+            /*if (player->GetTeam() == ALLIANCE)
+            {*/
+                if(biz && biz->territory != 1)
+                    nbRealPlayersCurrAlliance++;
+            /*}
+            else
+            {*/
+                if (biz && biz->territory != 0)
+                    nbRealPlayersCurrHorde++;
+            /*}*/
+        }
+    }
+
+    int nbBotsWantedAlliance =
+        (nbRealPlayersCurrAlliance * sWorld.getConfig(CONFIG_INT32_MAX_BOT_BY_PLAYER_IN_ZONE))
+        > sWorld.getConfig(CONFIG_INT32_MAX_BOT_ALLIANCE_SIDE)
+        ? sWorld.getConfig(CONFIG_INT32_MAX_BOT_ALLIANCE_SIDE) - nbBotsCurrAlliance
+        : nbRealPlayersCurrAlliance * sWorld.getConfig(CONFIG_INT32_MAX_BOT_BY_PLAYER_IN_ZONE) - nbBotsCurrAlliance;
+
+
+    int nbBotsWantedHorde =
+        (nbRealPlayersCurrHorde * sWorld.getConfig(CONFIG_INT32_MAX_BOT_BY_PLAYER_IN_ZONE))
+        > sWorld.getConfig(CONFIG_INT32_MAX_BOT_HORDE_SIDE)
+        ? sWorld.getConfig(CONFIG_INT32_MAX_BOT_HORDE_SIDE) - nbBotsCurrHorde
+        : nbRealPlayersCurrHorde * sWorld.getConfig(CONFIG_INT32_MAX_BOT_BY_PLAYER_IN_ZONE) - nbBotsCurrHorde;
+
     if (nbBotsWantedAlliance == 0 && nbBotsCurrHorde == 0)
         return;
 
@@ -650,7 +725,6 @@ void PlayerbotMgr::AddAllBots()
                 if (guid == 0)
                     continue;
 
-                // has bot already been added?
                 if (sObjectMgr.GetPlayer(guid))
                     continue;
 
@@ -668,7 +742,7 @@ void PlayerbotMgr::AddAllBots()
                             LoginQueryHolder *holder = new LoginQueryHolder(accountId, guid);
                             if(!holder->Initialize())
                             {
-                                delete holder;                                      // delete all unprocessed queries
+                                delete holder;
                                 continue;
                             }
                             CharacterDatabase.DelayQueryHolder(&chrHandler, &CharacterHandler::HandlePlayerBotLoginCallback, holder);
@@ -688,7 +762,7 @@ void PlayerbotMgr::AddAllBots()
                             LoginQueryHolder *holder = new LoginQueryHolder(accountId, guid);
                             if(!holder->Initialize())
                             {
-                                delete holder;                                      // delete all unprocessed queries
+                                delete holder;
                                 continue;
                             }
                             CharacterDatabase.DelayQueryHolder(&chrHandler, &CharacterHandler::HandlePlayerBotLoginCallback, holder);

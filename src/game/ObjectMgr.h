@@ -441,17 +441,22 @@ struct PlayerCondition
     }
 };
 
-struct BotSpawns
+struct BotInfoZone
 {
     uint32 id;
-    std::string description;
+    std::string name;
+    uint32 minlevel;
+    uint32 maxlevel;
+    uint8 territory;
+};
+
+struct BotInfoPosition
+{
+    uint32 id;
     float x;
     float y;
     float z;
-    uint32 map;
-    uint32 statut;
-    uint32 lvlmin;
-    uint32 lvlmax;
+    uint32 mapid;
 };
 
 // NPC gossip text id
@@ -639,7 +644,8 @@ class ObjectMgr
         }
 
         GossipText const* GetGossipText(uint32 Text_ID) const;
-        BotSpawns const* GetBotSpawns(uint32 id) const;
+        BotInfoZone const* GetBotInfoZone(uint32 zoneid) const;
+        BotInfoPosition const* GetBotInfoPosition(uint32 zoneid) const;
 
         WorldSafeLocsEntry const *GetClosestGraveYard(float x, float y, float z, uint32 MapId, Team team);
         bool AddGraveYardLink(uint32 id, uint32 zone, Team team, bool inDB = true);
@@ -754,7 +760,8 @@ class ObjectMgr
         void LoadPointOfInterestLocales();
         void LoadInstanceEncounters();
         void LoadInstanceTemplate();
-        void LoadBotSpawns();
+        void LoadBotInfoZone();
+        void LoadBotInfoPosition();
         void LoadWorldTemplate();
         void LoadMailLevelRewards();
 
@@ -1167,7 +1174,8 @@ class ObjectMgr
         typedef UNORDERED_MAP<uint32, uint32> QuestAreaTriggerMap;
         typedef std::set<uint32> TavernAreaTriggerSet;
         typedef std::set<uint32> GameObjectForQuestSet;
-        typedef UNORDERED_MAP<uint32, BotSpawns> BotSpawnsMap;
+        typedef UNORDERED_MAP<uint32, BotInfoZone> BotInfoZoneMap;
+        typedef UNORDERED_MAP<uint32, BotInfoPosition> BotInfoPositionMap;
 
         typedef std::multimap<uint32, CreatureModelRace> CreatureModelRaceMap;
         typedef std::pair<CreatureModelRaceMap::const_iterator, CreatureModelRaceMap::const_iterator> CreatureModelRaceMapBounds;
@@ -1181,7 +1189,8 @@ class ObjectMgr
         GossipTextMap       mGossipText;
         AreaTriggerMap      mAreaTriggers;
 
-        BotSpawnsMap            mBotSpawns;
+        BotInfoZoneMap      mBotInfoZone;
+        BotInfoPositionMap  mBotInfoPosition;
 
         RepRewardRateMap    m_RepRewardRateMap;
         RepOnKillMap        mRepOnKill;

@@ -4786,9 +4786,9 @@ void ObjectMgr::LoadInstanceTemplate()
     sLog.outString();
 }
 
-void ObjectMgr::LoadBotSpawns()
+void ObjectMgr::LoadBotInfoZone()
 {
-    QueryResult *result = WorldDatabase.Query( "SELECT id, description, x, y, z, map, statut, Lvlmin, Lvlmax FROM bot_spawns" );
+    QueryResult *result = WorldDatabase.Query( "SELECT id, name, minlevel, maxlevel, territory FROM bot_info_zone" );
 
     int count = 0;
     if( !result )
@@ -4797,7 +4797,7 @@ void ObjectMgr::LoadBotSpawns()
         bar.step();
 
         sLog.outString();
-        sLog.outString( ">> Loaded %u bot spawns", count );
+        sLog.outString( ">> Loaded %u bot info zone", count );
         return;
     }
 
@@ -4809,32 +4809,104 @@ void ObjectMgr::LoadBotSpawns()
 
         bar.step();
 
-        BotSpawns& bSpawn = mBotSpawns[count];
+        BotInfoZone& bInfoZone = mBotInfoZone[count];
 
-        bSpawn.id          = fields[0].GetUInt32();
-        bSpawn.description = fields[1].GetCppString();
-        bSpawn.x           = fields[2].GetFloat();
-        bSpawn.y           = fields[3].GetFloat();
-        bSpawn.z           = fields[4].GetFloat();
-        bSpawn.map         = fields[5].GetUInt32();
-        bSpawn.statut      = fields[6].GetUInt32();
-        bSpawn.lvlmin      = fields[7].GetUInt32();
-        bSpawn.lvlmax      = fields[8].GetUInt32();
+        bInfoZone.id        = fields[0].GetUInt32();
+        bInfoZone.name      = fields[1].GetCppString();
+        bInfoZone.minlevel  = fields[2].GetUInt32();
+        bInfoZone.maxlevel  = fields[3].GetUInt32();
+        bInfoZone.territory = fields[4].GetUInt8();
 
         count++;
 
     } while( result->NextRow() );
 
     sLog.outString();
-    sLog.outString( ">> Loaded %u bot spawns", count );
+    sLog.outString( ">> Loaded %u bot info zone", count );
     delete result;
 }
 
-BotSpawns const *ObjectMgr::GetBotSpawns(uint32 id) const
+void ObjectMgr::LoadBotInfoPosition()
 {
-    BotSpawnsMap::const_iterator itr = mBotSpawns.find(id);
-    if(itr != mBotSpawns.end())
-        return &itr->second;
+    QueryResult *result = WorldDatabase.Query( "SELECT id, x, y, z, mapid FROM bot_info_position" );
+
+    int count = 0;
+    if( !result )
+    {
+        barGoLink bar( 1 );
+        bar.step();
+
+        sLog.outString();
+        sLog.outString( ">> Loaded %u bot info position", count );
+        return;
+    }
+
+    barGoLink bar( (int)result->GetRowCount() );
+
+    do
+    {
+        Field *fields = result->Fetch();
+
+        bar.step();
+
+        BotInfoPosition& bInfoPosition = mBotInfoPosition[count];
+
+        bInfoPosition.id    = fields[0].GetUInt32();
+        bInfoPosition.x     = fields[1].GetFloat();
+        bInfoPosition.y     = fields[2].GetFloat();
+        bInfoPosition.z     = fields[3].GetFloat();
+        bInfoPosition.mapid = fields[4].GetUInt32();
+
+        count++;
+
+    } while( result->NextRow() );
+
+    sLog.outString();
+    sLog.outString( ">> Loaded %u bot info position", count );
+    delete result;
+}
+
+BotInfoZone const *ObjectMgr::GetBotInfoZone(uint32 zoneid) const
+{
+    for (BotInfoZoneMap::const_iterator itr = mBotInfoZone.begin(); itr != mBotInfoZone.end(); ++itr)
+    {
+        if(itr->second.id == zoneid)
+            return &itr->second;
+    }
+    return NULL;
+}
+
+BotInfoPosition const *ObjectMgr::GetBotInfoPosition(uint32 zoneid) const
+{
+    uint32 maxPOIinZone = 0;
+    for (BotInfoPositionMap::const_iterator itr = mBotInfoPosition.begin(); itr != mBotInfoPosition.end(); ++itr)
+    {
+        uint16 area_flag = sTerrainMgr.GetAreaFlag(itr->second.mapid, itr->second.x, itr->second.y, itr->second.z);
+        uint32 zone_id = TerrainManager::GetZoneIdByAreaFlag(area_flag, itr->second.mapid);
+
+        if (zoneid == zone_id)
+            maxPOIinZone++;
+    }
+
+    if (maxPOIinZone == 0)
+        return NULL;
+
+    uint32 myPOI = urand(0, maxPOIinZone);
+    sLog.outError("%d", myPOI);
+    for (BotInfoPositionMap::const_iterator itr = mBotInfoPosition.begin(); itr != mBotInfoPosition.end(); ++itr)
+    {
+        uint32 indexPOI = 0;
+        uint16 area_flag = sTerrainMgr.GetAreaFlag(itr->second.mapid, itr->second.x, itr->second.y, itr->second.z);
+        uint32 zone_id = TerrainManager::GetZoneIdByAreaFlag(area_flag, itr->second.mapid);
+
+        if (zoneid == zone_id)
+        {
+            if (indexPOI == myPOI)
+                return &itr->second;
+            else
+                indexPOI++;
+        }
+    }
     return NULL;
 }
 
