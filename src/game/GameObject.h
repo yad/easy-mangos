@@ -765,12 +765,6 @@ class MANGOS_DLL_SPEC GameObject : public WorldObject
         bool        m_spawnedByDefault;
         time_t      m_cooldownTime;                         // used as internal reaction delay time store (not state change reaction).
         uint32      m_health;
-                                                            // For traps/goober this: spell casting cooldown, for doors/buttons: reset time.
-        uint32      m_captureTime;
-        double      m_captureTicks;
-        uint8       m_captureState;
-        uint32      m_progressFaction;                      // faction which has the most players in range of a capture point
-        uint32      m_ownerFaction;                         // faction which has conquered the capture point
 
         typedef std::set<ObjectGuid> GuidsSet;
 

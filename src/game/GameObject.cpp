@@ -1713,8 +1713,8 @@ void GameObject::Use(Unit* user)
 
             // send world state
             player->SendUpdateWorldState(info->capturePoint.worldState1, 1);
-            player->SendUpdateWorldState(info->capturePoint.worldstate2, (uint32)m_captureTicks);
-            player->SendUpdateWorldState(info->capturePoint.worldstate3, m_neutralPercent);
+            player->SendUpdateWorldState(info->capturePoint.worldState2, (uint32)m_captureTicks);
+            player->SendUpdateWorldState(info->capturePoint.worldState3, m_neutralPercent);
 
             // ID1 vs ID2 are possibly related to team. The world states should probably
             // control which event to be used. For this to work, we need a far better system for
