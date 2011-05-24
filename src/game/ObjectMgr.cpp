@@ -4891,7 +4891,7 @@ BotInfoPosition const *ObjectMgr::GetBotInfoPosition(uint32 zoneid) const
     if (valid_zone.empty())
         return NULL;
 
-    return &valid_zone.at(urand(1, valid_zone.size()));
+    return &valid_zone.at(urand(0, valid_zone.size()-1));
 }
 
 struct SQLWorldLoader : public SQLStorageLoaderBase<SQLWorldLoader>
