@@ -26,6 +26,7 @@
 #include "TemporarySummon.h"
 #include "Totem.h"
 #include "Pet.h"
+#include "CreatureAI.h"
 #include "GameObject.h"
 #include "Opcodes.h"
 #include "Chat.h"
@@ -34,6 +35,7 @@
 #include "Language.h"
 #include "World.h"
 #include "GameEventMgr.h"
+#include "ScriptMgr.h"
 #include "SpellMgr.h"
 #include "MapPersistentStateMgr.h"
 #include "AccountMgr.h"
@@ -44,6 +46,7 @@
 #include <iostream>
 #include <fstream>
 #include <map>
+#include <typeinfo>
 
 #include "TargetedMovementGenerator.h"                      // for HandleNpcUnFollowCommand
 #include "MoveMap.h"                                        // for mmap manager
@@ -959,23 +962,13 @@ bool ChatHandler::HandleGameObjectTurnCommand(char* args)
         return false;
     }
 
-    float o;
-    if (!ExtractOptFloat(&args, o, m_session->GetPlayer()->GetOrientation()))
-        return false;
+    float z_rot, y_rot, x_rot;
+    if (!ExtractFloat(&args, z_rot) || !ExtractOptFloat(&args, y_rot, 0) || !ExtractOptFloat(&args, x_rot, 0))
+        return false;         
 
-    Map* map = obj->GetMap();
-    map->Remove(obj,false);
-
-    obj->Relocate(obj->GetPositionX(), obj->GetPositionY(), obj->GetPositionZ(), o);
-    obj->UpdateRotationFields();
-
-    map->Add(obj);
-
+    obj->SetRotationAngles(z_rot, y_rot, x_rot);
     obj->SaveToDB();
-    obj->Refresh();
-
     PSendSysMessage(LANG_COMMAND_TURNOBJMESSAGE, obj->GetGUIDLow(), obj->GetGOInfo()->name, obj->GetGUIDLow());
-
     return true;
 }
 
@@ -1705,6 +1698,35 @@ bool ChatHandler::HandleNpcDelVendorItemCommand(char* args)
     ItemPrototype const* pProto = ObjectMgr::GetItemPrototype(itemId);
 
     PSendSysMessage(LANG_ITEM_DELETED_FROM_LIST,itemId,pProto->Name1);
+    return true;
+}
+
+//show info about AI
+bool ChatHandler::HandleNpcAIInfoCommand(char* /*args*/)
+{
+    Creature* pTarget = getSelectedCreature();
+
+    if (!pTarget)
+    {
+        SendSysMessage(LANG_SELECT_CREATURE);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    PSendSysMessage(LANG_NPC_AI_HEADER, pTarget->GetEntry());
+
+    std::string strScript = pTarget->GetScriptName();
+    std::string strAI = pTarget->GetAIName();
+    char const* cstrAIClass = pTarget->AI() ? typeid(*pTarget->AI()).name() : " - ";
+
+    PSendSysMessage(LANG_NPC_AI_NAMES,
+        strAI.empty() ? " - " : strAI.c_str(),
+        cstrAIClass ? cstrAIClass : " - ",
+        strScript.empty() ? " - " : strScript.c_str());
+
+    if (pTarget->AI())
+        pTarget->AI()->GetAIInformation(*this);
+
     return true;
 }
 
@@ -2640,7 +2662,7 @@ bool ChatHandler::HandleTicketCommand(char* args)
         {
             bool accept = m_session->GetPlayer()->isAcceptTickets();
 
-            PSendSysMessage(LANG_COMMAND_TICKETCOUNT, count, accept ?  GetMangosString(LANG_ON) : GetMangosString(LANG_OFF));
+            PSendSysMessage(LANG_COMMAND_TICKETCOUNT, count, GetOnOffStr(accept));
         }
         else
             PSendSysMessage(LANG_COMMAND_TICKETCOUNT_CONSOLE, count);

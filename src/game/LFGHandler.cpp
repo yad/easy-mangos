@@ -881,6 +881,10 @@ void WorldSession::SendLfgOfferContinue(LFGDungeonEntry const* dungeon)
     if (!dungeon)
         return;
 
+    Group* group = GetPlayer()->GetGroup();
+    if (!group)
+        return;
+
     DEBUG_LOG("SMSG_LFG_OFFER_CONTINUE %u dungeon entry: %u", GetPlayer()->GetObjectGuid().GetCounter(), dungeon->ID);
     WorldPacket data(SMSG_LFG_OFFER_CONTINUE, 4);
     data << uint32(dungeon->Entry());
@@ -903,7 +907,9 @@ void WorldSession::SendLfgPlayerReward(LFGDungeonEntry const* dungeon, const LFG
         return;
     }
 
-    if (!dungeon || !reward || !qRew)
+    LFGDungeonEntry const* realdungeon = *GetPlayer()->GetLFGState()->GetDungeons()->begin();
+
+    if (!dungeon || !realdungeon || !reward || !qRew)
         return;
 
     uint8 itemNum = uint8(qRew ? qRew->GetRewItemsCount() : 0);
@@ -912,8 +918,8 @@ void WorldSession::SendLfgPlayerReward(LFGDungeonEntry const* dungeon, const LFG
     DEBUG_LOG("SMSG_LFG_PLAYER_REWARD %u dungeonEntry: %u ", GetPlayer()->GetObjectGuid().GetCounter(), dungeon->ID);
 
     WorldPacket data(SMSG_LFG_PLAYER_REWARD, 4 + 4 + 1 + 4 + 4 + 4 + 4 + 4 + 1 + itemNum * (4 + 4 + 4));
-    data << uint32(dungeon->Entry());                         // Random Dungeon Finished
-    data << uint32(0);                                        // Dungeon Finished
+    data << uint32(dungeon->Entry());                                            // Random Dungeon Finished
+    data << uint32(realdungeon->Entry());                                        // Dungeon Finished
     data << uint8(done);
     data << uint32(1);
     data << uint32(qRew->GetRewOrReqMoney());
@@ -1011,7 +1017,7 @@ void WorldSession::SendLfgBootPlayer()
     LFGAnswer playerVote = votes->find(guid)->second;
     uint8 votesNum = 0;
     uint8 agreeNum = 0;
-    uint32 secsleft = uint8((group->GetLFGState()->GetBootCancelTime() - time(NULL)) / 1000);
+    uint32 secsleft = uint8(group->GetLFGState()->GetBootCancelTime() - time(NULL));
 
     bool isBootContinued = (group->GetLFGState()->GetBootResult() == LFG_ANSWER_PENDING);
 

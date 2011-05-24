@@ -5991,8 +5991,10 @@ bool Unit::Attack(Unit *victim, bool meleeAttack)
     if(!isAlive() || !victim->IsInWorld() || !victim->isAlive())
         return false;
 
-    // player cannot attack while mounted or in vehicle
-    if(GetTypeId()==TYPEID_PLAYER && (IsMounted() || GetVehicle()))
+    // player cannot attack while mounted or in vehicle (exclude special vehicles)if 
+    if (GetTypeId()==TYPEID_PLAYER && (IsMounted() || 
+        (GetVehicle() && (!GetVehicle()->GetSeatInfo(this) ||
+        !(GetVehicle()->GetSeatInfo(this)->m_flags & (SEAT_FLAG_CAN_CAST | SEAT_FLAG_CAN_ATTACK))))))
         return false;
 
     // nobody can attack GM in GM-mode
@@ -6952,6 +6954,13 @@ uint32 Unit::SpellDamageBonusDone(Unit *pVictim, SpellEntry const *spellProto, u
                     }
                 }
             }
+            // Glyph of Shadow word: Death
+            else if (spellProto->SpellFamilyFlags & UI64LIT(0x0000000200000000))
+            {
+                if (pVictim->HasAuraState(AURA_STATE_HEALTHLESS_35_PERCENT))
+                    if (Aura* aur = GetAura(55682, EFFECT_INDEX_0))
+                        DoneTotalMod *= (aur->GetModifier()->m_amount + 100.0f) / 100.0f;
+            }
             break;
         }
         case SPELLFAMILY_DRUID:
@@ -7277,6 +7286,18 @@ bool Unit::IsSpellCrit(Unit *pVictim, SpellEntry const *spellProto, SpellSchoolM
                 // Custom crit by class
                 switch(spellProto->SpellFamilyName)
                 {
+                    case SPELLFAMILY_MAGE:
+                    {
+                        // Fire Blast
+                        if (spellProto->SpellFamilyFlags & UI64LIT(0x0000000000000002) && spellProto->SpellIconID == 12)
+                        {
+                            // Glyph of Fire Blast
+                            if (Aura* aura = GetAura(56369, EFFECT_INDEX_0))
+                                if (pVictim->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_STUNNED) || pVictim->isInRoots())
+                                    crit_chance += aura->GetModifier()->m_amount;
+                        }
+                        break;
+                    }
                     case SPELLFAMILY_PRIEST:
                         // Flash Heal
                         if (spellProto->SpellFamilyFlags & UI64LIT(0x0000000000000800))
@@ -7563,6 +7584,16 @@ uint32 Unit::SpellHealingBonusDone(Unit *pVictim, SpellEntry const *spellProto, 
 
             if (Aura* glyph = GetAura(62971, EFFECT_INDEX_0))// Glyph of Nourish
                 DoneTotalMod *= (glyph->GetModifier()->m_amount * ownHotCount + 100.0f) / 100.0f;
+        }
+    }
+
+    // Glyph of Rejuvenation
+    else if (spellProto->SpellFamilyName == SPELLFAMILY_DRUID && (spellProto->SpellFamilyFlags & UI64LIT(0x0000000000000010)))
+    {
+        if (Aura* aura = GetAura(54754, EFFECT_INDEX_0))
+        {
+            if (pVictim->GetHealth() < pVictim->GetMaxHealth() / 2)
+                DoneTotalMod *= (aura->GetModifier()->m_amount + 100.0f) / 100.0f;
         }
     }
 
@@ -11099,7 +11130,7 @@ void Unit::UpdateModelData()
         if (GetTypeId() == TYPEID_PLAYER)
             SetFloatValue(UNIT_FIELD_COMBATREACH, 1.5f);
         else
-            SetFloatValue(UNIT_FIELD_COMBATREACH, GetObjectScale() * modelInfo->combat_reach);
+            SetFloatValue(UNIT_FIELD_COMBATREACH, GetObjectScale() * ( modelInfo->bounding_radius < 2.0 ? modelInfo->combat_reach : modelInfo->combat_reach / modelInfo->bounding_radius ));
     }
 }
 
@@ -12531,4 +12562,67 @@ void Unit::SetVehicleId(uint32 entry)
         data << uint32(entry);
         SendMessageToSet(&data, true);
     }
+}
+
+uint32 Unit::CalculateAuraPeriodicTimeWithHaste(SpellEntry const* spellProto, uint32 oldPeriodicTime, SpellEffectIndex eff_idx)
+{
+    if (!spellProto || oldPeriodicTime == 0)
+        return 0;
+
+    bool applyHaste = spellProto->AttributesEx5 & SPELL_ATTR_EX5_AFFECTED_BY_HASTE;
+
+    if (!applyHaste)
+    {
+        Unit::AuraList const& mModByHaste = GetAurasByType(SPELL_AURA_MOD_PERIODIC_HASTE);
+        for (Unit::AuraList::const_iterator itr = mModByHaste.begin(); itr != mModByHaste.end(); ++itr)
+        {
+            if ((*itr)->isAffectedOnSpell(spellProto))
+            {
+                applyHaste = true;
+                break;
+            }
+        }
+    }
+
+    if (!applyHaste)
+        return oldPeriodicTime;
+
+    uint32 _periodicTime = oldPeriodicTime;
+
+    if(IsChanneledSpell(spellProto) && spellProto->EffectAmplitude[eff_idx])
+        _periodicTime = ceil(float(spellProto->EffectAmplitude[eff_idx]) * GetFloatValue(UNIT_MOD_CAST_SPEED));
+    else
+        _periodicTime = ceil(float(oldPeriodicTime) * GetFloatValue(UNIT_MOD_CAST_SPEED));
+
+    return _periodicTime;
+}
+
+uint32 Unit::CalculateSpellDurationWithHaste(SpellEntry const* spellProto, uint32 oldduration)
+{
+    if (!spellProto || oldduration == 0)
+        return 0;
+
+    bool applyHaste = spellProto->AttributesEx5 & SPELL_ATTR_EX5_AFFECTED_BY_HASTE;
+
+    if (!applyHaste)
+    {
+        Unit::AuraList const& mModByHaste = GetAurasByType(SPELL_AURA_MOD_PERIODIC_HASTE);
+        for (Unit::AuraList::const_iterator itr = mModByHaste.begin(); itr != mModByHaste.end(); ++itr)
+        {
+            if ((*itr)->isAffectedOnSpell(spellProto))
+            {
+                applyHaste = true;
+                break;
+            }
+        }
+    }
+
+    if (!applyHaste)
+        return oldduration;
+
+    // Apply haste to duration
+
+    uint32 duration = ceil(float(oldduration) * GetFloatValue(UNIT_MOD_CAST_SPEED));
+
+    return duration;
 }

@@ -77,11 +77,11 @@ int32 CalculateSpellDuration(SpellEntry const *spellInfo, Unit const* caster)
         {
             modOwner->ApplySpellMod(spellInfo->Id, SPELLMOD_DURATION, duration);
 
-            if ((spellInfo->AttributesEx5 & SPELL_ATTR_EX5_AFFECTED_BY_HASTE) != 0)
-                duration = (int32)(duration * modOwner->GetFloatValue(UNIT_MOD_CAST_SPEED));
+            duration = modOwner->CalculateSpellDurationWithHaste(spellInfo, duration);
 
             if (duration < 0)
                 duration = 0;
+
         }
     }
 
@@ -2161,6 +2161,11 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                 // Battle Shout and Rampage
                 if ((spellInfo_1->SpellIconID == 456 && spellInfo_2->SpellIconID == 2006) ||
                     (spellInfo_2->SpellIconID == 456 && spellInfo_1->SpellIconID == 2006))
+                    return false;
+
+                // Glyph of Revenge (triggered), and Sword and Board (triggered)
+                if ((spellInfo_1->SpellIconID == 856 && spellInfo_2->SpellIconID == 2780) ||
+                    (spellInfo_2->SpellIconID == 856 && spellInfo_1->SpellIconID == 2780))
                     return false;
 
                 // Defensive/Berserker/Battle stance aura can not stack (needed for dummy auras)
