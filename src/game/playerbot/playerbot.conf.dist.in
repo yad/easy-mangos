@@ -13,13 +13,17 @@ ConfVersion=2010062001
 #        Default: 0 - off
 #                 1 - on
 #
-#    PlayerBot.MaxBots.ByPlayerInZone
-#        Number max of bots by player in zone
-#        default: 7 bot by player in zone
+#    PlayerBot.MaxBots.InZoneByPlayer
+#        Max number of bots by player in zone
+#        default: 7 bots in zone by player
+#
+#    PlayerBot.MaxBots.InGMIslandByFaction
+#        Max number of bots in GM Island
+#        default: 10 bots in GM Island by faction
 #
 #    PlayerBot.MaxBots.AllianceSide
 #    PlayerBot.MaxBots.HordeSide
-#        Number max of bots ingame
+#        Max number of bots ingame
 #        Database has 300, it's possible to generate more
 #        default: 100 on each side
 #
@@ -30,7 +34,8 @@ ConfVersion=2010062001
 ###################################################################################################################
 
 PlayerBot.Enable = 0
-PlayerBot.MaxBots.ByPlayerInZone = 7
+PlayerBot.MaxBots.InZoneByPlayer = 7
+PlayerBot.MaxBots.InGMIslandByFaction = 10
 PlayerBot.MaxBots.AllianceSide = 100
 PlayerBot.MaxBots.HordeSide = 100
 PlayerBot.Join.Battleground = 0

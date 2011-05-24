@@ -173,6 +173,9 @@ void WorldSession::HandleWhoOpcode( WorldPacket & recv_data )
         if (itr->second->IsBot() && itr->second->GetGroup())
             continue;
 
+        if (itr->second->IsBot() && !itr->second->IsBeingTeleported() && itr->second->GetZoneId() == 876)
+            continue;
+
         // check if target's level is in level range
         uint32 lvl = pl->getLevel();
         if (lvl < level_min || lvl > level_max)

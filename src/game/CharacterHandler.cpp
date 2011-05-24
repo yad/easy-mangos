@@ -593,36 +593,33 @@ void PlayerbotMgr::AddAllBots()
     uint32 cycle = 0;
     int nbBotsCurrAlliance = 0;
     int nbBotsCurrHorde = 0;
+    int nbBotsCurrAllianceGMIsland = 0;
+    int nbBotsCurrHordeGMIsland = 0;
     int nbRealPlayersCurrAlliance = 0;
     int nbRealPlayersCurrHorde = 0;
 
     std::vector<uint32> valid_zone;
+    valid_zone.push_back(876);
     std::vector<Player*> remove_bots;
 
     HashMapHolder<Player>::MapType& m = sObjectAccessor.GetPlayers();
     for(HashMapHolder<Player>::MapType::const_iterator itr = m.begin(); itr != m.end(); ++itr)
     {
         Player* realPlayer = itr->second;
-        if (realPlayer && !realPlayer->IsBot())
+        if (realPlayer && !realPlayer->IsBot() && !realPlayer->IsBeingTeleported())
         {
-            if (!valid_zone.empty())
-            {
-                std::vector<uint32>::iterator it = std::find(valid_zone.begin(), valid_zone.end(), realPlayer->GetZoneId());
-                if ((*it)==realPlayer->GetZoneId())
-                    continue;
-            }
+            std::vector<uint32>::iterator it = std::find(valid_zone.begin(), valid_zone.end(), realPlayer->GetZoneId());
+            if ((*it)==realPlayer->GetZoneId())
+                continue;
             valid_zone.push_back(realPlayer->GetZoneId());
         }
     }
-
-    if (valid_zone.empty())
-        return;
 
     m = sObjectAccessor.GetPlayers();
     for(HashMapHolder<Player>::MapType::const_iterator itr = m.begin(); itr != m.end(); ++itr)
     {
         Player* bot = itr->second;
-        if (bot && bot->IsBot() && !bot->GetGroup() && !bot->GetSession()->isLogingOut())
+        if (bot && bot->IsBot() && !bot->GetGroup() && !bot->GetSession()->isLogingOut() && !bot->IsBeingTeleported())
         {
             std::vector<uint32>::iterator it = std::find(valid_zone.begin(), valid_zone.end(), bot->GetZoneId());
             if ((*it)==bot->GetZoneId())
@@ -649,49 +646,76 @@ void PlayerbotMgr::AddAllBots()
 
         if (player->IsBot())
         {
-            if (!player->GetGroup() && !player->GetSession()->isLogingOut())
+            if (!player->GetGroup() && !player->GetSession()->isLogingOut() && !player->IsBeingTeleported())
             {
-                if (player->GetTeam() == ALLIANCE)
-                    nbBotsCurrAlliance++;
+                if (player->GetZoneId() == 876)
+                {
+                    if (player->GetTeam() == ALLIANCE)
+                        nbBotsCurrAllianceGMIsland++;
+                    else
+                        nbBotsCurrHordeGMIsland++;
+                }
                 else
-                    nbBotsCurrHorde++;
+                {
+                    if (player->GetTeam() == ALLIANCE)
+                        nbBotsCurrAlliance++;
+                    else
+                        nbBotsCurrHorde++;
+                }
             }
         }
         else
         {
-            BotInfoZone const* biz = sObjectMgr.GetBotInfoZone(player->GetZoneId());
-            /*if (player->GetTeam() == ALLIANCE)
-            {*/
+            if (!player->IsBeingTeleported())
+            {
+                BotInfoZone const* biz = sObjectMgr.GetBotInfoZone(player->GetZoneId());
                 if(biz && biz->territory != 1)
                     nbRealPlayersCurrAlliance++;
-            /*}
-            else
-            {*/
                 if (biz && biz->territory != 0)
                     nbRealPlayersCurrHorde++;
-            /*}*/
+            }
         }
     }
 
     int nbBotsWantedAlliance =
-        (nbRealPlayersCurrAlliance * sWorld.getConfig(CONFIG_INT32_MAX_BOT_BY_PLAYER_IN_ZONE))
+        (nbRealPlayersCurrAlliance * sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_ZONE_BY_PLAYER) + nbBotsCurrAllianceGMIsland)
         > sWorld.getConfig(CONFIG_INT32_MAX_BOT_ALLIANCE_SIDE)
-        ? sWorld.getConfig(CONFIG_INT32_MAX_BOT_ALLIANCE_SIDE) - nbBotsCurrAlliance
-        : nbRealPlayersCurrAlliance * sWorld.getConfig(CONFIG_INT32_MAX_BOT_BY_PLAYER_IN_ZONE) - nbBotsCurrAlliance;
-
+        ? (sWorld.getConfig(CONFIG_INT32_MAX_BOT_ALLIANCE_SIDE) - nbBotsCurrAlliance)
+        : (nbRealPlayersCurrAlliance * sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_ZONE_BY_PLAYER)
+        - nbBotsCurrAlliance + sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_GM_ISLAND_BY_FACTION) - nbBotsCurrAllianceGMIsland);
 
     int nbBotsWantedHorde =
-        (nbRealPlayersCurrHorde * sWorld.getConfig(CONFIG_INT32_MAX_BOT_BY_PLAYER_IN_ZONE))
+        (nbRealPlayersCurrHorde * sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_ZONE_BY_PLAYER) + nbBotsCurrHordeGMIsland)
         > sWorld.getConfig(CONFIG_INT32_MAX_BOT_HORDE_SIDE)
-        ? sWorld.getConfig(CONFIG_INT32_MAX_BOT_HORDE_SIDE) - nbBotsCurrHorde
-        : nbRealPlayersCurrHorde * sWorld.getConfig(CONFIG_INT32_MAX_BOT_BY_PLAYER_IN_ZONE) - nbBotsCurrHorde;
+        ? (sWorld.getConfig(CONFIG_INT32_MAX_BOT_HORDE_SIDE) - nbBotsCurrHorde)
+        : (nbRealPlayersCurrHorde * sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_ZONE_BY_PLAYER)
+        - nbBotsCurrHorde + sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_GM_ISLAND_BY_FACTION) - nbBotsCurrHordeGMIsland);
 
-    if (nbBotsWantedAlliance == 0 && nbBotsCurrHorde == 0)
+    if (nbBotsWantedAlliance == 0 && nbBotsWantedHorde == 0)
         return;
 
-    else if (nbBotsWantedAlliance < 0 || nbBotsCurrHorde < 0)
+    else if (nbBotsWantedAlliance < 0 || nbBotsWantedHorde < 0)
     {
-        for(HashMapHolder<Player>::MapType::const_iterator itr = m.begin(); itr != m.end() || nbBotsWantedAlliance < 0 || nbBotsCurrHorde < 0; ++itr)
+        for(HashMapHolder<Player>::MapType::const_iterator itr = m.begin(); itr != m.end() || nbBotsWantedAlliance < 0 || nbBotsWantedHorde < 0; ++itr)
+        {
+            Player* bot = itr->second;
+            if (bot && bot->IsBot() && !bot->GetGroup() && !bot->GetSession()->isLogingOut() && !bot->IsBeingTeleported() && bot->GetZoneId() == 876)
+            {
+                if (bot->GetTeam() == ALLIANCE && nbBotsWantedAlliance < 0)
+                {
+                    nbBotsWantedAlliance++;
+                    bot->GetSession()->LogoutPlayer(false);
+                    break;
+                }
+                else if (bot->GetTeam() == HORDE && nbBotsWantedHorde < 0)
+                {
+                    nbBotsWantedHorde++;
+                    bot->GetSession()->LogoutPlayer(false);
+                    break;
+                }
+            }
+        }
+        for(HashMapHolder<Player>::MapType::const_iterator itr = m.begin(); itr != m.end() || nbBotsWantedAlliance < 0 || nbBotsWantedHorde < 0; ++itr)
         {
             Player* bot = itr->second;
             if (bot && bot->IsBot() && !bot->GetGroup() && !bot->GetSession()->isLogingOut())
@@ -713,8 +737,17 @@ void PlayerbotMgr::AddAllBots()
     }
     else
     {
-        QueryResult *result = CharacterDatabase.PQuery("SELECT guid, race FROM characters WHERE account = '%u' ORDER BY RAND()", accountId);
-        if( result )
+        QueryResult *result = NULL;
+        if (nbBotsWantedAlliance == 0)
+            result = CharacterDatabase.PQuery("SELECT guid, race FROM characters WHERE account = '%u' AND race IN (%u, %u, %u, %u, %u) ORDER BY RAND()", 
+            accountId, RACE_ORC, RACE_UNDEAD, RACE_TAUREN, RACE_TROLL, RACE_BLOODELF);
+        else if (nbBotsWantedHorde == 0)
+            result = CharacterDatabase.PQuery("SELECT guid, race FROM characters WHERE account = '%u' AND race IN (%u, %u, %u, %u, %u) ORDER BY RAND()", 
+            accountId, RACE_HUMAN, RACE_DWARF, RACE_NIGHTELF, RACE_GNOME, RACE_DRAENEI);
+        else
+            result = CharacterDatabase.PQuery("SELECT guid, race FROM characters WHERE account = '%u' ORDER BY RAND()", accountId);
+
+        if (result)
         {
             int itrAlliance = 0;
             int itrHorde = 0;
@@ -747,7 +780,7 @@ void PlayerbotMgr::AddAllBots()
                                 delete holder;
                                 continue;
                             }
-                            CharacterDatabase.DelayQueryHolder(&chrHandler, &CharacterHandler::HandlePlayerBotLoginCallback, holder);
+                            CharacterDatabase.DirectQueryHolder(&chrHandler, &CharacterHandler::HandlePlayerBotLoginCallback, holder);
                             cycle++;
                         }
                         break;
@@ -767,7 +800,7 @@ void PlayerbotMgr::AddAllBots()
                                 delete holder;
                                 continue;
                             }
-                            CharacterDatabase.DelayQueryHolder(&chrHandler, &CharacterHandler::HandlePlayerBotLoginCallback, holder);
+                            CharacterDatabase.DirectQueryHolder(&chrHandler, &CharacterHandler::HandlePlayerBotLoginCallback, holder);
                             cycle++;
                         }
                         break;
@@ -776,7 +809,7 @@ void PlayerbotMgr::AddAllBots()
                         break;
                 }
             }
-            while (result->NextRow() && cycle < 6 && (itrAlliance < nbBotsWantedAlliance || itrHorde < nbBotsWantedHorde));
+            while (result->NextRow() && cycle < 2 && (itrAlliance < nbBotsWantedAlliance || itrHorde < nbBotsWantedHorde));
             delete result;
         }
     }

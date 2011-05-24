@@ -181,6 +181,20 @@ Database::DelayQueryHolder(Class *object, void (Class::*method)(QueryResult*, Sq
     return holder->Execute(new MaNGOS::QueryCallback<Class, SqlQueryHolder*, ParamType1>(object, method, (QueryResult*)NULL, holder, param1), m_threadBody, m_pResultQueue);
 }
 
+template<class Class>
+bool
+Database::DirectQueryHolder(Class *object, void (Class::*method)(QueryResult*, SqlQueryHolder*), SqlQueryHolder *holder)
+{
+    return holder->Execute(new MaNGOS::QueryCallback<Class, SqlQueryHolder*>(object, method, (QueryResult*)NULL, holder), m_threadBody, m_pResultQueue);
+}
+
+template<class Class, typename ParamType1>
+bool
+Database::DirectQueryHolder(Class *object, void (Class::*method)(QueryResult*, SqlQueryHolder*, ParamType1), SqlQueryHolder *holder, ParamType1 param1)
+{
+    return holder->Execute(new MaNGOS::QueryCallback<Class, SqlQueryHolder*, ParamType1>(object, method, (QueryResult*)NULL, holder, param1), m_threadBody, m_pResultQueue);
+}
+
 #undef ASYNC_QUERY_BODY
 #undef ASYNC_PQUERY_BODY
 #undef ASYNC_DELAYHOLDER_BODY

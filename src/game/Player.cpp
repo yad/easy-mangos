@@ -16002,12 +16002,12 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder *holder )
             for(HashMapHolder<Player>::MapType::const_iterator itr1 = m.begin(); itr1 != m.end(); ++itr1)
             {
                 Player* realPlayer = itr1->second;
-                if (realPlayer && !realPlayer->IsBot())
+                if (realPlayer && !realPlayer->IsBot() && !realPlayer->IsBeingTeleported())
                 {
                     if (!invalid_zone.empty())
                     {
                         std::vector<uint32>::iterator it = std::find(invalid_zone.begin(), invalid_zone.end(), realPlayer->GetZoneId());
-                        if (*it==realPlayer->GetZoneId())
+                        if ((*it)==realPlayer->GetZoneId())
                             continue;
                     }
                     if (LastZoneId == 0)
@@ -16019,56 +16019,60 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder *holder )
 
             if (LastZoneId == 0)
             {
-                delete result;
-                return false;
-            }
-
-            for(HashMapHolder<Player>::MapType::const_iterator itr2 = m.begin(); itr2 != m.end(); ++itr2)
-            {
-                Player* bot = itr2->second;
-                if (bot && bot->IsBot() && !bot->GetGroup() && !bot->GetSession()->isLogingOut())
-                {
-                    if (bot->GetZoneId() == LastZoneId)
-                        ZoneCptBotPlayer++;
-                }
-            }
-
-            //TODO fix ratio bot...
-            if (ZoneCptRealPlayer * sWorld.getConfig(CONFIG_INT32_MAX_BOT_BY_PLAYER_IN_ZONE) <= ZoneCptBotPlayer)
-            {
-                invalid_zone.push_back(LastZoneId);
-                continue;
-            }
-
-            BotInfoZone const* biz = sObjectMgr.GetBotInfoZone(LastZoneId);
-            BotInfoPosition const* bip = sObjectMgr.GetBotInfoPosition(LastZoneId);
-
-            if (!biz || !bip)
-            {
-                invalid_zone.push_back(LastZoneId);
-                continue;
-            }
-
-            if (GetTeam() == ALLIANCE)
-            {
-                if(biz->territory == 1)
-                {
-                    invalid_zone.push_back(LastZoneId);
-                    continue;
-                }
+                Relocate(16227.69f, 16401.99f, -64.38f, fields[16].GetFloat());
+                SetLocationMapId(1);
+                SetLevelAtLoading(1);
+                ok = false;
             }
             else
             {
-                if (biz->territory == 0)
+                for(HashMapHolder<Player>::MapType::const_iterator itr2 = m.begin(); itr2 != m.end(); ++itr2)
+                {
+                    Player* bot = itr2->second;
+                    if (bot && bot->IsBot() && !bot->GetGroup() && !bot->GetSession()->isLogingOut() && !bot->IsBeingTeleported())
+                    {
+                        if (bot->GetZoneId() == LastZoneId)
+                            ZoneCptBotPlayer++;
+                    }
+                }
+
+                //TODO fix ratio bot...
+                if (ZoneCptRealPlayer * sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_ZONE_BY_PLAYER) <= ZoneCptBotPlayer)
                 {
                     invalid_zone.push_back(LastZoneId);
                     continue;
                 }
+
+                BotInfoZone const* biz = sObjectMgr.GetBotInfoZone(LastZoneId);
+                BotInfoPosition const* bip = sObjectMgr.GetBotInfoPosition(LastZoneId);
+
+                if (!biz || !bip)
+                {
+                    invalid_zone.push_back(LastZoneId);
+                    continue;
+                }
+
+                if (GetTeam() == ALLIANCE)
+                {
+                    if(biz->territory == 1)
+                    {
+                        invalid_zone.push_back(LastZoneId);
+                        continue;
+                    }
+                }
+                else
+                {
+                    if (biz->territory == 0)
+                    {
+                        invalid_zone.push_back(LastZoneId);
+                        continue;
+                    }
+                }
+                Relocate(bip->x, bip->y, bip->z, fields[16].GetFloat());
+                SetLocationMapId(bip->mapid);
+                SetLevelAtLoading(urand(biz->minlevel, biz->maxlevel));
+                ok = false;
             }
-            Relocate(bip->x, bip->y, bip->z, fields[16].GetFloat());
-            SetLocationMapId(bip->mapid);
-            SetLevelAtLoading(urand(biz->minlevel, biz->maxlevel));
-            ok = false;
         }while (ok);
     }
 

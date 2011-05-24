@@ -4878,36 +4878,20 @@ BotInfoZone const *ObjectMgr::GetBotInfoZone(uint32 zoneid) const
 
 BotInfoPosition const *ObjectMgr::GetBotInfoPosition(uint32 zoneid) const
 {
-    uint32 maxPOIinZone = 0;
+    std::vector<BotInfoPosition> valid_zone;
     for (BotInfoPositionMap::const_iterator itr = mBotInfoPosition.begin(); itr != mBotInfoPosition.end(); ++itr)
     {
         uint16 area_flag = sTerrainMgr.GetAreaFlag(itr->second.mapid, itr->second.x, itr->second.y, itr->second.z);
         uint32 zone_id = TerrainManager::GetZoneIdByAreaFlag(area_flag, itr->second.mapid);
 
         if (zoneid == zone_id)
-            maxPOIinZone++;
+            valid_zone.push_back(itr->second);
     }
 
-    if (maxPOIinZone == 0)
+    if (valid_zone.empty())
         return NULL;
 
-    uint32 myPOI = urand(1, maxPOIinZone);
-    sLog.outError("%d", myPOI);
-    for (BotInfoPositionMap::const_iterator itr = mBotInfoPosition.begin(); itr != mBotInfoPosition.end(); ++itr)
-    {
-        uint32 indexPOI = 1;
-        uint16 area_flag = sTerrainMgr.GetAreaFlag(itr->second.mapid, itr->second.x, itr->second.y, itr->second.z);
-        uint32 zone_id = TerrainManager::GetZoneIdByAreaFlag(area_flag, itr->second.mapid);
-
-        if (zoneid == zone_id)
-        {
-            if (indexPOI == myPOI)
-                return &itr->second;
-            else
-                indexPOI++;
-        }
-    }
-    return NULL;
+    return &valid_zone.at(urand(1, valid_zone.size()));
 }
 
 struct SQLWorldLoader : public SQLStorageLoaderBase<SQLWorldLoader>

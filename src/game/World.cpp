@@ -868,11 +868,12 @@ void World::LoadConfigSettings(bool reload)
     if (!PlBotCfg.SetSource(cfg_file))
         return;
 
-    setConfig(CONFIG_BOOL_BOTS_ENABLED,               PlBotCfg.GetBoolDefault("PlayerBot.Enable", false));
-    setConfig(CONFIG_INT32_MAX_BOT_BY_PLAYER_IN_ZONE, PlBotCfg.GetIntDefault("PlayerBot.MaxBots.ByPlayerInZone", 7));
-    setConfig(CONFIG_INT32_MAX_BOT_ALLIANCE_SIDE,     PlBotCfg.GetIntDefault("PlayerBot.MaxBots.AllianceSide", 100));
-    setConfig(CONFIG_INT32_MAX_BOT_HORDE_SIDE,        PlBotCfg.GetIntDefault("PlayerBot.MaxBots.HordeSide", 100));
-    setConfig(CONFIG_UINT32_BOT_JOIN_BG,              PlBotCfg.GetIntDefault("PlayerBot.Join.Battleground", 0));
+    setConfig(CONFIG_BOOL_BOTS_ENABLED,                     PlBotCfg.GetBoolDefault("PlayerBot.Enable", false));
+    setConfig(CONFIG_INT32_MAX_BOT_IN_ZONE_BY_PLAYER,       PlBotCfg.GetIntDefault("PlayerBot.MaxBots.InZoneByPlayer", 7));
+    setConfig(CONFIG_INT32_MAX_BOT_IN_GM_ISLAND_BY_FACTION, PlBotCfg.GetIntDefault("PlayerBot.MaxBots.InGMIslandByFaction", 10));
+    setConfig(CONFIG_INT32_MAX_BOT_ALLIANCE_SIDE,           PlBotCfg.GetIntDefault("PlayerBot.MaxBots.AllianceSide", 100));
+    setConfig(CONFIG_INT32_MAX_BOT_HORDE_SIDE,              PlBotCfg.GetIntDefault("PlayerBot.MaxBots.HordeSide", 100));
+    setConfig(CONFIG_UINT32_BOT_JOIN_BG,                    PlBotCfg.GetIntDefault("PlayerBot.Join.Battleground", 0));
 }
 
 /// Initialize the World
@@ -1566,7 +1567,7 @@ void World::Update(uint32 diff)
     if (m_NextPlayerBotCheck < time(0))
     {
         PlayerbotMgr::AddAllBots();
-        m_NextPlayerBotCheck = time(0) + 10;
+        m_NextPlayerBotCheck = time(0) + 5;
     }
 
     // And last, but not least handle the issued cli commands

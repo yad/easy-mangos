@@ -178,6 +178,11 @@ class MANGOS_DLL_SPEC Database
         template<class Class, typename ParamType1>
             bool DelayQueryHolder(Class *object, void (Class::*method)(QueryResult*, SqlQueryHolder*, ParamType1), SqlQueryHolder *holder, ParamType1 param1);
 
+        template<class Class>
+            bool DirectQueryHolder(Class *object, void (Class::*method)(QueryResult*, SqlQueryHolder*), SqlQueryHolder *holder);
+        template<class Class, typename ParamType1>
+            bool DirectQueryHolder(Class *object, void (Class::*method)(QueryResult*, SqlQueryHolder*, ParamType1), SqlQueryHolder *holder, ParamType1 param1);
+
         bool Execute(const char *sql);
         bool PExecute(const char *format,...) ATTR_PRINTF(2,3);
 
