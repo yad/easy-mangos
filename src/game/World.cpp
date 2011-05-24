@@ -869,7 +869,7 @@ void World::LoadConfigSettings(bool reload)
         return;
 
     setConfig(CONFIG_BOOL_BOTS_ENABLED,                     PlBotCfg.GetBoolDefault("PlayerBot.Enable", false));
-    setConfig(CONFIG_INT32_MAX_BOT_IN_ZONE_BY_PLAYER,       PlBotCfg.GetIntDefault("PlayerBot.MaxBots.InZoneByPlayer", 7));
+    setConfig(CONFIG_INT32_MAX_BOT_IN_ZONE_BY_PLAYER,       PlBotCfg.GetIntDefault("PlayerBot.MaxBots.InZoneByPlayer", 5));
     setConfig(CONFIG_INT32_MAX_BOT_IN_GM_ISLAND_BY_FACTION, PlBotCfg.GetIntDefault("PlayerBot.MaxBots.InGMIslandByFaction", 10));
     setConfig(CONFIG_INT32_MAX_BOT_ALLIANCE_SIDE,           PlBotCfg.GetIntDefault("PlayerBot.MaxBots.AllianceSide", 100));
     setConfig(CONFIG_INT32_MAX_BOT_HORDE_SIDE,              PlBotCfg.GetIntDefault("PlayerBot.MaxBots.HordeSide", 100));

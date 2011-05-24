@@ -677,6 +677,13 @@ void PlayerbotMgr::AddAllBots()
         }
     }
 
+    /*sLog.outString("nbRealPlayersCurrAlliance %u", nbRealPlayersCurrAlliance);
+    sLog.outString("nbRealPlayersCurrHorde %u", nbRealPlayersCurrHorde);
+    sLog.outString("nbBotsCurrAlliance %u", nbBotsCurrAlliance);
+    sLog.outString("nbBotsCurrHorde %u", nbBotsCurrHorde);
+    sLog.outString("nbBotsCurrAllianceGMIsland %u", nbBotsCurrAllianceGMIsland);
+    sLog.outString("nbBotsCurrHordeGMIsland %u", nbBotsCurrHordeGMIsland);*/
+
     int nbBotsWantedAlliance =
         (nbRealPlayersCurrAlliance * sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_ZONE_BY_PLAYER) + nbBotsCurrAllianceGMIsland)
         > sWorld.getConfig(CONFIG_INT32_MAX_BOT_ALLIANCE_SIDE)

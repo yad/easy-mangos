@@ -16037,7 +16037,7 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder *holder )
                 }
 
                 //TODO fix ratio bot...
-                if (ZoneCptRealPlayer * sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_ZONE_BY_PLAYER) <= ZoneCptBotPlayer)
+                if (ZoneCptRealPlayer * sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_ZONE_BY_PLAYER) * 2 <= ZoneCptBotPlayer)
                 {
                     invalid_zone.push_back(LastZoneId);
                     continue;
