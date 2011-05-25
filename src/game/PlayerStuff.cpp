@@ -2874,7 +2874,7 @@ bool ChatHandler::HandleBotInvite(char* args)
 bool ChatHandler::HandleBotAddPOI(char* args)
 {
     uint32 id = 0;
-    QueryResult *result = CharacterDatabase.Query("SELECT MAX(id) FROM bot_info_position");
+    QueryResult *result = WorldDatabase.Query("SELECT MAX(id) FROM bot_info_position");
     if(!result)
     {
         id++;
@@ -2902,7 +2902,7 @@ bool ChatHandler::HandleBotAddPOI(char* args)
     uint32 maxlevel = biz->maxlevel;
     uint8 territory = biz->territory;
 
-    CharacterDatabase.PExecute("INSERT INTO bot_info_position (id, x, y, z, mapid, zoneid, minlevel, maxlevel, territory) VALUES ('%u', '%f', '%f', '%f', '%u', '%u', '%u', '%u', '%u')",
+    WorldDatabase.PExecute("INSERT INTO bot_info_position (id, x, y, z, mapid, zoneid, minlevel, maxlevel, territory) VALUES ('%u', '%f', '%f', '%f', '%u', '%u', '%u', '%u', '%u')",
         id, x, y, z, mapid, zoneid, minlevel, maxlevel, territory);
     return true;
 }
