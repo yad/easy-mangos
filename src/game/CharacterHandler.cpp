@@ -595,8 +595,8 @@ void PlayerbotMgr::AddAllBots()
     int nbBotsCurrHorde = 0;
     int nbBotsCurrAllianceGMIsland = 0;
     int nbBotsCurrHordeGMIsland = 0;
-    int nbRealPlayersCurrAlliance = 0;
-    int nbRealPlayersCurrHorde = 0;
+    std::vector<Player*> nbRealPlayersCurrAlliance;
+    std::vector<Player*> nbRealPlayersCurrHorde;
 
     std::vector<uint32> valid_zone;
     valid_zone.push_back(876);
@@ -668,34 +668,119 @@ void PlayerbotMgr::AddAllBots()
         {
             if (!player->IsBeingTeleported())
             {
-                BotInfoZone const* biz = sObjectMgr.GetBotInfoZone(player->GetZoneId());
-                if(biz && biz->territory != 1)
-                    nbRealPlayersCurrAlliance++;
-                if (biz && biz->territory != 0)
-                    nbRealPlayersCurrHorde++;
+                /*BotInfoZone const* biz = sObjectMgr.GetBotInfoZone(player->GetZoneId());
+                if(biz && biz->territory != 1)*/
+                    nbRealPlayersCurrAlliance.push_back(player);
+                //if (biz && biz->territory != 0)
+                    nbRealPlayersCurrHorde.push_back(player);
             }
         }
     }
 
-    /*sLog.outString("nbRealPlayersCurrAlliance %u", nbRealPlayersCurrAlliance);
-    sLog.outString("nbRealPlayersCurrHorde %u", nbRealPlayersCurrHorde);
+    if (nbBotsCurrAllianceGMIsland > sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_GM_ISLAND_BY_FACTION) 
+        || nbBotsCurrHordeGMIsland > sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_GM_ISLAND_BY_FACTION))
+    {
+        int nbBotsAllowedAllianceGMIsland = sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_GM_ISLAND_BY_FACTION);
+        int nbBotsAllowedHordeGMIsland = sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_GM_ISLAND_BY_FACTION);
+        if (!nbRealPlayersCurrAlliance.empty())
+        {
+            for(std::vector<Player*>::const_iterator itr = nbRealPlayersCurrAlliance.begin(); itr != nbRealPlayersCurrAlliance.end(); ++itr)
+            {
+                BotInfoZone const* biz = sObjectMgr.GetBotInfoZone((*itr)->GetZoneId());
+                BotInfoPosition const* bip = sObjectMgr.GetBotInfoPosition((*itr)->GetZoneId());
+
+                if (!biz || !bip)
+                {
+                    nbBotsAllowedAllianceGMIsland += sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_ZONE_BY_PLAYER);
+                    nbBotsAllowedHordeGMIsland += sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_ZONE_BY_PLAYER);
+                    continue;
+                }
+
+                if(biz->territory == 1)
+                {
+                    nbBotsAllowedAllianceGMIsland += sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_ZONE_BY_PLAYER);
+                    continue;
+                }
+            }
+        }        
+        if (!nbRealPlayersCurrHorde.empty())
+        {
+            for(std::vector<Player*>::const_iterator itr = nbRealPlayersCurrHorde.begin(); itr != nbRealPlayersCurrHorde.end(); ++itr)
+            {
+                BotInfoZone const* biz = sObjectMgr.GetBotInfoZone((*itr)->GetZoneId());
+                BotInfoPosition const* bip = sObjectMgr.GetBotInfoPosition((*itr)->GetZoneId());
+
+                if (!biz || !bip)
+                {
+                    nbBotsAllowedAllianceGMIsland += sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_ZONE_BY_PLAYER);
+                    nbBotsAllowedHordeGMIsland += sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_ZONE_BY_PLAYER);
+                    continue;
+                }
+
+                if (biz->territory == 0)
+                {
+                    nbBotsAllowedHordeGMIsland += sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_ZONE_BY_PLAYER);
+                    continue;
+                }
+            }
+        }    
+        if (nbBotsAllowedAllianceGMIsland > sWorld.getConfig(CONFIG_INT32_MAX_BOT_ALLIANCE_SIDE))
+            nbBotsAllowedAllianceGMIsland = sWorld.getConfig(CONFIG_INT32_MAX_BOT_ALLIANCE_SIDE);
+        if (nbBotsAllowedHordeGMIsland > sWorld.getConfig(CONFIG_INT32_MAX_BOT_HORDE_SIDE))
+            nbBotsAllowedHordeGMIsland = sWorld.getConfig(CONFIG_INT32_MAX_BOT_HORDE_SIDE);
+
+        if (nbBotsCurrAllianceGMIsland > nbBotsAllowedAllianceGMIsland 
+            || nbBotsCurrHordeGMIsland > nbBotsAllowedHordeGMIsland)
+        {
+            int nbBotsRemoveAllianceGMIsland = nbBotsAllowedAllianceGMIsland - nbBotsCurrAllianceGMIsland;
+            int nbBotsRemoveHordeGMIsland = nbBotsAllowedHordeGMIsland - nbBotsCurrHordeGMIsland;
+
+            while (nbBotsRemoveAllianceGMIsland < 0 || nbBotsRemoveHordeGMIsland < 0)
+            {
+                m = sObjectAccessor.GetPlayers();
+                for(HashMapHolder<Player>::MapType::const_iterator itr = m.begin(); itr != m.end(); ++itr)
+                {
+                    Player* bot = itr->second;
+                    if (bot && bot->IsBot() && !bot->GetGroup() && !bot->GetSession()->isLogingOut() && !bot->IsBeingTeleported() && bot->GetZoneId() == 876)
+                    {
+                        if (bot->GetTeam() == ALLIANCE && nbBotsRemoveAllianceGMIsland < 0)
+                        {
+                            nbBotsRemoveAllianceGMIsland++;
+                            bot->GetSession()->LogoutPlayer(false);
+                            break;
+                        }
+                        else if (bot->GetTeam() == HORDE && nbBotsRemoveHordeGMIsland < 0)
+                        {
+                            nbBotsRemoveHordeGMIsland++;
+                            bot->GetSession()->LogoutPlayer(false);
+                            break;
+                        }
+                    }
+                }
+            }
+
+        }
+    }
+
+	sLog.outString("nbRealPlayersCurrAlliance %u", nbRealPlayersCurrAlliance.size());
+    sLog.outString("nbRealPlayersCurrHorde %u", nbRealPlayersCurrHorde.size());
     sLog.outString("nbBotsCurrAlliance %u", nbBotsCurrAlliance);
     sLog.outString("nbBotsCurrHorde %u", nbBotsCurrHorde);
     sLog.outString("nbBotsCurrAllianceGMIsland %u", nbBotsCurrAllianceGMIsland);
-    sLog.outString("nbBotsCurrHordeGMIsland %u", nbBotsCurrHordeGMIsland);*/
+    sLog.outString("nbBotsCurrHordeGMIsland %u", nbBotsCurrHordeGMIsland);
 
     int nbBotsWantedAlliance =
-        (nbRealPlayersCurrAlliance * sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_ZONE_BY_PLAYER) + nbBotsCurrAllianceGMIsland)
+        (int(nbRealPlayersCurrAlliance.size()) * sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_ZONE_BY_PLAYER) + nbBotsCurrAllianceGMIsland)
         > sWorld.getConfig(CONFIG_INT32_MAX_BOT_ALLIANCE_SIDE)
         ? (sWorld.getConfig(CONFIG_INT32_MAX_BOT_ALLIANCE_SIDE) - nbBotsCurrAlliance)
-        : (nbRealPlayersCurrAlliance * sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_ZONE_BY_PLAYER)
+        : (int(nbRealPlayersCurrAlliance.size()) * sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_ZONE_BY_PLAYER)
         - nbBotsCurrAlliance + sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_GM_ISLAND_BY_FACTION) - nbBotsCurrAllianceGMIsland);
 
     int nbBotsWantedHorde =
-        (nbRealPlayersCurrHorde * sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_ZONE_BY_PLAYER) + nbBotsCurrHordeGMIsland)
+        (int(nbRealPlayersCurrHorde.size()) * sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_ZONE_BY_PLAYER) + nbBotsCurrHordeGMIsland)
         > sWorld.getConfig(CONFIG_INT32_MAX_BOT_HORDE_SIDE)
         ? (sWorld.getConfig(CONFIG_INT32_MAX_BOT_HORDE_SIDE) - nbBotsCurrHorde)
-        : (nbRealPlayersCurrHorde * sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_ZONE_BY_PLAYER)
+        : (int(nbRealPlayersCurrHorde.size()) * sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_ZONE_BY_PLAYER)
         - nbBotsCurrHorde + sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_GM_ISLAND_BY_FACTION) - nbBotsCurrHordeGMIsland);
 
     if (nbBotsWantedAlliance == 0 && nbBotsWantedHorde == 0)
