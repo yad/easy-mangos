@@ -19373,6 +19373,9 @@ void Player::RemoveSpellMods(Spell const* spell)
 
             if (mod && mod->charges == -1 && (mod->lastAffected == spell || mod->lastAffected==NULL))
             {
+                SpellAuraHolderBounds bounds = GetSpellAuraHolderBounds(mod->spellId);
+                if (bounds.first == bounds.second)
+                    break;
                 RemoveAurasDueToSpell(mod->spellId);
                 if (m_spellMods[i].empty())
                     break;
