@@ -1734,7 +1734,7 @@ void LFGMgr::Teleport(Player* player, bool out, bool fromOpcode /*= false*/)
     float orientation = 0;
     Difficulty difficulty;
 
-    LFGDungeonEntry const* dungeon = NULL; 
+    LFGDungeonEntry const* dungeon = NULL;
 
     if (error == LFG_TELEPORTERROR_OK)
     {

@@ -39,7 +39,10 @@ void Player::GiveMeBestItemForMyLevel()
         if (CanEquipNewItem(NULL_SLOT, eDest, id, false)!=EQUIP_ERR_OK)
             continue;
 
-        if(!IsForMyClass(pProto) || !IsNotAllowedItem(pProto))
+        if(!IsForMyClass(pProto))
+            continue;
+
+        if (!IsNotAllowedItem(pProto))
             continue;
 
         if (pProto->ItemSet > 0 && !OtherItemsInSetAreAllowedForMe(pProto))
@@ -650,6 +653,9 @@ void Player::RemoveMyEquipement(bool destroy)
 
 bool Player::IsForMyClass(ItemPrototype const* pProto)
 {
+    if (pProto->InventoryType==INVTYPE_CLOAK)
+        return true;
+
     uint16 role = getRole();
     switch (pProto->Class)
     {
@@ -823,11 +829,10 @@ bool Player::IsForMyClass(ItemPrototype const* pProto)
 
                     switch(getClass())
                     {
-
-                        case CLASS_HUNTER:
                         case CLASS_DRUID:
                         case CLASS_ROGUE:
                             return true;
+                        case CLASS_HUNTER:
                         case CLASS_SHAMAN:
                             if (getLevel()<40)
                                 return true;
@@ -2755,6 +2760,8 @@ bool ChatHandler::HandleBotInvite(char* args)
     if (role == 0)
         return false;
 
+    Player *pl = m_session->GetPlayer();
+
     uint8 _class = 0;
     switch (role)
     {
@@ -2806,13 +2813,18 @@ bool ChatHandler::HandleBotInvite(char* args)
         case DeathKnightBlood:
         case DeathKnightFrost:
         case DeathKnightUnholy:
+        {
+            if (pl->getLevel() < 55)
+            {
+                PSendSysMessage("Impossible d'inviter un Chevalier de la Mort avant le niveau 55");
+                return true;
+            }
             _class = CLASS_DEATH_KNIGHT;
             break;
+        }
     }
     if (_class == 0)
         return false;
-
-    Player *pl = m_session->GetPlayer();
 
     HashMapHolder<Player>::MapType& m = sObjectAccessor.GetPlayers();
     for(HashMapHolder<Player>::MapType::const_iterator itr = m.begin(); itr != m.end(); ++itr)
@@ -2868,6 +2880,8 @@ bool ChatHandler::HandleBotInviteArena(char* args)
     if (role == 0)
         return false;
 
+    Player *pl = m_session->GetPlayer();
+
     uint8 _class = 0;
     switch (role)
     {
@@ -2919,13 +2933,18 @@ bool ChatHandler::HandleBotInviteArena(char* args)
         case DeathKnightBlood:
         case DeathKnightFrost:
         case DeathKnightUnholy:
+        {
+            if (pl->getLevel() < 55)
+            {
+                PSendSysMessage("Impossible d'inviter un Chevalier de la Mort avant le niveau 55");
+                return true;
+            }
             _class = CLASS_DEATH_KNIGHT;
             break;
+        }
     }
     if (_class == 0)
         return false;
-
-    Player *pl = m_session->GetPlayer();
 
     HashMapHolder<Player>::MapType& m = sObjectAccessor.GetPlayers();
     for(HashMapHolder<Player>::MapType::const_iterator itr = m.begin(); itr != m.end(); ++itr)

@@ -488,14 +488,26 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
                     m_bot->SetGroupInvite(NULL);
                     return;
                 }
+                WorldPacket p;
 
                 if (inviter->GetBattleGround())
                 {
+                    ChatHandler ch(inviter);
+                    ch.PSendSysMessage("Impossible d'inviter un bot depuis un champ de bataille");
+                    m_bot->GetSession()->HandleGroupDeclineOpcode(p);
                     m_bot->SetGroupInvite(NULL);
                     return;
                 }
 
-                WorldPacket p;
+                if (inviter->getLevel() < 55 && m_bot->getClass() == CLASS_DEATH_KNIGHT)
+                {
+                    ChatHandler ch(inviter);
+                    ch.PSendSysMessage("Impossible d'inviter un Chevalier de la Mort avant le niveau 55");
+                    m_bot->GetSession()->HandleGroupDeclineOpcode(p);
+                    m_bot->SetGroupInvite(NULL);
+                    return;
+                }
+
                 m_bot->GetSession()->HandleGroupAcceptOpcode(p);
                 MovementClear();
                 if (!inviter->IsBot())
@@ -2199,6 +2211,9 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
     if (!CheckMaster())
         return;
 
+    if (m_bot==GetLeader() && m_bot->GetZoneId()==876)
+        return;
+
     CheckBG();
     CheckMMaps();
 
@@ -2298,6 +2313,12 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
 
         else if (!IsInCombat() && m_bot->IsInWorld())
         {
+            if (m_bot->getClass() == CLASS_DEATH_KNIGHT && GetLeader() != m_bot && GetLeader()->getLevel() < 55)
+            {
+                SetLeader(m_bot);
+                ReinitAI();
+                return;
+            }
             CheckRoles();
             if(CheckLevel())
                 CheckStuff();
@@ -2386,7 +2407,7 @@ bool PlayerbotAI::CheckMaster()
 
 void PlayerbotAI::CheckMMaps()
 {
-    Player* leader = GetLeader();
+    /*Player* leader = GetLeader();
     if (leader->GetTransport() || (m_bot->GetBattleGround() && m_bot->GetBattleGround()->isArena()))
     {
         if(!m_bot->hasUnitState(UNIT_STAT_IGNORE_PATHFINDING))
@@ -2396,7 +2417,7 @@ void PlayerbotAI::CheckMMaps()
     {
         if(m_bot->hasUnitState(UNIT_STAT_IGNORE_PATHFINDING))
             m_bot->clearUnitState(UNIT_STAT_IGNORE_PATHFINDING);
-    }
+    }*/
 }
 
 void PlayerbotAI::CheckRoles()

@@ -16007,7 +16007,8 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder *holder )
             HashMapHolder<Player>::MapType& m = sObjectAccessor.GetPlayers();
 
             uint32 ZoneCptRealPlayer = 0;
-            uint32 ZoneCptBotPlayer = 0;
+            uint32 ZoneCptBotPlayerAlliance = 0;
+            uint32 ZoneCptBotPlayerHorde = 0;
             uint32 LastZoneId = 0;
 
             for(HashMapHolder<Player>::MapType::const_iterator itr1 = m.begin(); itr1 != m.end(); ++itr1)
@@ -16043,37 +16044,42 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder *holder )
                     if (bot && bot->IsBot() && !bot->GetGroup() && !bot->GetSession()->isLogingOut() && !bot->IsBeingTeleported())
                     {
                         if (bot->GetZoneId() == LastZoneId)
-                            ZoneCptBotPlayer++;
+                        {
+                            if (bot->GetTeam() == ALLIANCE)
+                                ZoneCptBotPlayerAlliance++;
+                            else
+                                ZoneCptBotPlayerHorde++;
+                        }
                     }
                 }
 
-                //TODO fix ratio bot...
-                if (ZoneCptRealPlayer * sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_ZONE_BY_PLAYER) * 2 <= ZoneCptBotPlayer)
-                {
-                    invalid_zone.push_back(LastZoneId);
-                    continue;
-                }
-
-                BotInfoZone const* biz = sObjectMgr.GetBotInfoZone(LastZoneId);
                 BotInfoPosition const* bip = sObjectMgr.GetBotInfoPosition(LastZoneId);
-
-                if (!biz || !bip)
+                if (!bip)
                 {
                     invalid_zone.push_back(LastZoneId);
                     continue;
                 }
 
-                if (GetTeam() == ALLIANCE)
+                //TODO fix ratio bot...
+                if (ZoneCptRealPlayer * sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_ZONE_BY_PLAYER) *
+                    ((bip->territory == 0 || bip->territory == 1) ? 1 : 2)
+                    <= ZoneCptBotPlayerAlliance + ZoneCptBotPlayerHorde)
                 {
-                    if(biz->territory == 1)
+                    invalid_zone.push_back(LastZoneId);
+                    continue;
+                }
+
+                if (GetTeam() == ALLIANCE && ZoneCptBotPlayerAlliance < ZoneCptRealPlayer * sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_ZONE_BY_PLAYER))
+                {
+                    if(bip->territory == 1)
                     {
                         invalid_zone.push_back(LastZoneId);
                         continue;
                     }
                 }
-                else
+                else if (GetTeam() == HORDE && ZoneCptBotPlayerHorde < ZoneCptRealPlayer * sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_ZONE_BY_PLAYER))
                 {
-                    if (biz->territory == 0)
+                    if (bip->territory == 0)
                     {
                         invalid_zone.push_back(LastZoneId);
                         continue;
@@ -16081,7 +16087,36 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder *holder )
                 }
                 Relocate(bip->x, bip->y, bip->z, fields[16].GetFloat());
                 SetLocationMapId(bip->mapid);
-                SetLevelAtLoading(urand(biz->minlevel, biz->maxlevel));
+                if (bytes0_1 == CLASS_DEATH_KNIGHT)
+                {
+                    if (bip->maxlevel < 55)
+                    {
+                        bytes0_1 = urand(CLASS_WARRIOR, CLASS_DRUID);
+                        do
+                        {
+                            PlayerInfo const* info = sObjectMgr.GetPlayerInfo(fields[3].GetUInt8(), bytes0_1);
+                            if (info && bytes0_1 != CLASS_DEATH_KNIGHT)
+                                break;
+
+                            bytes0_1 = bytes0_1 % CLASS_DRUID;
+                            ++bytes0_1;
+                        }while(true);
+                        setClass(bytes0_1);
+                        SetLevelAtLoading(urand(bip->minlevel, bip->maxlevel));
+                    }
+                    else if (bip->minlevel < 55)
+                    {
+                        SetLevelAtLoading(urand(55, bip->maxlevel));
+                    }
+                    else
+                    {
+                        SetLevelAtLoading(urand(bip->minlevel, bip->maxlevel));
+                    }
+                }
+                else
+                {
+                    SetLevelAtLoading(urand(bip->minlevel, bip->maxlevel));
+                }
                 ok = false;
             }
         }while (ok);
@@ -19346,6 +19381,9 @@ void Player::RemoveSpellMods(Spell const* spell)
 
             if (mod && mod->charges == -1 && (mod->lastAffected == spell || mod->lastAffected==NULL))
             {
+                SpellAuraHolderBounds bounds = GetSpellAuraHolderBounds(mod->spellId);
+                if (bounds.first == bounds.second)
+                    break;
                 RemoveAurasDueToSpell(mod->spellId);
                 if (m_spellMods[i].empty())
                     break;
