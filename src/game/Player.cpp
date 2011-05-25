@@ -16073,7 +16073,36 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder *holder )
                 }
                 Relocate(bip->x, bip->y, bip->z, fields[16].GetFloat());
                 SetLocationMapId(bip->mapid);
-                SetLevelAtLoading(urand(biz->minlevel, biz->maxlevel));
+                if (bytes0_1 == CLASS_DEATH_KNIGHT)
+                {
+                    if (biz->maxlevel < 55)
+                    {
+                        bytes0_1 = urand(CLASS_WARRIOR, CLASS_DRUID);
+                        do
+                        {
+                            PlayerInfo const* info = sObjectMgr.GetPlayerInfo(fields[3].GetUInt8(), bytes0_1);
+                            if (info && bytes0_1 != CLASS_DEATH_KNIGHT)
+                                break;
+
+                            bytes0_1 = bytes0_1 % CLASS_DRUID;
+                            ++bytes0_1;
+                        }while(true);
+                        setClass(bytes0_1);
+                        SetLevelAtLoading(urand(biz->minlevel, biz->maxlevel));
+                    }
+                    else if (biz->minlevel < 55)
+                    {
+                        SetLevelAtLoading(urand(55, biz->maxlevel));
+                    }
+                    else
+                    {
+                        SetLevelAtLoading(urand(biz->minlevel, biz->maxlevel));
+                    }
+                }
+                else
+                {
+                    SetLevelAtLoading(urand(biz->minlevel, biz->maxlevel));
+                }
                 ok = false;
             }
         }while (ok);
