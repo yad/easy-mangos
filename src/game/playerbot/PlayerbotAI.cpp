@@ -2306,13 +2306,15 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
 
         else if (!IsInCombat() && m_bot->IsInWorld())
         {
+            if (m_bot->getClass() == CLASS_DEATH_KNIGHT && GetLeader() != m_bot && GetLeader()->getLevel() < 55)
+            {
+                SetLeader(m_bot);
+                ReinitAI();
+                return;
+            }
             CheckRoles();
             if(CheckLevel())
-            {
-                if (GetLeader()==m_bot)
-                    return;
                 CheckStuff();
-            }
         }
 
         if (IsInCombat() || m_targetCombat)
@@ -2614,15 +2616,7 @@ bool PlayerbotAI::CheckLevel()
     if (GetLeader()->getLevel() == m_bot->getLevel())
         return false;
 
-    if (m_bot->getClass() == CLASS_DEATH_KNIGHT && GetLeader() != m_bot && GetLeader()->getLevel() < 55)
-    {
-        SetLeader(m_bot);
-        ReinitAI();
-    }
-    else
-    {
-        m_bot->GiveLevel(GetLeader()->getLevel());
-    }
+    m_bot->GiveLevel(GetLeader()->getLevel());
     return true;
 }
 
