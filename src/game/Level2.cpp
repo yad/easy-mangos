@@ -964,7 +964,7 @@ bool ChatHandler::HandleGameObjectTurnCommand(char* args)
 
     float z_rot, y_rot, x_rot;
     if (!ExtractFloat(&args, z_rot) || !ExtractOptFloat(&args, y_rot, 0) || !ExtractOptFloat(&args, x_rot, 0))
-        return false;         
+        return false;
 
     obj->SetRotationAngles(z_rot, y_rot, x_rot);
     obj->SaveToDB();

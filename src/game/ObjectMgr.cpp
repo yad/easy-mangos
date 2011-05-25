@@ -4840,7 +4840,7 @@ void ObjectMgr::LoadBotInfoZone()
 
 void ObjectMgr::LoadBotInfoPosition()
 {
-    QueryResult *result = WorldDatabase.Query( "SELECT id, x, y, z, mapid FROM bot_info_position" );
+    QueryResult *result = WorldDatabase.Query( "SELECT id, x, y, z, mapid, zoneid, minlevel, maxlevel, territory FROM bot_info_position" );
 
     int count = 0;
     if( !result )
@@ -4863,11 +4863,15 @@ void ObjectMgr::LoadBotInfoPosition()
 
         BotInfoPosition& bInfoPosition = mBotInfoPosition[count];
 
-        bInfoPosition.id    = fields[0].GetUInt32();
-        bInfoPosition.x     = fields[1].GetFloat();
-        bInfoPosition.y     = fields[2].GetFloat();
-        bInfoPosition.z     = fields[3].GetFloat();
-        bInfoPosition.mapid = fields[4].GetUInt32();
+        bInfoPosition.id        = fields[0].GetUInt32();
+        bInfoPosition.x         = fields[1].GetFloat();
+        bInfoPosition.y         = fields[2].GetFloat();
+        bInfoPosition.z         = fields[3].GetFloat();
+        bInfoPosition.mapid     = fields[4].GetUInt32();
+        bInfoPosition.zoneid    = fields[5].GetUInt32();
+        bInfoPosition.minlevel  = fields[6].GetUInt32();
+        bInfoPosition.maxlevel  = fields[7].GetUInt32();
+        bInfoPosition.territory = fields[8].GetUInt8();
 
         count++;
 
@@ -4893,10 +4897,7 @@ BotInfoPosition const *ObjectMgr::GetBotInfoPosition(uint32 zoneid) const
     std::vector<BotInfoPosition> valid_zone;
     for (BotInfoPositionMap::const_iterator itr = mBotInfoPosition.begin(); itr != mBotInfoPosition.end(); ++itr)
     {
-        uint16 area_flag = sTerrainMgr.GetAreaFlag(itr->second.mapid, itr->second.x, itr->second.y, itr->second.z);
-        uint32 zone_id = TerrainManager::GetZoneIdByAreaFlag(area_flag, itr->second.mapid);
-
-        if (zoneid == zone_id)
+        if (zoneid == itr->second.zoneid)
             valid_zone.push_back(itr->second);
     }
 

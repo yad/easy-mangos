@@ -2812,7 +2812,7 @@ bool ChatHandler::HandleBotInvite(char* args)
             if (pl->getLevel() < 55)
             {
                 PSendSysMessage("Impossible d'inviter un Chevalier de la Mort avant le niveau 55");
-                return false;
+                return true;
             }
             _class = CLASS_DEATH_KNIGHT;
             break;
@@ -2932,7 +2932,7 @@ bool ChatHandler::HandleBotInviteArena(char* args)
             if (pl->getLevel() < 55)
             {
                 PSendSysMessage("Impossible d'inviter un Chevalier de la Mort avant le niveau 55");
-                return false;
+                return true;
             }
             _class = CLASS_DEATH_KNIGHT;
             break;

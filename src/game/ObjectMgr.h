@@ -457,6 +457,10 @@ struct BotInfoPosition
     float y;
     float z;
     uint32 mapid;
+    uint32 zoneid;
+    uint32 minlevel;
+    uint32 maxlevel;
+    uint8 territory;
 };
 
 // NPC gossip text id

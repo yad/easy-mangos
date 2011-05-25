@@ -668,16 +668,13 @@ void PlayerbotMgr::AddAllBots()
         {
             if (!player->IsBeingTeleported())
             {
-                /*BotInfoZone const* biz = sObjectMgr.GetBotInfoZone(player->GetZoneId());
-                if(biz && biz->territory != 1)*/
-                    nbRealPlayersCurrAlliance.push_back(player);
-                //if (biz && biz->territory != 0)
-                    nbRealPlayersCurrHorde.push_back(player);
+                nbRealPlayersCurrAlliance.push_back(player);
+                nbRealPlayersCurrHorde.push_back(player);
             }
         }
     }
 
-    if (nbBotsCurrAllianceGMIsland > sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_GM_ISLAND_BY_FACTION) 
+    if (nbBotsCurrAllianceGMIsland > sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_GM_ISLAND_BY_FACTION)
         || nbBotsCurrHordeGMIsland > sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_GM_ISLAND_BY_FACTION))
     {
         int nbBotsAllowedAllianceGMIsland = sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_GM_ISLAND_BY_FACTION);
@@ -686,50 +683,47 @@ void PlayerbotMgr::AddAllBots()
         {
             for(std::vector<Player*>::const_iterator itr = nbRealPlayersCurrAlliance.begin(); itr != nbRealPlayersCurrAlliance.end(); ++itr)
             {
-                BotInfoZone const* biz = sObjectMgr.GetBotInfoZone((*itr)->GetZoneId());
                 BotInfoPosition const* bip = sObjectMgr.GetBotInfoPosition((*itr)->GetZoneId());
-
-                if (!biz || !bip)
+                if (!bip)
                 {
                     nbBotsAllowedAllianceGMIsland += sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_ZONE_BY_PLAYER);
                     nbBotsAllowedHordeGMIsland += sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_ZONE_BY_PLAYER);
                     continue;
                 }
 
-                if(biz->territory == 1)
+                if(bip->territory == 1)
                 {
                     nbBotsAllowedAllianceGMIsland += sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_ZONE_BY_PLAYER);
                     continue;
                 }
             }
-        }        
+        }
         if (!nbRealPlayersCurrHorde.empty())
         {
             for(std::vector<Player*>::const_iterator itr = nbRealPlayersCurrHorde.begin(); itr != nbRealPlayersCurrHorde.end(); ++itr)
             {
-                BotInfoZone const* biz = sObjectMgr.GetBotInfoZone((*itr)->GetZoneId());
                 BotInfoPosition const* bip = sObjectMgr.GetBotInfoPosition((*itr)->GetZoneId());
 
-                if (!biz || !bip)
+                if (!bip)
                 {
                     nbBotsAllowedAllianceGMIsland += sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_ZONE_BY_PLAYER);
                     nbBotsAllowedHordeGMIsland += sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_ZONE_BY_PLAYER);
                     continue;
                 }
 
-                if (biz->territory == 0)
+                if (bip->territory == 0)
                 {
                     nbBotsAllowedHordeGMIsland += sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_ZONE_BY_PLAYER);
                     continue;
                 }
             }
-        }    
+        }
         if (nbBotsAllowedAllianceGMIsland > sWorld.getConfig(CONFIG_INT32_MAX_BOT_ALLIANCE_SIDE))
             nbBotsAllowedAllianceGMIsland = sWorld.getConfig(CONFIG_INT32_MAX_BOT_ALLIANCE_SIDE);
         if (nbBotsAllowedHordeGMIsland > sWorld.getConfig(CONFIG_INT32_MAX_BOT_HORDE_SIDE))
             nbBotsAllowedHordeGMIsland = sWorld.getConfig(CONFIG_INT32_MAX_BOT_HORDE_SIDE);
 
-        if (nbBotsCurrAllianceGMIsland > nbBotsAllowedAllianceGMIsland 
+        if (nbBotsCurrAllianceGMIsland > nbBotsAllowedAllianceGMIsland
             || nbBotsCurrHordeGMIsland > nbBotsAllowedHordeGMIsland)
         {
             int nbBotsRemoveAllianceGMIsland = nbBotsAllowedAllianceGMIsland - nbBotsCurrAllianceGMIsland;
@@ -768,8 +762,8 @@ void PlayerbotMgr::AddAllBots()
     sLog.outString("nbBotsCurrAlliance %u", nbBotsCurrAlliance);
     sLog.outString("nbBotsCurrHorde %u", nbBotsCurrHorde);
     sLog.outString("nbBotsCurrAllianceGMIsland %u", nbBotsCurrAllianceGMIsland);
-    sLog.outString("nbBotsCurrHordeGMIsland %u", nbBotsCurrHordeGMIsland);
-    */
+    sLog.outString("nbBotsCurrHordeGMIsland %u", nbBotsCurrHordeGMIsland);*/
+
 
     int nbBotsWantedAlliance =
         (int(nbRealPlayersCurrAlliance.size()) * sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_ZONE_BY_PLAYER) + nbBotsCurrAllianceGMIsland)
@@ -833,10 +827,10 @@ void PlayerbotMgr::AddAllBots()
     {
         QueryResult *result = NULL;
         if (nbBotsWantedAlliance == 0)
-            result = CharacterDatabase.PQuery("SELECT guid, race FROM characters WHERE account = '%u' AND race IN (%u, %u, %u, %u, %u) ORDER BY RAND()", 
+            result = CharacterDatabase.PQuery("SELECT guid, race FROM characters WHERE account = '%u' AND race IN (%u, %u, %u, %u, %u) ORDER BY RAND()",
             accountId, RACE_ORC, RACE_UNDEAD, RACE_TAUREN, RACE_TROLL, RACE_BLOODELF);
         else if (nbBotsWantedHorde == 0)
-            result = CharacterDatabase.PQuery("SELECT guid, race FROM characters WHERE account = '%u' AND race IN (%u, %u, %u, %u, %u) ORDER BY RAND()", 
+            result = CharacterDatabase.PQuery("SELECT guid, race FROM characters WHERE account = '%u' AND race IN (%u, %u, %u, %u, %u) ORDER BY RAND()",
             accountId, RACE_HUMAN, RACE_DWARF, RACE_NIGHTELF, RACE_GNOME, RACE_DRAENEI);
         else
             result = CharacterDatabase.PQuery("SELECT guid, race FROM characters WHERE account = '%u' ORDER BY RAND()", accountId);

@@ -16045,10 +16045,8 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder *holder )
                     }
                 }
 
-                BotInfoZone const* biz = sObjectMgr.GetBotInfoZone(LastZoneId);
                 BotInfoPosition const* bip = sObjectMgr.GetBotInfoPosition(LastZoneId);
-
-                if (!biz || !bip)
+                if (!bip)
                 {
                     invalid_zone.push_back(LastZoneId);
                     continue;
@@ -16056,7 +16054,7 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder *holder )
 
                 //TODO fix ratio bot...
                 if (ZoneCptRealPlayer * sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_ZONE_BY_PLAYER) *
-                    ((biz->territory == 0 || biz->territory == 1) ? 1 : 2)
+                    ((bip->territory == 0 || bip->territory == 1) ? 1 : 2)
                     <= ZoneCptBotPlayerAlliance + ZoneCptBotPlayerHorde)
                 {
                     invalid_zone.push_back(LastZoneId);
@@ -16065,7 +16063,7 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder *holder )
 
                 if (GetTeam() == ALLIANCE && ZoneCptBotPlayerAlliance < ZoneCptRealPlayer * sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_ZONE_BY_PLAYER))
                 {
-                    if(biz->territory == 1)
+                    if(bip->territory == 1)
                     {
                         invalid_zone.push_back(LastZoneId);
                         continue;
@@ -16073,7 +16071,7 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder *holder )
                 }
                 else if (GetTeam() == HORDE && ZoneCptBotPlayerHorde < ZoneCptRealPlayer * sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_ZONE_BY_PLAYER))
                 {
-                    if (biz->territory == 0)
+                    if (bip->territory == 0)
                     {
                         invalid_zone.push_back(LastZoneId);
                         continue;
@@ -16083,7 +16081,7 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder *holder )
                 SetLocationMapId(bip->mapid);
                 if (bytes0_1 == CLASS_DEATH_KNIGHT)
                 {
-                    if (biz->maxlevel < 55)
+                    if (bip->maxlevel < 55)
                     {
                         bytes0_1 = urand(CLASS_WARRIOR, CLASS_DRUID);
                         do
@@ -16096,20 +16094,20 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder *holder )
                             ++bytes0_1;
                         }while(true);
                         setClass(bytes0_1);
-                        SetLevelAtLoading(urand(biz->minlevel, biz->maxlevel));
+                        SetLevelAtLoading(urand(bip->minlevel, bip->maxlevel));
                     }
-                    else if (biz->minlevel < 55)
+                    else if (bip->minlevel < 55)
                     {
-                        SetLevelAtLoading(urand(55, biz->maxlevel));
+                        SetLevelAtLoading(urand(55, bip->maxlevel));
                     }
                     else
                     {
-                        SetLevelAtLoading(urand(biz->minlevel, biz->maxlevel));
+                        SetLevelAtLoading(urand(bip->minlevel, bip->maxlevel));
                     }
                 }
                 else
                 {
-                    SetLevelAtLoading(urand(biz->minlevel, biz->maxlevel));
+                    SetLevelAtLoading(urand(bip->minlevel, bip->maxlevel));
                 }
                 ok = false;
             }
