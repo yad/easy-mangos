@@ -15999,7 +15999,8 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder *holder )
             HashMapHolder<Player>::MapType& m = sObjectAccessor.GetPlayers();
 
             uint32 ZoneCptRealPlayer = 0;
-            uint32 ZoneCptBotPlayer = 0;
+            uint32 ZoneCptBotPlayerAlliance = 0;
+            uint32 ZoneCptBotPlayerHorde = 0;
             uint32 LastZoneId = 0;
 
             for(HashMapHolder<Player>::MapType::const_iterator itr1 = m.begin(); itr1 != m.end(); ++itr1)
@@ -16035,7 +16036,12 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder *holder )
                     if (bot && bot->IsBot() && !bot->GetGroup() && !bot->GetSession()->isLogingOut() && !bot->IsBeingTeleported())
                     {
                         if (bot->GetZoneId() == LastZoneId)
-                            ZoneCptBotPlayer++;
+                        {
+                            if (bot->GetTeam() == ALLIANCE)
+                                ZoneCptBotPlayerAlliance++;
+                            else
+                                ZoneCptBotPlayerHorde++;
+                        }
                     }
                 }
 
@@ -16049,13 +16055,15 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder *holder )
                 }
 
                 //TODO fix ratio bot...
-                if (ZoneCptRealPlayer * sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_ZONE_BY_PLAYER) * ((biz->territory == 0 || biz->territory == 1) ? 1 : 2) <= ZoneCptBotPlayer)
+                if (ZoneCptRealPlayer * sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_ZONE_BY_PLAYER) *
+                    ((biz->territory == 0 || biz->territory == 1) ? 1 : 2)
+                    <= ZoneCptBotPlayerAlliance + ZoneCptBotPlayerHorde)
                 {
                     invalid_zone.push_back(LastZoneId);
                     continue;
                 }
 
-                if (GetTeam() == ALLIANCE)
+                if (GetTeam() == ALLIANCE && ZoneCptBotPlayerAlliance < ZoneCptRealPlayer * sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_ZONE_BY_PLAYER))
                 {
                     if(biz->territory == 1)
                     {
@@ -16063,7 +16071,7 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder *holder )
                         continue;
                     }
                 }
-                else
+                else if (GetTeam() == HORDE && ZoneCptBotPlayerHorde < ZoneCptRealPlayer * sWorld.getConfig(CONFIG_INT32_MAX_BOT_IN_ZONE_BY_PLAYER))
                 {
                     if (biz->territory == 0)
                     {

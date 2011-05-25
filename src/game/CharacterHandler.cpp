@@ -762,7 +762,7 @@ void PlayerbotMgr::AddAllBots()
         }
     }
 
-	sLog.outString("nbRealPlayersCurrAlliance %u", nbRealPlayersCurrAlliance.size());
+    sLog.outString("nbRealPlayersCurrAlliance %u", nbRealPlayersCurrAlliance.size());
     sLog.outString("nbRealPlayersCurrHorde %u", nbRealPlayersCurrHorde.size());
     sLog.outString("nbBotsCurrAlliance %u", nbBotsCurrAlliance);
     sLog.outString("nbBotsCurrHorde %u", nbBotsCurrHorde);
