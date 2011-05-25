@@ -2884,7 +2884,6 @@ bool ChatHandler::HandleBotAddPOI(char* args)
         Field *fields = result->Fetch();
         id = fields[0].GetUInt32()+1;
         delete result;
-        return true;
     }
 
     Player *pl = m_session->GetPlayer();
