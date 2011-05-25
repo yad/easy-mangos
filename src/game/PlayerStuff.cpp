@@ -2755,6 +2755,8 @@ bool ChatHandler::HandleBotInvite(char* args)
     if (role == 0)
         return false;
 
+    Player *pl = m_session->GetPlayer();
+
     uint8 _class = 0;
     switch (role)
     {
@@ -2806,13 +2808,18 @@ bool ChatHandler::HandleBotInvite(char* args)
         case DeathKnightBlood:
         case DeathKnightFrost:
         case DeathKnightUnholy:
+        {
+            if (pl->getLevel() < 55)
+            {
+                PSendSysMessage("Impossible d'inviter un Chevalier de la Mort avant le niveau 55");
+                return false;
+            }
             _class = CLASS_DEATH_KNIGHT;
             break;
+        }
     }
     if (_class == 0)
         return false;
-
-    Player *pl = m_session->GetPlayer();
 
     HashMapHolder<Player>::MapType& m = sObjectAccessor.GetPlayers();
     for(HashMapHolder<Player>::MapType::const_iterator itr = m.begin(); itr != m.end(); ++itr)
@@ -2868,6 +2875,8 @@ bool ChatHandler::HandleBotInviteArena(char* args)
     if (role == 0)
         return false;
 
+    Player *pl = m_session->GetPlayer();
+
     uint8 _class = 0;
     switch (role)
     {
@@ -2919,13 +2928,18 @@ bool ChatHandler::HandleBotInviteArena(char* args)
         case DeathKnightBlood:
         case DeathKnightFrost:
         case DeathKnightUnholy:
+        {
+            if (pl->getLevel() < 55)
+            {
+                PSendSysMessage("Impossible d'inviter un Chevalier de la Mort avant le niveau 55");
+                return false;
+            }
             _class = CLASS_DEATH_KNIGHT;
             break;
+        }
     }
     if (_class == 0)
         return false;
-
-    Player *pl = m_session->GetPlayer();
 
     HashMapHolder<Player>::MapType& m = sObjectAccessor.GetPlayers();
     for(HashMapHolder<Player>::MapType::const_iterator itr = m.begin(); itr != m.end(); ++itr)

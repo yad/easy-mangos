@@ -495,6 +495,14 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
                     return;
                 }
 
+                if (inviter->getLevel() < 55)
+                {
+                    ChatHandler ch(inviter);
+                    ch.PSendSysMessage("Impossible d'inviter un Chevalier de la Mort avant le niveau 55");
+                    m_bot->SetGroupInvite(NULL);
+                    return;
+                }
+
                 WorldPacket p;
                 m_bot->GetSession()->HandleGroupAcceptOpcode(p);
                 MovementClear();
@@ -2300,7 +2308,11 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
         {
             CheckRoles();
             if(CheckLevel())
+            {
+                if (GetLeader()==m_bot)
+                    return;
                 CheckStuff();
+            }
         }
 
         if (IsInCombat() || m_targetCombat)
@@ -2602,7 +2614,15 @@ bool PlayerbotAI::CheckLevel()
     if (GetLeader()->getLevel() == m_bot->getLevel())
         return false;
 
-    m_bot->GiveLevel(GetLeader()->getLevel());
+    if (m_bot->getClass() == CLASS_DEATH_KNIGHT && GetLeader() != m_bot && GetLeader()->getLevel() < 55)
+    {
+        SetLeader(m_bot);
+        ReinitAI();
+    }
+    else
+    {
+        m_bot->GiveLevel(GetLeader()->getLevel());
+    }
     return true;
 }
 
