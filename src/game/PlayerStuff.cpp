@@ -35,11 +35,17 @@ void Player::GiveMeBestItemForMyLevel()
         if(!pProto)
             continue;
 
+        if (pProto->InventoryType!=INVTYPE_CLOAK)
+            continue;
+
         uint16 eDest;
         if (CanEquipNewItem(NULL_SLOT, eDest, id, false)!=EQUIP_ERR_OK)
             continue;
 
-        if(!IsForMyClass(pProto) || !IsNotAllowedItem(pProto))
+        if(!IsForMyClass(pProto))
+            continue;
+
+        if (!IsNotAllowedItem(pProto))
             continue;
 
         if (pProto->ItemSet > 0 && !OtherItemsInSetAreAllowedForMe(pProto))
@@ -650,6 +656,9 @@ void Player::RemoveMyEquipement(bool destroy)
 
 bool Player::IsForMyClass(ItemPrototype const* pProto)
 {
+    if (pProto->InventoryType==INVTYPE_CLOAK)
+        return true;
+
     uint16 role = getRole();
     switch (pProto->Class)
     {
@@ -823,11 +832,10 @@ bool Player::IsForMyClass(ItemPrototype const* pProto)
 
                     switch(getClass())
                     {
-
-                        case CLASS_HUNTER:
                         case CLASS_DRUID:
                         case CLASS_ROGUE:
                             return true;
+                        case CLASS_HUNTER:
                         case CLASS_SHAMAN:
                             if (getLevel()<40)
                                 return true;
