@@ -35,9 +35,6 @@ void Player::GiveMeBestItemForMyLevel()
         if(!pProto)
             continue;
 
-        if (pProto->InventoryType!=INVTYPE_CLOAK)
-            continue;
-
         uint16 eDest;
         if (CanEquipNewItem(NULL_SLOT, eDest, id, false)!=EQUIP_ERR_OK)
             continue;
