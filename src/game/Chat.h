@@ -142,14 +142,15 @@ class MANGOS_DLL_SPEC ChatHandler
         bool HandleAccountSetGmLevelCommand(char* args);
         bool HandleAccountSetPasswordCommand(char* args);
         bool HandleAHBotOptionsCommand(char* args);
-        bool HandleBotInvite(char* args);
-        bool HandleBotInviteArena(char* args);
 
         bool HandleBotPull(char* args);
         bool HandleBotTank(char* args);
         bool HandleBotAssist(char* args);
         bool HandleBotTankTarget(char* args);
         bool HandleBotAssistTarget(char* args);
+        bool HandleBotAddPOI(char* args);
+        bool HandleBotInvite(char* args);
+        bool HandleBotInviteArena(char* args);
 
         bool HandleAuctionAllianceCommand(char* args);
         bool HandleAuctionGoblinCommand(char* args);

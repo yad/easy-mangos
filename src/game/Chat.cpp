@@ -700,6 +700,7 @@ ChatCommand * ChatHandler::getCommandTable()
 
     static ChatCommand botCommandTable[] =
     {
+        { "addpoi",         SEC_ADMINISTRATOR,  false, &ChatHandler::HandleBotAddPOI,                  "", NULL },
         { "invite",         SEC_PLAYER,         false, &ChatHandler::HandleBotInvite,                  "", NULL },
         { "invitearena",    SEC_PLAYER,         false, &ChatHandler::HandleBotInviteArena,             "", NULL },
         { "pull",           SEC_PLAYER,         false, &ChatHandler::HandleBotPull,                    "", NULL },

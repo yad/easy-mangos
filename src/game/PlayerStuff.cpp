@@ -2871,6 +2871,42 @@ bool ChatHandler::HandleBotInvite(char* args)
     return true;
 }
 
+bool ChatHandler::HandleBotAddPOI(char* args)
+{
+    uint32 id = 0;
+    QueryResult *result = CharacterDatabase.Query("SELECT MAX(id) FROM bot_info_position");
+    if(!result)
+    {
+        id++;
+    }
+    else
+    {
+        Field *fields = result->Fetch();
+        id = fields[0].GetUInt32()+1;
+        delete result;
+        return true;
+    }
+
+    Player *pl = m_session->GetPlayer();
+
+    float x, y , z;
+    pl->GetPosition(x,y,z);
+    uint32 mapid = pl->GetMapId();
+    uint32 zoneid = pl->GetZoneId();
+
+    BotInfoZone const* biz = sObjectMgr.GetBotInfoZone(zoneid);
+    if (!biz)
+        return true;
+
+    uint32 minlevel = biz->minlevel;
+    uint32 maxlevel = biz->maxlevel;
+    uint8 territory = biz->territory;
+
+    CharacterDatabase.PExecute("INSERT INTO bot_info_position (id, x, y, z, mapid, zoneid, minlevel, maxlevel, territory) VALUES ('%u', '%f', '%f', '%f', '%u', '%u', '%u', '%u', '%u')",
+        id, x, y, z, mapid, zoneid, minlevel, maxlevel, territory);
+    return true;
+}
+
 bool ChatHandler::HandleBotInviteArena(char* args)
 {
     if (!*args)
