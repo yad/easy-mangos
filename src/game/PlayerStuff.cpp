@@ -451,6 +451,14 @@ void Player::GiveMeBestItemForMyLevel()
     for (uint8 i = 0; i < 3; ++i)
         bIInSlotAmmo[i] = NULL;
 
+    ItemPrototype const *bAmmoBag[2];
+    for (uint8 i = 0; i < 2; ++i)
+        bAmmoBag[i] = NULL;
+
+    ItemPrototype const *bOtherBag[4];
+    for (uint8 i = 0; i < 4; ++i)
+        bOtherBag[i] = NULL;
+
     for (uint32 id = 0; id < sItemStorage.MaxEntry; id++)
     {
         ItemPrototype const *pProto = sObjectMgr.GetItemPrototype(id);
@@ -483,6 +491,45 @@ void Player::GiveMeBestItemForMyLevel()
                     bIInSlotAmmo[0] = BestItemBetween(bIInSlotAmmo[0], pProto, true);
                 break;
             }
+            case INVTYPE_BAG:
+            {
+                if (pProto->Class == ITEM_CLASS_QUIVER)
+                {
+                    uint16 eDest;
+                    if (CanEquipNewItem(NULL_SLOT, eDest, id, false)!=EQUIP_ERR_OK)
+                        break;
+                    if(!bAmmoBag[pProto->SubClass - 2])
+                        bAmmoBag[pProto->SubClass - 2] = pProto;
+                    else
+                        bAmmoBag[pProto->SubClass - 2] = BestItemBetween(bAmmoBag[pProto->SubClass - 2], pProto, false /*use max slot if isBag()*/);
+                }
+                else if (pProto->SubClass == 0)
+                {
+                    if (id == 23162) //Foror's Crate of Endless Resist Gear Storage - 36
+                        continue;
+
+                    uint16 eDest;
+                    if (CanEquipNewItem(NULL_SLOT, eDest, id, false)!=EQUIP_ERR_OK)
+                        break;
+
+                    for (uint8 i = 0; i < 4; ++i)
+                    {
+                        const ItemPrototype *ip = BestItemBetween(bOtherBag[i], pProto, false /*use max slot if isBag()*/);
+                        if (ip == pProto && ip->MaxCount > 0)
+                        {
+                            for (uint8 j = 3; j > i; --j)
+                                bOtherBag[j] = bOtherBag[j-1];
+                            bOtherBag[i] = ip;
+                            break;
+                        }
+                        else
+                        {
+                            bOtherBag[i] = ip;
+                        }
+                    }
+                }
+                break;
+            }
             default:
                 break;
         }
@@ -490,14 +537,48 @@ void Player::GiveMeBestItemForMyLevel()
     Item* it = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_RANGED);
     if (it)
     {
+        bOtherBag[3] = NULL;
+
         if (bIInSlotAmmo[1] && it->GetProto()->AmmoType == bIInSlotAmmo[1]->SubClass)
         {
-            StoreNewItemInBestSlots(bIInSlotAmmo[1]->ItemId, 200);
+            StoreNewItemInBestSlots(bAmmoBag[0]);
+            Item* bag = GetItemByEntry(bAmmoBag[0]->ItemId);
+            if (bag && bag->IsBag())
+            {
+                uint8 msg = EQUIP_ERR_OK;
+                do
+                {
+                    ItemPosCountVec sDest;
+                    msg = CanStoreNewItem( NULL_BAG, NULL_SLOT, sDest, bIInSlotAmmo[1]->ItemId, bIInSlotAmmo[1]->Stackable );
+                    if( msg == EQUIP_ERR_OK )
+                        StoreNewItem( sDest, bIInSlotAmmo[1]->ItemId, true, Item::GenerateItemRandomPropertyId(bIInSlotAmmo[1]->ItemId) );
+                }while(msg == EQUIP_ERR_OK && ((Bag*)bag)->GetFreeSlots()>0);
+            }
+            else
+            {
+                StoreNewItemInBestSlots(bIInSlotAmmo[1]->ItemId, bIInSlotAmmo[1]->Stackable);
+            }
             SetAmmo(bIInSlotAmmo[1]->ItemId);
         }
         else if (bIInSlotAmmo[2] && it->GetProto()->AmmoType == bIInSlotAmmo[2]->SubClass)
         {
-            StoreNewItemInBestSlots(bIInSlotAmmo[2]->ItemId, 200);
+            StoreNewItemInBestSlots(bAmmoBag[1]);
+            Item* bag = GetItemByEntry(bAmmoBag[1]->ItemId);
+            if (bag && bag->IsBag())
+            {
+                uint8 msg = EQUIP_ERR_OK;
+                do
+                {
+                    ItemPosCountVec sDest;
+                    msg = CanStoreNewItem( NULL_BAG, NULL_SLOT, sDest, bIInSlotAmmo[2]->ItemId, bIInSlotAmmo[2]->Stackable );
+                    if( msg == EQUIP_ERR_OK )
+                        StoreNewItem( sDest, bIInSlotAmmo[2]->ItemId, true, Item::GenerateItemRandomPropertyId(bIInSlotAmmo[2]->ItemId) );
+                }while(msg == EQUIP_ERR_OK && ((Bag*)bag)->GetFreeSlots()>0);
+            }
+            else
+            {
+                StoreNewItemInBestSlots(bIInSlotAmmo[2]->ItemId, bIInSlotAmmo[2]->Stackable);
+            }
             SetAmmo(bIInSlotAmmo[2]->ItemId);
         }
     }
@@ -505,8 +586,11 @@ void Player::GiveMeBestItemForMyLevel()
     {
         StoreNewItemInBestSlots(bIInSlotAmmo[0]);
         Item* i = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_RANGED);
-        if (i && i->GetMaxStackCount()!=1) i->SetCount(200);
+        if (i && i->GetMaxStackCount()!=1) i->SetCount(bIInSlotAmmo[0]->Stackable);
     }
+
+    for (uint8 i = 0; i < 4; ++i)
+        StoreNewItemInBestSlots(bOtherBag[i]);
 
     StoreNewItemInBestSlots(bIInSlot[INVTYPE_FINGER]);
     if (!StoreNewItemInBestSlots(bIInSlot[INVTYPE_FINGER]))
@@ -649,6 +733,42 @@ void Player::RemoveMyEquipement(bool destroy)
         if (destroy && pItem)
             DestroyItem(pItem->GetBagSlot(), pItem->GetSlot(), true);
     }
+
+    if (IsBot())
+    {
+        for (int slot=INVENTORY_SLOT_BAG_START; slot < INVENTORY_SLOT_BAG_END; ++slot)
+        {
+            Item* pItem = GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
+            if (!pItem || !pItem->IsBag())
+                continue;
+
+            Bag* pBag = (Bag*)pItem;
+            if (!pBag)
+                continue;
+
+            DestroyItem(INVENTORY_SLOT_BAG_0, pItem->GetSlot(), true);
+        }
+    }
+
+    Item* pItem = NULL;
+    for (int slot=INVENTORY_SLOT_BAG_START; slot < INVENTORY_SLOT_BAG_END; ++slot)
+    {
+        pItem = GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
+        if (!pItem || !pItem->IsBag())
+            continue;
+
+        Bag* pBag = (Bag*)pItem;
+        if (!pBag)
+            continue;
+
+        if (pBag->GetProto()->Class == ITEM_CLASS_QUIVER)
+            break;
+    }
+
+    if (!pItem)
+        pItem = GetItemByPos(INVENTORY_SLOT_BAG_0, INVENTORY_SLOT_BAG_END-1);
+    if (pItem)
+        DestroyItem(INVENTORY_SLOT_BAG_0, pItem->GetSlot(), true);
 }
 
 bool Player::IsForMyClass(ItemPrototype const* pProto)
@@ -888,30 +1008,33 @@ bool Player::IsForMyClass(ItemPrototype const* pProto)
 
 bool Player::IsNotAllowedItem(ItemPrototype const* pProto)
 {
-    if((pProto->RequiredLevel == 0) && (pProto->ItemLevel > 1))
-        return false;
-
-    if ((pProto->MaxCount > 0) && (uint32(pProto->MaxCount) <= GetItemCount(pProto->ItemId)))
-        return false;
-
-    if(pProto->Bonding == BIND_QUEST_ITEM)
-        return false;
-
-    switch (pProto->InventoryType)
+    if (pProto->InventoryType!=INVTYPE_BAG)
     {
-        case INVTYPE_SHOULDERS:
-        case INVTYPE_FINGER:
-            if (getLevel() < 20)
-                return false;
-            return true;
-        case INVTYPE_HEAD:
-        case INVTYPE_TRINKET:
-        case INVTYPE_NECK:
-            if (getLevel() < 30)
-                return false;
-            return true;
-        default:
-            break;
+        if((pProto->RequiredLevel == 0) && (pProto->ItemLevel > 1))
+            return false;
+
+        if ((pProto->MaxCount > 0) && (uint32(pProto->MaxCount) <= GetItemCount(pProto->ItemId)))
+            return false;
+
+        if(pProto->Bonding == BIND_QUEST_ITEM)
+            return false;
+
+        switch (pProto->InventoryType)
+        {
+            case INVTYPE_SHOULDERS:
+            case INVTYPE_FINGER:
+                if (getLevel() < 20)
+                    return false;
+                return true;
+            case INVTYPE_HEAD:
+            case INVTYPE_TRINKET:
+            case INVTYPE_NECK:
+                if (getLevel() < 30)
+                    return false;
+                return true;
+            default:
+                break;
+        }
     }
 
     if((pProto->Quality == ITEM_QUALITY_UNCOMMON) && (getLevel() < 15))
@@ -1249,7 +1372,14 @@ ItemPrototype const* Player::BestItemBetween(ItemPrototype const* pProto1, ItemP
             break;
     }
 
-    if (DPS)
+    if (pProto1->InventoryType == INVTYPE_BAG)
+    {
+        if (pProto1->ContainerSlots > pProto2->ContainerSlots)
+            return pProto1;
+        else
+            return pProto2;
+    }
+    else if (DPS)
     {
         if (pProto1->getDPS() > pProto2->getDPS())
             return pProto1;
@@ -1279,9 +1409,6 @@ void Player::GMStartup()
     LearnAllMyTalentsForMyLevel();
     LearnAllMySpellsForMyLevel();
     UpdateSkillsToMaxSkillsForLevel();
-
-    if(!HasItemCount(23162, 4, false))
-        StoreNewItemInBestSlots(23162, 4);
 
     switch (getRace())
     {
@@ -2871,41 +2998,6 @@ bool ChatHandler::HandleBotInvite(char* args)
     return true;
 }
 
-bool ChatHandler::HandleBotAddPOI(char* args)
-{
-    uint32 id = 0;
-    QueryResult *result = WorldDatabase.Query("SELECT MAX(id) FROM bot_info_position");
-    if(!result)
-    {
-        id++;
-    }
-    else
-    {
-        Field *fields = result->Fetch();
-        id = fields[0].GetUInt32()+1;
-        delete result;
-    }
-
-    Player *pl = m_session->GetPlayer();
-
-    float x, y , z;
-    pl->GetPosition(x,y,z);
-    uint32 mapid = pl->GetMapId();
-    uint32 zoneid = pl->GetZoneId();
-
-    BotInfoZone const* biz = sObjectMgr.GetBotInfoZone(zoneid);
-    if (!biz)
-        return true;
-
-    uint32 minlevel = biz->minlevel;
-    uint32 maxlevel = biz->maxlevel;
-    uint8 territory = biz->territory;
-
-    WorldDatabase.PExecute("INSERT INTO bot_info_position (id, x, y, z, mapid, zoneid, minlevel, maxlevel, territory) VALUES ('%u', '%f', '%f', '%f', '%u', '%u', '%u', '%u', '%u')",
-        id, x, y, z, mapid, zoneid, minlevel, maxlevel, territory);
-    return true;
-}
-
 bool ChatHandler::HandleBotInviteArena(char* args)
 {
     if (!*args)
@@ -3030,5 +3122,40 @@ bool ChatHandler::HandleBotInviteArena(char* args)
         break;
     }
 
+    return true;
+}
+
+bool ChatHandler::HandleBotAddPOI(char* args)
+{
+    uint32 id = 0;
+    QueryResult *result = WorldDatabase.Query("SELECT MAX(id) FROM bot_info_position");
+    if(!result)
+    {
+        id++;
+    }
+    else
+    {
+        Field *fields = result->Fetch();
+        id = fields[0].GetUInt32()+1;
+        delete result;
+    }
+
+    Player *pl = m_session->GetPlayer();
+
+    float x, y , z;
+    pl->GetPosition(x,y,z);
+    uint32 mapid = pl->GetMapId();
+    uint32 zoneid = pl->GetZoneId();
+
+    BotInfoZone const* biz = sObjectMgr.GetBotInfoZone(zoneid);
+    if (!biz)
+        return true;
+
+    uint32 minlevel = biz->minlevel;
+    uint32 maxlevel = biz->maxlevel;
+    uint8 territory = biz->territory;
+
+    WorldDatabase.PExecute("INSERT INTO bot_info_position (id, x, y, z, mapid, zoneid, minlevel, maxlevel, territory) VALUES ('%u', '%f', '%f', '%f', '%u', '%u', '%u', '%u', '%u')",
+        id, x, y, z, mapid, zoneid, minlevel, maxlevel, territory);
     return true;
 }
