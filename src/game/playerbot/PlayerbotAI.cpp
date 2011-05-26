@@ -547,20 +547,28 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
                 return;
 
             uint32 QueueSlot;
-            uint64 Type;
+            uint8 type;
+            uint8 unk;
+            uint32 bgTypeId_;
+            uint16 unk0;
             uint8 unk1;
             uint8 unk2;
             uint32 ClientInstanceID;
             uint8 Rated;
             uint32 StatusID;
 
-            p >> QueueSlot >> Type >> unk1 >> unk2 >> ClientInstanceID >> Rated >> StatusID;
+            p >> QueueSlot >> type >> unk >> bgTypeId_ >> unk0 >> unk1 >> unk2 >> ClientInstanceID >> Rated >> StatusID;
 
             if (StatusID == STATUS_WAIT_JOIN)
             {
+                BattleGroundTypeId bgTypeId = BattleGroundTypeId(bgTypeId_);
+                BattleGroundQueueTypeId bgQueueTypeId = BattleGroundMgr::BGQueueTypeId(bgTypeId, ArenaType(type));
                 WorldPacket packet = WorldPacket(CMSG_BATTLEFIELD_PORT,1+1+4+2+1);
-                packet << uint64(Type);
-                packet << uint8(m_bot->InBattleGroundQueue());   // enter battle 0x1, leave queue 0x0
+                packet << uint8(type);                           // arenatype if arena
+                packet << uint8(unk);                            // unk, can be 0x0 (may be if was invited?) and 0x1
+                packet << uint32(bgTypeId_);                     // type id from dbc
+                packet << uint16(unk0);                          // 0x1F90 constant?
+                packet << uint8(m_bot->IsInvitedForBattleGroundQueueType(bgQueueTypeId) ? 1 : 0);   // enter battle 0x1, leave queue 0x0
                 m_bot->GetSession()->HandleBattleFieldPortOpcode(packet);
                 m_bot->GetPlayerbotAI()->SetEnterBGTime(60);
             }

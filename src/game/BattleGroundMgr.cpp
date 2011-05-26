@@ -1195,16 +1195,13 @@ void BattleGroundQueue::Update(BattleGroundTypeId bgTypeId, BattleGroundBracketI
 
             if (!team.empty() && team.size() == m_SelectionPools[BG_TEAM].GetPlayerCount())
             {
-                ArenaTeam* at = new ArenaTeam;
+                ArenaTeam* at = new ArenaTeam();
 
                 for(std::list<Player *>::iterator tIter = team.begin(); tIter != team.end(); ++tIter)
                 {
-                    WorldPacket pk1;
                     Player* p = *tIter;
                     p->GiveLevel(leader->getLevel());
                     p->GetPlayerbotAI()->CheckStuff();
-                    p->SetArenaTeamIdInvited(at->GetId());
-                    p->GetSession()->HandleArenaTeamAcceptOpcode(pk1);
 
                     if (team.front() == p)
                     {
@@ -1222,6 +1219,9 @@ void BattleGroundQueue::Update(BattleGroundTypeId bgTypeId, BattleGroundBracketI
                         pk2 << uint32(0);
                         team.front()->GetSession()->HandleGroupInviteOpcode(pk2);
                     }
+                    WorldPacket pk1;
+                    p->SetArenaTeamIdInvited(at->GetId());
+                    p->GetSession()->HandleArenaTeamAcceptOpcode(pk1);
                 }
 
                 if (team.front()->GetGroup())
