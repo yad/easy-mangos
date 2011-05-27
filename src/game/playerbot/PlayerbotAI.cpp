@@ -1448,6 +1448,17 @@ bool PlayerbotAI::GetCombatTarget(Unit* forcedTarget)
         }
     }
 
+    if (m_bot->getClass()==CLASS_WARRIOR || m_bot->getClass()==CLASS_PALADIN 
+        || m_bot->getClass()==CLASS_HUNTER || m_bot->getClass()==CLASS_DEATH_KNIGHT)
+    {
+        Unit* target = FindEnemy();
+        if (target && target != m_targetCombat)
+        {
+            m_targetCombat = target;
+            return true;
+        }
+    }
+
     return false;
 }
 
@@ -2210,6 +2221,9 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
         return;
     m_ignoreAIUpdatesUntilTime = currentTime + 1;
 
+    if (!m_bot->IsInWorld())
+        return;
+
     if (m_bot->GetTrader())
         return;
 
@@ -2223,7 +2237,6 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
         return;
 
     CheckBG();
-    CheckMMaps();
 
     if (!m_bot->isAlive())
     {
@@ -2319,8 +2332,13 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
         if (pSpell && !(pSpell->IsChannelActive() || pSpell->IsAutoRepeat()))
             InterruptCurrentCastingSpell();
 
-        else if (!IsInCombat() && m_bot->IsInWorld())
+        else if (!IsInCombat())
         {
+            m_bot->AttackStop();
+            m_bot->SetSelectionGuid(ObjectGuid());
+            m_bot->InterruptNonMeleeSpells(true);
+            m_targetCombat = NULL;
+            SetMovementTarget(GetLeader());
             if (m_bot->getClass() == CLASS_DEATH_KNIGHT && GetLeader() != m_bot && GetLeader()->getLevel() < 55)
             {
                 SetLeader(m_bot);
@@ -2411,21 +2429,6 @@ bool PlayerbotAI::CheckMaster()
         }
     }
     return true;
-}
-
-void PlayerbotAI::CheckMMaps()
-{
-    /*Player* leader = GetLeader();
-    if (leader->GetTransport() || (m_bot->GetBattleGround() && m_bot->GetBattleGround()->isArena()))
-    {
-        if(!m_bot->hasUnitState(UNIT_STAT_IGNORE_PATHFINDING))
-            m_bot->addUnitState(UNIT_STAT_IGNORE_PATHFINDING);
-    }
-    else
-    {
-        if(m_bot->hasUnitState(UNIT_STAT_IGNORE_PATHFINDING))
-            m_bot->clearUnitState(UNIT_STAT_IGNORE_PATHFINDING);
-    }*/
 }
 
 void PlayerbotAI::CheckRoles()

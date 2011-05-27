@@ -204,7 +204,6 @@ public:
 
     bool CheckTeleport();
     bool CheckMaster();
-    void CheckMMaps();
     bool CheckLevel();
     void CheckStuff();
     void CheckRoles();
