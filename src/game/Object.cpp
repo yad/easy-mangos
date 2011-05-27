@@ -1149,9 +1149,9 @@ uint32 WorldObject::GetAreaId() const
     return GetTerrain()->GetAreaId(m_position.x, m_position.y, m_position.z);
 }
 
-bool WorldObject::GetZoneAndAreaId(uint32& zoneid, uint32& areaid) const
+void WorldObject::GetZoneAndAreaId(uint32& zoneid, uint32& areaid) const
 {
-    return GetTerrain()->GetZoneAndAreaId(zoneid, areaid, m_position.x, m_position.y, m_position.z);
+    GetTerrain()->GetZoneAndAreaId(zoneid, areaid, m_position.x, m_position.y, m_position.z);
 }
 
 InstanceData* WorldObject::GetInstanceData() const

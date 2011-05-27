@@ -231,7 +231,7 @@ public:
 
     uint32 GetAreaId(float x, float y, float z) const;
     uint32 GetZoneId(float x, float y, float z) const;
-    bool GetZoneAndAreaId(uint32& zoneid, uint32& areaid, float x, float y, float z) const;
+    void GetZoneAndAreaId(uint32& zoneid, uint32& areaid, float x, float y, float z) const;
 
     bool GetAreaInfo(float x, float y, float z, uint32 &mogpflags, int32 &adtId, int32 &rootId, int32 &groupId) const;
     bool IsOutdoors(float x, float y, float z) const;
