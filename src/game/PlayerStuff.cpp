@@ -534,11 +534,10 @@ void Player::GiveMeBestItemForMyLevel()
                 break;
         }
     }
+
     Item* it = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_RANGED);
     if (it)
     {
-        bOtherBag[3] = NULL;
-
         if (bIInSlotAmmo[1] && it->GetProto()->AmmoType == bIInSlotAmmo[1]->SubClass)
         {
             StoreNewItemInBestSlots(bAmmoBag[0]);
@@ -559,6 +558,7 @@ void Player::GiveMeBestItemForMyLevel()
                 StoreNewItemInBestSlots(bIInSlotAmmo[1]->ItemId, bIInSlotAmmo[1]->Stackable);
             }
             SetAmmo(bIInSlotAmmo[1]->ItemId);
+            bOtherBag[3] = NULL;
         }
         else if (bIInSlotAmmo[2] && it->GetProto()->AmmoType == bIInSlotAmmo[2]->SubClass)
         {
@@ -580,6 +580,7 @@ void Player::GiveMeBestItemForMyLevel()
                 StoreNewItemInBestSlots(bIInSlotAmmo[2]->ItemId, bIInSlotAmmo[2]->Stackable);
             }
             SetAmmo(bIInSlotAmmo[2]->ItemId);
+            bOtherBag[3] = NULL;
         }
     }
     else if (bIInSlotAmmo[0])
