@@ -798,6 +798,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\game\GuildMgr.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\game\GuildMgr.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\game\InstanceData.cpp"
 				>
 			</File>
@@ -819,6 +827,10 @@
 			</File>
 			<File
 				RelativePath="..\..\src\game\Mail.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\game\MailHandler.cpp"
 				>
 			</File>
 			<File

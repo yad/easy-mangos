@@ -47,7 +47,7 @@ void WorldSession::SendGMTicketGetTicket(uint32 status, GMTicket *ticket /*= NUL
 void WorldSession::SendGMResponse(GMTicket *ticket)
 {
     int len = strlen(ticket->GetText())+1+strlen(ticket->GetResponse())+1;
-    WorldPacket data(SMSG_GMRESPONSE_RECEIVED, 4+4+len+1+1+1);
+    WorldPacket data(SMSG_GMTICKET_GET_RESPONSE, 4+4+len+1+1+1);
     data << uint32(123);
     data << uint32(456);
     data << ticket->GetText();                              // issue text
@@ -134,9 +134,9 @@ void WorldSession::HandleGMTicketCreateOpcode( WorldPacket & recv_data )
 
     //TODO: Guard player map
     HashMapHolder<Player>::MapType &m = sObjectAccessor.GetPlayers();
-    for(HashMapHolder<Player>::MapType::const_iterator itr = m.begin(); itr != m.end(); ++itr)
+    for (HashMapHolder<Player>::MapType::const_iterator itr = m.begin(); itr != m.end(); ++itr)
     {
-        if(itr->second->GetSession()->GetSecurity() >= SEC_GAMEMASTER && itr->second->isAcceptTickets())
+        if (itr->second->GetSession()->GetSecurity() >= SEC_GAMEMASTER && itr->second->isAcceptTickets())
             ChatHandler(itr->second).PSendSysMessage(LANG_COMMAND_TICKETNEW,GetPlayer()->GetName());
     }
 }
@@ -188,7 +188,7 @@ void WorldSession::HandleGMResponseResolveOpcode(WorldPacket & recv_data)
 
     sTicketMgr.Delete(GetPlayer()->GetObjectGuid());
 
-    WorldPacket data(SMSG_GMRESPONSE_STATUS_UPDATE, 1);
+    WorldPacket data(SMSG_GMTICKET_RESOLVE_RESPONSE, 1);
     data << uint8(0);                                       // ask to fill out gm survey = 1
     SendPacket(&data);
 }

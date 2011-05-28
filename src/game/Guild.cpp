@@ -23,6 +23,7 @@
 #include "Opcodes.h"
 #include "ObjectMgr.h"
 #include "Guild.h"
+#include "GuildMgr.h"
 #include "Chat.h"
 #include "SocialMgr.h"
 #include "Util.h"
@@ -104,7 +105,7 @@ Guild::~Guild()
 
 bool Guild::Create(Player* leader, std::string gname)
 {
-    if (sObjectMgr.GetGuildByName(gname))
+    if (sGuildMgr.GetGuildByName(gname))
         return false;
 
     WorldSession* lSession = leader->GetSession();
@@ -300,10 +301,8 @@ bool Guild::CheckGuildStructure()
     int32 GM_rights = GetRank(m_LeaderGuid);
     if (GM_rights == -1)
     {
-        DelMember(m_LeaderGuid);
-        // check no members case (disbanded)
-        if (members.empty())
-            return false;
+        if (DelMember(m_LeaderGuid))
+            return false;                                   // guild will disbanded and deleted in caller
     }
     else if (GM_rights != GR_GUILDMASTER)
         SetLeader(m_LeaderGuid);
@@ -487,7 +486,15 @@ void Guild::SetLeader(ObjectGuid guid)
     CharacterDatabase.PExecute("UPDATE guild SET leaderguid='%u' WHERE guildid='%u'", guid.GetCounter(), m_Id);
 }
 
-void Guild::DelMember(ObjectGuid guid, bool isDisbanding)
+/**
+ * Remove character from guild
+ *
+ * @param guid          Character that removed from guild
+ * @param isDisbanding  Flag set if function called from Guild::Disband, so not need update DB in per-member mode only or leader update
+ *
+ * @return true, if guild need to be disband and erase (no members or can't setup leader)
+ */
+bool Guild::DelMember(ObjectGuid guid, bool isDisbanding)
 {
     uint32 lowguid = guid.GetCounter();
 
@@ -512,11 +519,9 @@ void Guild::DelMember(ObjectGuid guid, bool isDisbanding)
                 newLeaderGUID = ObjectGuid(HIGHGUID_PLAYER, i->first);
             }
         }
+
         if (!best)
-        {
-            Disband();
-            return;
-        }
+            return true;
 
         SetLeader(newLeaderGUID);
 
@@ -546,6 +551,8 @@ void Guild::DelMember(ObjectGuid guid, bool isDisbanding)
 
     if (!isDisbanding)
         UpdateAccountsNumber();
+
+    return members.empty();
 }
 
 void Guild::BroadcastToGuild(WorldSession *session, const std::string& msg, uint32 language)
@@ -553,7 +560,7 @@ void Guild::BroadcastToGuild(WorldSession *session, const std::string& msg, uint
     if (session && session->GetPlayer() && HasRankRight(session->GetPlayer()->GetRank(),GR_RIGHT_GCHATSPEAK))
     {
         WorldPacket data;
-        ChatHandler(session).FillMessageData(&data, CHAT_MSG_GUILD, language, 0, msg.c_str());
+        ChatHandler::FillMessageData(&data, session, CHAT_MSG_GUILD, language, msg.c_str());
 
         for (MemberList::const_iterator itr = members.begin(); itr != members.end(); ++itr)
         {
@@ -572,7 +579,7 @@ void Guild::BroadcastToOfficers(WorldSession *session, const std::string& msg, u
         for(MemberList::const_iterator itr = members.begin(); itr != members.end(); ++itr)
         {
             WorldPacket data;
-            ChatHandler::FillMessageData(&data, session, CHAT_MSG_OFFICER, language, NULL, 0, msg.c_str(), NULL);
+            ChatHandler::FillMessageData(&data, session, CHAT_MSG_OFFICER, language, msg.c_str());
 
             Player *pl = ObjectAccessor::FindPlayer(ObjectGuid(HIGHGUID_PLAYER, itr->first));
 
@@ -684,6 +691,11 @@ void Guild::SetRankRights(uint32 rankId, uint32 rights)
     CharacterDatabase.PExecute("UPDATE guild_rank SET rights='%u' WHERE rid='%u' AND guildid='%u'", rights, rankId, m_Id);
 }
 
+/**
+ * Disband guild including cleanup structures and DB
+ *
+ * Note: guild object need deleted after this in caller code.
+ */
 void Guild::Disband()
 {
     BroadcastEvent(GE_DISBANDED);
@@ -707,7 +719,7 @@ void Guild::Disband()
     CharacterDatabase.PExecute("DELETE FROM guild_bank_eventlog WHERE guildid = '%u'", m_Id);
     CharacterDatabase.PExecute("DELETE FROM guild_eventlog WHERE guildid = '%u'", m_Id);
     CharacterDatabase.CommitTransaction();
-    sObjectMgr.RemoveGuild(m_Id);
+    sGuildMgr.RemoveGuild(m_Id);
 }
 
 void Guild::Roster(WorldSession *session /*= NULL*/)
@@ -1737,7 +1749,7 @@ void Guild::RemoveItem(uint8 tab, uint8 slot )
         GetId(), uint32(tab), uint32(slot));
 }
 
-uint8 Guild::_CanStoreItem_InSpecificSlot( uint8 tab, uint8 slot, GuildItemPosCountVec &dest, uint32& count, bool swap, Item* pSrcItem ) const
+InventoryResult Guild::_CanStoreItem_InSpecificSlot( uint8 tab, uint8 slot, GuildItemPosCountVec &dest, uint32& count, bool swap, Item* pSrcItem ) const
 {
     Item* pItem2 = m_TabListMap[tab]->Slots[slot];
 
@@ -1780,7 +1792,7 @@ uint8 Guild::_CanStoreItem_InSpecificSlot( uint8 tab, uint8 slot, GuildItemPosCo
     return EQUIP_ERR_OK;
 }
 
-uint8 Guild::_CanStoreItem_InTab( uint8 tab, GuildItemPosCountVec &dest, uint32& count, bool merge, Item* pSrcItem, uint8 skip_slot ) const
+InventoryResult Guild::_CanStoreItem_InTab( uint8 tab, GuildItemPosCountVec &dest, uint32& count, bool merge, Item* pSrcItem, uint8 skip_slot ) const
 {
     for (uint32 j = 0; j < GUILD_BANK_MAX_SLOTS; ++j)
     {
@@ -1837,7 +1849,7 @@ uint8 Guild::_CanStoreItem_InTab( uint8 tab, GuildItemPosCountVec &dest, uint32&
     return EQUIP_ERR_OK;
 }
 
-uint8 Guild::CanStoreItem( uint8 tab, uint8 slot, GuildItemPosCountVec &dest, uint32 count, Item *pItem, bool swap ) const
+InventoryResult Guild::CanStoreItem( uint8 tab, uint8 slot, GuildItemPosCountVec &dest, uint32 count, Item *pItem, bool swap ) const
 {
     DEBUG_LOG( "GUILD STORAGE: CanStoreItem tab = %u, slot = %u, item = %u, count = %u", tab, slot, pItem->GetEntry(), count);
 
@@ -1850,7 +1862,7 @@ uint8 Guild::CanStoreItem( uint8 tab, uint8 slot, GuildItemPosCountVec &dest, ui
     // in specific slot
     if (slot != NULL_SLOT)
     {
-        uint8 res = _CanStoreItem_InSpecificSlot(tab,slot,dest,count,swap,pItem);
+        InventoryResult res = _CanStoreItem_InSpecificSlot(tab,slot,dest,count,swap,pItem);
         if (res != EQUIP_ERR_OK)
             return res;
 
@@ -1863,7 +1875,7 @@ uint8 Guild::CanStoreItem( uint8 tab, uint8 slot, GuildItemPosCountVec &dest, ui
     // search stack in tab for merge to
     if (pItem->GetMaxStackCount() > 1)
     {
-        uint8 res = _CanStoreItem_InTab(tab, dest, count, true, pItem, slot);
+        InventoryResult res = _CanStoreItem_InTab(tab, dest, count, true, pItem, slot);
         if (res != EQUIP_ERR_OK)
             return res;
 
@@ -1872,7 +1884,7 @@ uint8 Guild::CanStoreItem( uint8 tab, uint8 slot, GuildItemPosCountVec &dest, ui
     }
 
     // search free slot in bag for place to
-    uint8 res = _CanStoreItem_InTab(tab, dest, count, false, pItem, slot);
+    InventoryResult res = _CanStoreItem_InTab(tab, dest, count, false, pItem, slot);
     if (res != EQUIP_ERR_OK)
         return res;
 
@@ -1950,7 +1962,7 @@ void Guild::SwapItems(Player * pl, uint8 BankTab, uint8 BankTabSlot, uint8 BankT
     if (SplitedAmount)
     {                                                   // Bank -> Bank item split (in empty or non empty slot
         GuildItemPosCountVec dest;
-        uint8 msg = CanStoreItem(BankTabDst, BankTabSlotDst, dest, SplitedAmount, pItemSrc, false);
+        InventoryResult msg = CanStoreItem(BankTabDst, BankTabSlotDst, dest, SplitedAmount, pItemSrc, false);
         if (msg != EQUIP_ERR_OK)
         {
             pl->SendEquipError( msg, pItemSrc, NULL );
@@ -1977,7 +1989,7 @@ void Guild::SwapItems(Player * pl, uint8 BankTab, uint8 BankTabSlot, uint8 BankT
     else                                                    // non split
     {
         GuildItemPosCountVec gDest;
-        uint8 msg = CanStoreItem(BankTabDst,BankTabSlotDst,gDest,pItemSrc->GetCount(), pItemSrc, false);
+        InventoryResult msg = CanStoreItem(BankTabDst,BankTabSlotDst,gDest,pItemSrc->GetCount(), pItemSrc, false);
         if (msg == EQUIP_ERR_OK)                            // merge to
         {
             CharacterDatabase.BeginTransaction();
@@ -2057,7 +2069,7 @@ void Guild::MoveFromBankToChar( Player * pl, uint8 BankTab, uint8 BankTabSlot, u
         }
 
         ItemPosCountVec dest;
-        uint8 msg = pl->CanStoreItem(PlayerBag, PlayerSlot, dest, pNewItem, false);
+        InventoryResult msg = pl->CanStoreItem(PlayerBag, PlayerSlot, dest, pNewItem, false);
         if (msg != EQUIP_ERR_OK)
         {
             pl->SendEquipError( msg, pNewItem, NULL );
@@ -2088,7 +2100,7 @@ void Guild::MoveFromBankToChar( Player * pl, uint8 BankTab, uint8 BankTabSlot, u
     else                                                    // Bank -> Char swap with slot (move)
     {
         ItemPosCountVec dest;
-        uint8 msg = pl->CanStoreItem(PlayerBag, PlayerSlot, dest, pItemBank, false);
+        InventoryResult msg = pl->CanStoreItem(PlayerBag, PlayerSlot, dest, pItemBank, false);
         if (msg == EQUIP_ERR_OK)                            // merge case
         {
             // check source pos rights (item moved to inventory)
@@ -2208,7 +2220,7 @@ void Guild::MoveFromCharToBank( Player * pl, uint8 PlayerBag, uint8 PlayerSlot, 
     if (SplitedAmount)
     {                                                       // Char -> Bank split to empty or non-empty slot (partly move)
         GuildItemPosCountVec dest;
-        uint8 msg = CanStoreItem(BankTab, BankTabSlot, dest, SplitedAmount, pItemChar, false);
+        InventoryResult msg = CanStoreItem(BankTab, BankTabSlot, dest, SplitedAmount, pItemChar, false);
         if (msg != EQUIP_ERR_OK)
         {
             pl->SendEquipError( msg, pItemChar, NULL );
@@ -2245,7 +2257,7 @@ void Guild::MoveFromCharToBank( Player * pl, uint8 PlayerBag, uint8 PlayerSlot, 
     else                                                    // Char -> Bank swap with empty or non-empty (move)
     {
         GuildItemPosCountVec dest;
-        uint8 msg = CanStoreItem(BankTab, BankTabSlot, dest, pItemChar->GetCount(), pItemChar, false);
+        InventoryResult msg = CanStoreItem(BankTab, BankTabSlot, dest, pItemChar->GetCount(), pItemChar, false);
         if (msg == EQUIP_ERR_OK)                            // merge
         {
             // logging item move to bank
@@ -2334,7 +2346,7 @@ void Guild::BroadcastEvent(GuildEvents event, ObjectGuid guid, char const* str1 
 {
     uint8 strCount = !str1 ? 0 : (!str2 ? 1 : (!str3 ? 2 : 3));
 
-    WorldPacket data(SMSG_GUILD_EVENT, 1 + 1 + 1*strCount + (guid.IsEmpty() ? 0 : 8));
+    WorldPacket data(SMSG_GUILD_EVENT, 1 + 1 + 1*strCount + (!guid ? 0 : 8));
     data << uint8(event);
     data << uint8(strCount);
 
@@ -2352,8 +2364,8 @@ void Guild::BroadcastEvent(GuildEvents event, ObjectGuid guid, char const* str1 
     else if (str1)
         data << str1;
 
-    if (!guid.IsEmpty())
-        data << guid;
+    if (guid)
+        data << ObjectGuid(guid);
 
     BroadcastPacket(&data);
 

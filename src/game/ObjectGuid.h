@@ -73,6 +73,7 @@ enum HighGuid
     HIGHGUID_CORPSE         = 0xF500,                       // blizz F100/F500 used second variant to resolve conflict with HIGHGUID_DYNAMICOBJECT
     HIGHGUID_MO_TRANSPORT   = 0x1FC0,                       // blizz 1FC0 (for GAMEOBJECT_TYPE_MO_TRANSPORT)
     HIGHGUID_INSTANCE       = 0x1F42,                       // blizz 1F42/1F44/1F44/1F47
+    HIGHGUID_GROUP          = 0x1F50,                       // blizz 1F5x
 };
 
 class ObjectGuid;
@@ -88,9 +89,11 @@ class MANGOS_DLL_SPEC ObjectGuid
 {
     public:                                                 // constructors
         ObjectGuid() : m_guid(0) {}
-        ObjectGuid(uint64 const& guid) : m_guid(guid) {}    // NOTE: must be explicit in future for more strict control type conversions
+        ObjectGuid(uint64 const& guid) : m_guid(guid) {}    // temporary allowed implicit cast, really bad in connection with operator uint64()
         ObjectGuid(HighGuid hi, uint32 entry, uint32 counter) : m_guid(counter ? uint64(counter) | (uint64(entry) << 24) | (uint64(hi) << 48) : 0) {}
         ObjectGuid(HighGuid hi, uint32 counter) : m_guid(counter ? uint64(counter) | (uint64(hi) << 48) : 0) {}
+
+        operator uint64() const { return m_guid; }
     private:
         ObjectGuid(uint32 const&);                          // no implementation, used for catch wrong type assign
         ObjectGuid(HighGuid, uint32, uint64 counter);       // no implementation, used for catch wrong type assign
@@ -101,9 +104,6 @@ class MANGOS_DLL_SPEC ObjectGuid
 
         void Set(uint64 const& guid) { m_guid = guid; }
         void Clear() { m_guid = 0; }
-
-        // Possible removed in future for more strict control type conversions
-        void operator= (uint64 const& guid) { m_guid = guid; }
 
         PackedGuid WriteAsPacked() const;
     public:                                                 // accessors
@@ -126,22 +126,23 @@ class MANGOS_DLL_SPEC ObjectGuid
 
         uint32 GetMaxCounter() const { return GetMaxCounter(GetHigh()); }
 
-        bool IsEmpty()         const { return m_guid == 0; }
-        bool IsCreature()      const { return GetHigh() == HIGHGUID_UNIT; }
-        bool IsPet()           const { return GetHigh() == HIGHGUID_PET; }
-        bool IsVehicle()       const { return GetHigh() == HIGHGUID_VEHICLE; }
-        bool IsCreatureOrPet() const { return IsCreature() || IsPet(); }
-        bool IsCreatureOrVehicle() const { return IsCreature() || IsVehicle(); }
-        bool IsAnyTypeCreature() const { return IsCreature() || IsPet() || IsVehicle(); }
-        bool IsPlayer()        const { return !IsEmpty() && GetHigh() == HIGHGUID_PLAYER; }
-        bool IsUnit()          const { return IsAnyTypeCreature() || IsPlayer(); }
-        bool IsItem()          const { return GetHigh() == HIGHGUID_ITEM; }
-        bool IsGameObject()    const { return GetHigh() == HIGHGUID_GAMEOBJECT; }
-        bool IsDynamicObject() const { return GetHigh() == HIGHGUID_DYNAMICOBJECT; }
-        bool IsCorpse()        const { return GetHigh() == HIGHGUID_CORPSE; }
-        bool IsTransport()     const { return GetHigh() == HIGHGUID_TRANSPORT; }
-        bool IsMOTransport()   const { return GetHigh() == HIGHGUID_MO_TRANSPORT; }
-        bool IsInstance()      const { return GetHigh() == HIGHGUID_INSTANCE; }
+        bool IsEmpty()             const { return m_guid == 0;                                }
+        bool IsCreature()          const { return GetHigh() == HIGHGUID_UNIT;                 }
+        bool IsPet()               const { return GetHigh() == HIGHGUID_PET;                  }
+        bool IsVehicle()           const { return GetHigh() == HIGHGUID_VEHICLE;              }
+        bool IsCreatureOrPet()     const { return IsCreature() || IsPet();                    }
+        bool IsCreatureOrVehicle() const { return IsCreature() || IsVehicle();                }
+        bool IsAnyTypeCreature()   const { return IsCreature() || IsPet() || IsVehicle();     }
+        bool IsPlayer()            const { return !IsEmpty() && GetHigh() == HIGHGUID_PLAYER; }
+        bool IsUnit()              const { return IsAnyTypeCreature() || IsPlayer();          }
+        bool IsItem()              const { return GetHigh() == HIGHGUID_ITEM;                 }
+        bool IsGameObject()        const { return GetHigh() == HIGHGUID_GAMEOBJECT;           }
+        bool IsDynamicObject()     const { return GetHigh() == HIGHGUID_DYNAMICOBJECT;        }
+        bool IsCorpse()            const { return GetHigh() == HIGHGUID_CORPSE;               }
+        bool IsTransport()         const { return GetHigh() == HIGHGUID_TRANSPORT;            }
+        bool IsMOTransport()       const { return GetHigh() == HIGHGUID_MO_TRANSPORT;         }
+        bool IsInstance()          const { return GetHigh() == HIGHGUID_INSTANCE;             }
+        bool IsGroup()             const { return GetHigh() == HIGHGUID_GROUP;                }
 
         static TypeID GetTypeId(HighGuid high)
         {
@@ -159,12 +160,14 @@ class MANGOS_DLL_SPEC ObjectGuid
                 case HIGHGUID_VEHICLE:      return TYPEID_UNIT;
                 // unknown
                 case HIGHGUID_INSTANCE:
+                case HIGHGUID_GROUP:
                 default:                    return TYPEID_OBJECT;
             }
         }
 
         TypeID GetTypeId() const { return GetTypeId(GetHigh()); }
 
+        bool operator! () const { return IsEmpty(); }
         bool operator== (ObjectGuid const& guid) const { return GetRawValue() == guid.GetRawValue(); }
         bool operator!= (ObjectGuid const& guid) const { return GetRawValue() != guid.GetRawValue(); }
         bool operator< (ObjectGuid const& guid) const { return GetRawValue() < guid.GetRawValue(); }
@@ -185,6 +188,7 @@ class MANGOS_DLL_SPEC ObjectGuid
                 case HIGHGUID_CORPSE:
                 case HIGHGUID_MO_TRANSPORT:
                 case HIGHGUID_INSTANCE:
+                case HIGHGUID_GROUP:
                     return false;
                 case HIGHGUID_GAMEOBJECT:
                 case HIGHGUID_TRANSPORT:
@@ -204,14 +208,17 @@ class MANGOS_DLL_SPEC ObjectGuid
 
 typedef std::set<ObjectGuid> ObjectGuidSet;
 
+//minimum buffer size for packed guid is 9 bytes
+#define PACKED_GUID_MIN_BUFFER_SIZE 9
+
 class PackedGuid
 {
     friend ByteBuffer& operator<< (ByteBuffer& buf, PackedGuid const& guid);
 
     public:                                                 // constructors
-        explicit PackedGuid() { m_packedGuid.appendPackGUID(0); }
-        explicit PackedGuid(uint64 const& guid) { m_packedGuid.appendPackGUID(guid); }
-        explicit PackedGuid(ObjectGuid const& guid) { m_packedGuid.appendPackGUID(guid.GetRawValue()); }
+        explicit PackedGuid() : m_packedGuid(PACKED_GUID_MIN_BUFFER_SIZE) { m_packedGuid.appendPackGUID(0); }
+        explicit PackedGuid(uint64 const& guid) : m_packedGuid(PACKED_GUID_MIN_BUFFER_SIZE) { m_packedGuid.appendPackGUID(guid); }
+        explicit PackedGuid(ObjectGuid const& guid) : m_packedGuid(PACKED_GUID_MIN_BUFFER_SIZE) { m_packedGuid.appendPackGUID(guid.GetRawValue()); }
 
     public:                                                 // modifiers
         void Set(uint64 const& guid) { m_packedGuid.wpos(0); m_packedGuid.appendPackGUID(guid); }

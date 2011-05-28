@@ -28,6 +28,8 @@
 #include "GridNotifiers.h"
 #include "GridNotifiersImpl.h"
 #include "InstanceData.h"
+#include "Chat.h"
+#include "Language.h"
 
 bool CreatureEventAIHolder::UpdateRepeatTimer( Creature* creature, uint32 repeatMin, uint32 repeatMax )
 {
@@ -50,6 +52,13 @@ int CreatureEventAI::Permissible(const Creature *creature)
     if( creature->GetAIName() == "EventAI" )
         return PERMIT_BASE_SPECIAL;
     return PERMIT_BASE_NO;
+}
+
+void CreatureEventAI::GetAIInformation(ChatHandler& reader)
+{
+    reader.PSendSysMessage(LANG_NPC_EVENTAI_PHASE, (uint32)m_Phase);
+    reader.PSendSysMessage(LANG_NPC_EVENTAI_MOVE, reader.GetOnOffStr(m_CombatMovementEnabled));
+    reader.PSendSysMessage(LANG_NPC_EVENTAI_COMBAT, reader.GetOnOffStr(m_MeleeEnabled));
 }
 
 CreatureEventAI::CreatureEventAI(Creature *c ) : CreatureAI(c)
@@ -457,16 +466,10 @@ void CreatureEventAI::ProcessAction(CreatureEventAI_Action const& action, uint32
         case ACTION_T_SET_FACTION:
         {
             if (action.set_faction.factionId)
-                m_creature->setFaction(action.set_faction.factionId);
-            else
-            {
-                if (CreatureInfo const* ci = ObjectMgr::GetCreatureTemplate(m_creature->GetEntry()))
-                {
-                    //if no id provided, assume reset and then use default
-                    if (m_creature->getFaction() != ci->faction_A)
-                        m_creature->setFaction(ci->faction_A);
-                }
-            }
+                m_creature->SetFactionTemporary(action.set_faction.factionId, action.set_faction.factionFlags);
+            else                                            // no id provided, assume reset and then use default
+                m_creature->ClearTemporaryFaction();
+
             break;
         }
         case ACTION_T_MORPH_TO_ENTRY_OR_MODEL:
@@ -779,7 +782,7 @@ void CreatureEventAI::ProcessAction(CreatureEventAI_Action const& action, uint32
                 return;
             }
 
-            pInst->SetData64(action.set_inst_data64.field, target->GetGUID());
+            pInst->SetData64(action.set_inst_data64.field, target->GetObjectGuid().GetRawValue());
             break;
         }
         case ACTION_T_UPDATE_TEMPLATE:
@@ -937,7 +940,7 @@ void CreatureEventAI::JustDied(Unit* killer)
 {
     Reset();
 
-    if (m_creature->isGuard())
+    if (m_creature->IsGuard())
     {
         //Send Zone Under Attack message to the LocalDefense and WorldDefense Channels
         if (Player* pKiller = killer->GetCharmerOrOwnerPlayerOrPlayerItself())

@@ -52,6 +52,7 @@ class MANGOS_DLL_SPEC SpellAuraHolder
         void ApplyAuraModifiers(bool apply, bool real = false);
         void _AddSpellAuraHolder();
         void _RemoveSpellAuraHolder();
+        void BuildUpdatePacket(WorldPacket& data) const;
         void SendAuraUpdate(bool remove) const;
         void HandleSpellSpecificBoosts(bool apply);
         void CleanupTriggeredSpells();
@@ -68,7 +69,6 @@ class MANGOS_DLL_SPEC SpellAuraHolder
         uint32 GetId() const { return m_spellProto->Id; }
         SpellEntry const* GetSpellProto() const { return m_spellProto; }
 
-        uint64 const& GetCasterGUID() const { return m_casterGuid.GetRawValue(); }
         ObjectGuid const& GetCasterGuid() const { return m_casterGuid; }
         void SetCasterGuid(ObjectGuid guid) { m_casterGuid = guid; }
         ObjectGuid const& GetCastItemGuid() const { return m_castItemGuid; }
@@ -107,9 +107,14 @@ class MANGOS_DLL_SPEC SpellAuraHolder
         void Update(uint32 diff);
         void RefreshHolder();
 
-        bool IsSingleTarget() const {return m_isSingleTarget; }
+        bool IsSingleTarget() const { return m_isSingleTarget; }
         void SetIsSingleTarget(bool val) { m_isSingleTarget = val; }
         void UnregisterSingleCastHolder();
+
+        int32 GetAuraMaxDuration() const { return m_maxDuration; }
+        void SetAuraMaxDuration(int32 duration);
+        int32 GetAuraDuration() const { return m_duration; }
+        void SetAuraDuration(int32 duration) { m_duration = duration; }
 
         uint8 GetAuraSlot() const { return m_auraSlot; }
         void SetAuraSlot(uint8 slot) { m_auraSlot = slot; }
@@ -117,8 +122,8 @@ class MANGOS_DLL_SPEC SpellAuraHolder
         void SetAuraFlags(uint8 flags) { m_auraFlags = flags; }
         uint8 GetAuraLevel() const { return m_auraLevel; }
         void SetAuraLevel(uint8 level) { m_auraLevel = level; }
-        uint8 GetAuraCharges() const { return m_procCharges; }
-        void SetAuraCharges(uint8 charges)
+        uint32 GetAuraCharges() const { return m_procCharges; }
+        void SetAuraCharges(uint32 charges)
         {
             if (m_procCharges == charges)
                 return;
@@ -139,12 +144,14 @@ class MANGOS_DLL_SPEC SpellAuraHolder
 
         void SetVisibleAura(bool remove) { m_target->SetVisibleAura(m_auraSlot, remove ? 0 : GetId()); }
         void SetRemoveMode(AuraRemoveMode mode) { m_removeMode = mode; }
-        void SetLoadedState(ObjectGuid casterGUID, ObjectGuid itemGUID, int32 stackAmount, int32 charges)
+        void SetLoadedState(ObjectGuid const& casterGUID, ObjectGuid const& itemGUID, uint32 stackAmount, uint32 charges, int32 maxduration, int32 duration)
         {
-            m_casterGuid = casterGUID;
+            m_casterGuid   = casterGUID;
             m_castItemGuid = itemGUID;
-            m_procCharges = charges;
-            m_stackAmount = stackAmount;
+            m_procCharges  = charges;
+            m_stackAmount  = stackAmount;
+            SetAuraMaxDuration(maxduration);
+            SetAuraDuration(duration);
         }
 
         bool HasMechanic(uint32 mechanic) const;
@@ -162,8 +169,11 @@ class MANGOS_DLL_SPEC SpellAuraHolder
         uint8 m_auraSlot;                                   // Aura slot on unit (for show in client)
         uint8 m_auraFlags;                                  // Aura info flag (for send data to client)
         uint8 m_auraLevel;                                  // Aura level (store caster level for correct show level dep amount)
-        uint8 m_procCharges;                                // Aura charges (0 for infinite)
-        uint8 m_stackAmount;                                // Aura stack amount
+        uint32 m_procCharges;                               // Aura charges (0 for infinite)
+        uint32 m_stackAmount;                               // Aura stack amount
+        int32 m_maxDuration;                                // Max aura duration
+        int32 m_duration;                                   // Current time
+        int32 m_timeCla;                                    // Timer for power per sec calculation
 
         AuraRemoveMode m_removeMode:8;                      // Store info for know remove aura reason
         DiminishingGroup m_AuraDRGroup:8;                   // Diminishing
@@ -351,6 +361,7 @@ class MANGOS_DLL_SPEC Aura
         void HandlePreventFleeing(bool apply, bool Real);
         void HandleManaShield(bool apply, bool Real);
         void HandleArenaPreparation(bool apply, bool Real);
+        void HandleAuraMirrorImage(bool apply, bool Real);
         void HandleAuraConvertRune(bool apply, bool Real);
         void HandleAuraIncreaseBaseHealthPercent(bool Apply, bool Real);
         void HandleNoReagentUseAura(bool Apply, bool Real);
@@ -359,6 +370,7 @@ class MANGOS_DLL_SPEC Aura
         void HandleAuraModAllCritChance(bool Apply, bool Real);
         void HandleAuraOpenStable(bool apply, bool Real);
         void HandleAuraAddMechanicAbilities(bool apply, bool Real);
+        void HandleAuraStopNaturalManaRegen(bool apply, bool real);
 
         virtual ~Aura();
 
@@ -371,7 +383,6 @@ class MANGOS_DLL_SPEC Aura
         SpellEntry const* GetSpellProto() const { return GetHolder()->GetSpellProto(); }
         uint32 GetId() const{ return GetHolder()->GetSpellProto()->Id; }
         ObjectGuid const& GetCastItemGuid() const { return GetHolder()->GetCastItemGuid(); }
-        uint64 const& GetCasterGUID() const { return GetHolder()->GetCasterGUID(); }//can't be easy replaced by GetCasterGuid until AuraHolders backporting ig we don't want create additional problems for this.
         ObjectGuid const& GetCasterGuid() const { return GetHolder()->GetCasterGuid(); }
         Unit* GetCaster() const { return GetHolder()->GetCaster(); }
         Unit* GetTarget() const { return GetHolder()->GetTarget(); }
@@ -379,22 +390,24 @@ class MANGOS_DLL_SPEC Aura
         SpellEffectIndex GetEffIndex() const{ return m_effIndex; }
         int32 GetBasePoints() const { return m_currentBasePoints; }
 
-        int32 GetAuraMaxDuration() const { return m_maxduration; }
-        void SetAuraMaxDuration(int32 duration);
-        int32 GetAuraDuration() const { return m_duration; }
-        void SetAuraDuration(int32 duration) { m_duration = duration; }
+        int32 GetAuraMaxDuration() const { return GetHolder()->GetAuraMaxDuration(); }
+        int32 GetAuraDuration() const { return GetHolder()->GetAuraDuration(); }
         time_t GetAuraApplyTime() const { return m_applyTime; }
         uint32 GetAuraTicks() const { return m_periodicTick; }
-        uint32 GetAuraMaxTicks() const { return m_maxduration > 0 && m_modifier.periodictime > 0 ? m_maxduration / m_modifier.periodictime : 0; }
+        uint32 GetAuraMaxTicks() const
+        {
+            int32 maxDuration = GetAuraMaxDuration();
+            return maxDuration > 0 && m_modifier.periodictime > 0 ? maxDuration / m_modifier.periodictime : 0;
+        }
         uint32 GetStackAmount() const { return GetHolder()->GetStackAmount(); }
 
-        void SetLoadedState(int32 damage,int32 maxduration,int32 duration)
+        void SetLoadedState(int32 damage, uint32 periodicTime)
         {
             m_modifier.m_amount = damage;
-            SetAuraMaxDuration(maxduration);
-            SetAuraDuration(duration);
+            m_modifier.periodictime = periodicTime;
+
             if(uint32 maxticks = GetAuraMaxTicks())
-                m_periodicTick = maxticks - m_duration / m_modifier.periodictime;
+                m_periodicTick = maxticks - GetAuraDuration() / m_modifier.periodictime;
         }
 
         bool IsPositive() { return m_positive; }
@@ -457,9 +470,6 @@ class MANGOS_DLL_SPEC Aura
         time_t m_applyTime;
 
         int32 m_currentBasePoints;                          // cache SpellEntry::CalculateSimpleValue and use for set custom base points
-        int32 m_maxduration;                                // Max aura duration
-        int32 m_duration;                                   // Current time
-        int32 m_timeCla;                                    // Timer for power per sec calcultion
         int32 m_periodicTimer;                              // Timer for periodic auras
         uint32 m_periodicTick;                              // Tick count pass (including current if use in tick code) from aura apply, used for some tick count dependent aura effects
 

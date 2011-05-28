@@ -52,13 +52,16 @@ void PointMovementGenerator<T>::Initialize(T &unit)
         i_destinationHolder.SetDestination(traveller, i_x, i_y, i_z, true);
 
     if (unit.GetTypeId() == TYPEID_UNIT && ((Creature*)&unit)->CanFly())
-        ((Creature&)unit).AddSplineFlag(SPLINEFLAG_UNKNOWN7);
+        ((Creature&)unit).AddSplineFlag(SPLINEFLAG_FLYING);
 }
 
 template<class T>
 void PointMovementGenerator<T>::Finalize(T &unit)
 {
     unit.clearUnitState(UNIT_STAT_ROAMING|UNIT_STAT_ROAMING_MOVE);
+
+    if (i_destinationHolder.HasArrived())
+        MovementInform(unit);
 }
 
 template<class T>
@@ -97,16 +100,8 @@ bool PointMovementGenerator<T>::Update(T &unit, const uint32 &diff)
             return true;                                    // not expire now, but already lost
     }
 
-    if(i_destinationHolder.HasArrived())
-    {
-        unit.clearUnitState(UNIT_STAT_ROAMING_MOVE);
-        MovementInform(unit);
-
-        if (!IsActive(unit))
-            return true;
-
+    if (i_destinationHolder.HasArrived())
         return false;
-    }
 
     return true;
 }
@@ -125,7 +120,7 @@ void PointMovementGenerator<Creature>::MovementInform(Creature &unit)
     if (unit.IsTemporarySummon())
     {
         TemporarySummon* pSummon = (TemporarySummon*)(&unit);
-        if (pSummon->GetSummonerGuid().IsCreature())
+        if (pSummon->GetSummonerGuid().IsCreatureOrVehicle())
             if(Creature* pSummoner = unit.GetMap()->GetCreature(pSummon->GetSummonerGuid()))
                 if (pSummoner->AI())
                     pSummoner->AI()->SummonedMovementInform(&unit, POINT_MOTION_TYPE, id);

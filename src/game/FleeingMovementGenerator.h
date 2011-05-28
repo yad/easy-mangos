@@ -23,13 +23,14 @@
 #include "DestinationHolder.h"
 #include "Traveller.h"
 #include "PathFinder.h"
+#include "ObjectGuid.h"
 
 template<class T>
 class MANGOS_DLL_SPEC FleeingMovementGenerator
 : public MovementGeneratorMedium< T, FleeingMovementGenerator<T> >
 {
     public:
-        FleeingMovementGenerator(uint64 fright) : i_frightGUID(fright), i_nextCheckTime(0) {}
+        FleeingMovementGenerator(ObjectGuid fright) : i_frightGUID(fright),i_nextCheckTime(0) {}
 
         void Initialize(T &);
         void Finalize(T &);
@@ -43,7 +44,7 @@ class MANGOS_DLL_SPEC FleeingMovementGenerator
         void _setTargetLocation(T &owner);
         bool _getPoint(T &owner, float &x, float &y, float &z);
 
-        uint64 i_frightGUID;
+        ObjectGuid i_frightGUID;
 
         TimeTracker i_nextCheckTime;
         DestinationHolder< Traveller<T> > i_destinationHolder;
@@ -53,7 +54,7 @@ class MANGOS_DLL_SPEC TimedFleeingMovementGenerator
 : public FleeingMovementGenerator<Creature>
 {
     public:
-        TimedFleeingMovementGenerator(uint64 fright, uint32 time) :
+        TimedFleeingMovementGenerator(ObjectGuid fright, uint32 time) :
             FleeingMovementGenerator<Creature>(fright),
             i_totalFleeTime(time) {}
 

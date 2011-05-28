@@ -131,7 +131,7 @@ void WorldSession::HandleQuestgiverAcceptQuestOpcode( WorldPacket & recv_data )
         )
     {
         _player->PlayerTalkClass->CloseGossip();
-        _player->SetDivider( 0 );
+        _player->ClearDividerGuid();
         return;
     }
 
@@ -142,23 +142,19 @@ void WorldSession::HandleQuestgiverAcceptQuestOpcode( WorldPacket & recv_data )
         if(!GetPlayer()->CanTakeQuest(qInfo,true) )
         {
             _player->PlayerTalkClass->CloseGossip();
-            _player->SetDivider( 0 );
+            _player->ClearDividerGuid();
             return;
         }
 
-        if( _player->GetDivider() != 0 )
+        if (Player *pPlayer = ObjectAccessor::FindPlayer(_player->GetDividerGuid()))
         {
-            Player *pPlayer = ObjectAccessor::FindPlayer( _player->GetDivider() );
-            if( pPlayer )
-            {
-                pPlayer->SendPushToPartyResponse( _player, QUEST_PARTY_MSG_ACCEPT_QUEST );
-                _player->SetDivider( 0 );
-            }
+            pPlayer->SendPushToPartyResponse(_player, QUEST_PARTY_MSG_ACCEPT_QUEST);
+            _player->ClearDividerGuid();
         }
 
         if( _player->CanAddQuest( qInfo, true ) )
         {
-            _player->AddQuest( qInfo, pObject );
+            _player->AddQuest( qInfo, pObject );            // pObject (if it item) can be destroyed at call
 
             if (qInfo->HasQuestFlag(QUEST_FLAGS_PARTY_ACCEPT))
             {
@@ -173,7 +169,7 @@ void WorldSession::HandleQuestgiverAcceptQuestOpcode( WorldPacket & recv_data )
 
                         if (pPlayer->CanTakeQuest(qInfo, true))
                         {
-                            pPlayer->SetDivider(_player->GetGUID());
+                            pPlayer->SetDividerGuid(_player->GetObjectGuid());
 
                             //need confirmation that any gossip window will close
                             pPlayer->PlayerTalkClass->CloseGossip();
@@ -189,36 +185,6 @@ void WorldSession::HandleQuestgiverAcceptQuestOpcode( WorldPacket & recv_data )
 
             _player->GetAchievementMgr().StartTimedAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_COMPLETE_QUEST, quest);
 
-            switch(pObject->GetTypeId())
-            {
-                case TYPEID_UNIT:
-                    sScriptMgr.OnQuestAccept(_player, (Creature*)pObject, qInfo);
-                    break;
-                case TYPEID_ITEM:
-                case TYPEID_CONTAINER:
-                {
-                    sScriptMgr.OnQuestAccept(_player, (Item*)pObject, qInfo);
-
-                    // destroy not required for quest finish quest starting item
-                    bool destroyItem = true;
-                    for(int i = 0; i < QUEST_ITEM_OBJECTIVES_COUNT; ++i)
-                    {
-                        if ((qInfo->ReqItemId[i] == ((Item*)pObject)->GetEntry()) && (((Item*)pObject)->GetProto()->MaxCount > 0))
-                        {
-                            destroyItem = false;
-                            break;
-                        }
-                    }
-
-                    if(destroyItem)
-                        _player->DestroyItem(((Item*)pObject)->GetBagSlot(), ((Item*)pObject)->GetSlot(), true);
-
-                    break;
-                }
-                case TYPEID_GAMEOBJECT:
-                    sScriptMgr.OnQuestAccept(_player, (GameObject*)pObject, qInfo);
-                    break;
-            }
             _player->PlayerTalkClass->CloseGossip();
 
             if( qInfo->GetSrcSpell() > 0 )
@@ -391,7 +357,7 @@ void WorldSession::HandleQuestConfirmAccept(WorldPacket& recv_data)
         if (!pQuest->HasQuestFlag(QUEST_FLAGS_PARTY_ACCEPT))
             return;
 
-        Player* pOriginalPlayer = ObjectAccessor::FindPlayer(_player->GetDivider());
+        Player* pOriginalPlayer = ObjectAccessor::FindPlayer(_player->GetDividerGuid());
 
         if (!pOriginalPlayer)
             return;
@@ -410,7 +376,7 @@ void WorldSession::HandleQuestConfirmAccept(WorldPacket& recv_data)
         if (_player->CanAddQuest(pQuest, true))
             _player->AddQuest(pQuest, NULL);                // NULL, this prevent DB script from duplicate running
 
-        _player->SetDivider(0);
+        _player->ClearDividerGuid();
     }
 }
 
@@ -493,14 +459,14 @@ void WorldSession::HandlePushQuestToParty(WorldPacket& recvPacket)
                     continue;
                 }
 
-                if (pPlayer->GetDivider() != 0)
+                if (pPlayer->GetDividerGuid())
                 {
                     _player->SendPushToPartyResponse(pPlayer, QUEST_PARTY_MSG_BUSY);
                     continue;
                 }
 
                 pPlayer->PlayerTalkClass->SendQuestGiverQuestDetails(pQuest, _player->GetObjectGuid(), true);
-                pPlayer->SetDivider(_player->GetGUID());
+                pPlayer->SetDividerGuid(_player->GetObjectGuid());
             }
         }
     }
@@ -514,16 +480,13 @@ void WorldSession::HandleQuestPushResult(WorldPacket& recvPacket)
 
     DEBUG_LOG("WORLD: Received MSG_QUEST_PUSH_RESULT");
 
-    if (_player->GetDivider() != 0)
+    if (Player *pPlayer = ObjectAccessor::FindPlayer(_player->GetDividerGuid()))
     {
-        if (Player *pPlayer = ObjectAccessor::FindPlayer(_player->GetDivider()))
-        {
-            WorldPacket data( MSG_QUEST_PUSH_RESULT, (8+1) );
-            data << ObjectGuid(guid);
-            data << uint8(msg);                             // valid values: 0-8
-            pPlayer->GetSession()->SendPacket(&data);
-            _player->SetDivider( 0 );
-        }
+        WorldPacket data( MSG_QUEST_PUSH_RESULT, (8+1) );
+        data << ObjectGuid(guid);
+        data << uint8(msg);                             // valid values: 0-8
+        pPlayer->GetSession()->SendPacket(&data);
+        _player->ClearDividerGuid();
     }
 }
 
@@ -636,7 +599,7 @@ void WorldSession::HandleQuestgiverStatusMultipleQuery(WorldPacket& /*recvPacket
     {
         uint8 dialogStatus = DIALOG_STATUS_NONE;
 
-        if (itr->IsCreatureOrPet())
+        if (itr->IsAnyTypeCreature())
         {
             // need also pet quests case support
             Creature *questgiver = GetPlayer()->GetMap()->GetAnyTypeCreature(*itr);

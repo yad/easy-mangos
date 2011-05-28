@@ -41,7 +41,7 @@ void DynamicObject::AddToWorld()
 {
     ///- Register the dynamicObject for guid lookup
     if(!IsInWorld())
-        GetMap()->GetObjectsStore().insert<DynamicObject>(GetGUID(), (DynamicObject*)this);
+        GetMap()->GetObjectsStore().insert<DynamicObject>(GetObjectGuid(), (DynamicObject*)this);
 
     Object::AddToWorld();
 }
@@ -51,14 +51,14 @@ void DynamicObject::RemoveFromWorld()
     ///- Remove the dynamicObject from the accessor
     if(IsInWorld())
     {
-        GetMap()->GetObjectsStore().erase<DynamicObject>(GetGUID(), (DynamicObject*)NULL);
+        GetMap()->GetObjectsStore().erase<DynamicObject>(GetObjectGuid(), (DynamicObject*)NULL);
         GetViewPoint().Event_RemovedFromWorld();
     }
 
     Object::RemoveFromWorld();
 }
 
-bool DynamicObject::Create( uint32 guidlow, Unit *caster, uint32 spellId, SpellEffectIndex effIndex, float x, float y, float z, int32 duration, float radius )
+bool DynamicObject::Create(uint32 guidlow, Unit *caster, uint32 spellId, SpellEffectIndex effIndex, float x, float y, float z, int32 duration, float radius, DynamicObjectType type)
 {
     WorldObject::_Create(guidlow, HIGHGUID_DYNAMICOBJECT, caster->GetPhaseMask());
     SetMap(caster->GetMap());
@@ -86,17 +86,24 @@ bool DynamicObject::Create( uint32 guidlow, Unit *caster, uint32 spellId, SpellE
     bytes |= 0x00 << 16;
     bytes |= 0x00 << 24;
     */
-    SetUInt32Value(DYNAMICOBJECT_BYTES, 0x00000001);
+    SetByteValue(DYNAMICOBJECT_BYTES, 0, type);
 
     SetUInt32Value(DYNAMICOBJECT_SPELLID, spellId);
     SetFloatValue(DYNAMICOBJECT_RADIUS, radius);
     SetUInt32Value(DYNAMICOBJECT_CASTTIME, WorldTimer::getMSTime());    // new 2.4.0
 
+    SpellEntry const* spellProto = sSpellStore.LookupEntry(spellId);
+    if (!spellProto)
+    {
+        sLog.outError("DynamicObject (spell %u) not created. Spell not exist!", spellId, GetPositionX(), GetPositionY());
+        return false;
+    }
+
     m_aliveDuration = duration;
     m_radius = radius;
     m_effIndex = effIndex;
     m_spellId = spellId;
-    m_positive = IsPositiveEffect(m_spellId, m_effIndex);
+    m_positive = IsPositiveEffect(spellProto, m_effIndex);
 
     return true;
 }
@@ -134,14 +141,14 @@ void DynamicObject::Update(uint32 update_diff, uint32 p_time)
 
     if(deleteThis)
     {
-        caster->RemoveDynObjectWithGUID(GetGUID());
+        caster->RemoveDynObjectWithGUID(GetObjectGuid());
         Delete();
     }
 }
 
 void DynamicObject::Delete()
 {
-    SendObjectDeSpawnAnim(GetGUID());
+    SendObjectDeSpawnAnim(GetObjectGuid());
     AddObjectToRemoveList();
 }
 
@@ -153,7 +160,7 @@ void DynamicObject::Delay(int32 delaytime)
         Unit *target = GetMap()->GetUnit((*iter));
         if (target)
         {
-            SpellAuraHolder *holder = target->GetSpellAuraHolder(m_spellId, GetCasterGuid().GetRawValue());
+            SpellAuraHolder *holder = target->GetSpellAuraHolder(m_spellId, GetCasterGuid());
             if (!holder)
             {
                 ++iter;
@@ -176,7 +183,7 @@ void DynamicObject::Delay(int32 delaytime)
                 continue;
             }
 
-            target->DelaySpellAuraHolder(m_spellId, delaytime, GetCasterGuid().GetRawValue());
+            target->DelaySpellAuraHolder(m_spellId, delaytime, GetCasterGuid());
             ++iter;
         }
         else
