@@ -90,20 +90,12 @@ bool PlayerbotPriestAI::HealTarget(Unit* target)
 {
     PlayerbotAI* ai = GetAI();
     Player *m_bot = GetPlayerBot();
-    uint8 hp = target->GetHealth() * 100 / target->GetMaxHealth();
+    uint8 hp = target->GetHealthPercent();
 
-    if (target->isInCombat() && hp < 80 && !target->HasAura(WEAKENED_SOUL, EFFECT_INDEX_0) && !target->HasAura(POWER_WORD_SHIELD, EFFECT_INDEX_0) && ai->CastSpell(POWER_WORD_SHIELD, target))
+    if (target->isInCombat() && hp < 80 && !target->HasAura(WEAKENED_SOUL) && !target->HasAura(POWER_WORD_SHIELD) && ai->CastSpell(POWER_WORD_SHIELD, target))
         return true;
     
-    if (hp < 15 && ai->CastSpell(CIRCLE_OF_HEALING, target))
-        return true;
-    else if (hp < 30 && ai->CastSpell(FLASH_HEAL, target))
-        return true;
-    else if (hp < 35 && ai->CastSpell(BINDING_HEAL, target))
-        return true;
-    else if (hp < 40 && ai->CastSpell(PRAYER_OF_HEALING, target))
-        return true;
-    else if (hp < 50 && ai->CastSpell(CIRCLE_OF_HEALING, target))
+    if (hp < 40 && ai->CastSpell(FLASH_HEAL, target))
         return true;
     else if (hp < 60 && ai->CastSpell(GREATER_HEAL, target))
         return true;
@@ -127,12 +119,29 @@ void PlayerbotPriestAI::DoNextCombatManeuver(Unit *pTarget)
     Player *m_bot = GetPlayerBot();
     Group *m_group = m_bot->GetGroup();
     GroupReference *ref = (m_group) ? m_group->GetFirstMember() : NULL;
-    
-    ai->SetInFront(pTarget);
+    ObjectGuid const targetOfTarget = pTarget->GetTargetGuid();
+    uint32 membersWithLessHp = 0;
+    uint32 membersWithVeryLessHp = 0;
 
     switch (m_bot->getRole())
     {
     case PriestHoly:
+        // High priority to target of target
+        if (targetOfTarget.IsPlayer())
+        {
+            Player *tank = sObjectMgr.GetPlayer(pTarget->GetTargetGuid());
+            
+            if (tank->isAlive() && tank->IsInSameRaidWith(m_bot) && tank->GetHealthPercent() < 80)
+            {
+                // Cast binding heal if target and caster have low health
+                if (m_bot != tank && m_bot->GetHealthPercent() < 60 && ai->CastSpell(BINDING_HEAL, tank))
+                    return;
+                else if (HealTarget(tank))
+                    return;
+            }
+        }
+
+        // Next, priority to healing multiple-target spells
         do
         {
             Player *g_member = (ref) ? ref->getSource() : m_bot;
@@ -140,14 +149,46 @@ void PlayerbotPriestAI::DoNextCombatManeuver(Unit *pTarget)
             if (!g_member->isAlive())
                 continue;
 
-            if ((g_member->GetHealth() * 100 / g_member->GetMaxHealth()) < 80 && HealTarget(g_member))
-                return;
+            if (g_member->GetHealthPercent() < 80)
+            {
+                membersWithLessHp++;
 
-        }while(ref = (ref) ? ref->next() : NULL);
+                if (g_member->GetHealthPercent() < 60)
+                {
+                    membersWithVeryLessHp++;
+                    if (membersWithVeryLessHp > 2 && ai->CastSpell(CIRCLE_OF_HEALING, g_member))
+                        return;
+                }
+                else if (membersWithLessHp > 2 && ai->CastSpell(PRAYER_OF_HEALING, g_member))
+                    return;
+            }
+
+        }while (ref = (ref) ? ref->next() : NULL);
+
+        // At last, heal only members who need to be healed
+        ref = (m_group) ? m_group->GetFirstMember() : NULL;
+        do
+        {
+            Player *g_member = (ref) ? ref->getSource() : m_bot;
+
+            if (!g_member->isAlive())
+                continue;
+
+            if (g_member->GetHealthPercent() < 80)
+            {
+                // Cast binding heal if target and caster have low health
+                if (m_bot != g_member && m_bot->GetHealthPercent() < 60 && ai->CastSpell(BINDING_HEAL, g_member))
+                    return;
+                else if (HealTarget(g_member))
+                    return;
+            }
+
+        }while (ref = (ref) ? ref->next() : NULL);
         break;
 
     case PriestDiscipline:
     case PriestShadow:
+        ai->SetInFront(pTarget);
         static const uint32 SpellShadow[] = {SHADOW_WORD_PAIN, DEVOURING_PLAGUE, VAMPIRIC_TOUCH, MIND_BLAST};
         static const uint32 elt = sizeof(SpellShadow)/sizeof(uint32); 
         char *SpellFirstTarget = "11110";
@@ -175,7 +216,7 @@ void PlayerbotPriestAI::DoNextCombatManeuver(Unit *pTarget)
                     numberTargetsWithin5f++;
             }
 
-        }while(ref = (ref) ? ref->next() : NULL);
+        }while (ref = (ref) ? ref->next() : NULL);
 
         // Spells with Area of Effect
         if (numberTargetsWithin5f >= 5 && !MIND_SEAR)
@@ -214,7 +255,7 @@ void PlayerbotPriestAI::DoNextCombatManeuver(Unit *pTarget)
                          if (!(*itr)->HasAuraFromUnit(SpellShadow[i], m_bot) && ai->CastSpell(SpellShadow[i], (*itr)))
                              return;
 
-                }while(ref = (ref) ? ref->next() : NULL);
+                }while (ref = (ref) ? ref->next() : NULL);
             }
         }
 
