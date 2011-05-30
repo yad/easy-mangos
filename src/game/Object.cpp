@@ -306,15 +306,6 @@ void Object::BuildMovementUpdate(ByteBuffer * data, uint16 updateFlags) const
                     player->m_movementInfo.AddMovementFlag(MOVEFLAG_FORWARD);
                     player->m_movementInfo.AddMovementFlag(MOVEFLAG_SPLINE_ENABLED);
                 }
-
-                if (player->IsFlying() && player->IsBot())
-                {
-                    player->m_movementInfo.AddMovementFlag(MOVEFLAG_LEVITATING);
-                    player->m_movementInfo.AddMovementFlag(MOVEFLAG_FORWARD);
-                    player->m_movementInfo.AddMovementFlag(MOVEFLAG_SPLINE_ENABLED);
-                    /*if (player->IsMounted())
-                        player->m_movementInfo.AddMovementFlag(MOVEFLAG_FLYING);*/
-                }
             }
             break;
         }

@@ -75,27 +75,7 @@ void PlayerbotRogueAI::InitSpells(PlayerbotAI* const ai)
 
 PlayerbotRogueAI::~PlayerbotRogueAI() {}
 
-bool PlayerbotRogueAI::DoFirstCombatManeuver(Unit *pTarget)
-{
-    PlayerbotAI* ai = GetAI();
-    Player * m_bot = GetPlayerBot();
-
-    if (STEALTH > 0 && !m_bot->HasAura(STEALTH, EFFECT_INDEX_0) && ai->CastSpell(STEALTH, m_bot))
-    {
-
-        m_bot->addUnitState(UNIT_STAT_CHASE); // ensure that the bot does not use MoveChase(), as this doesn't seem to work with STEALTH
-
-        return true;
-    }
-    else if (m_bot->HasAura(STEALTH, EFFECT_INDEX_0))
-    {
-        m_bot->GetMotionMaster()->MoveFollow(pTarget, 4.5f, m_bot->GetOrientation());
-        return false;
-    }
-    return false;
-}
-
-void PlayerbotRogueAI::DoNextCombatManeuver(Unit *pTarget)
+void PlayerbotRogueAI::DoCombatManeuver(Unit *pTarget)
 {
     if (!pTarget)
         return;
@@ -112,6 +92,8 @@ void PlayerbotRogueAI::DoNextCombatManeuver(Unit *pTarget)
     if (!m_master)
         return;
 
+    //TODO implement STEALTH
+    
     ai->SetInFront(pTarget);
     Unit* pVictim = pTarget->getVictim();
     float fTargetDist = m_bot->GetDistance(pTarget);
@@ -274,7 +256,7 @@ void PlayerbotRogueAI::DoNextCombatManeuver(Unit *pTarget)
 
 }
 
-// end DoNextCombatManeuver
+// end DoCombatManeuver
 
 void PlayerbotRogueAI::DoNonCombatActions()
 {

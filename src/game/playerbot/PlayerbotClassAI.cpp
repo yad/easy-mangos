@@ -22,12 +22,7 @@
 PlayerbotClassAI::PlayerbotClassAI(Player* const bot, PlayerbotAI* const ai): m_bot(bot), m_ai(ai) {}
 PlayerbotClassAI::~PlayerbotClassAI() {}
 
-bool PlayerbotClassAI::DoFirstCombatManeuver(Unit *)
-{
-    // return false, if done with opening moves/spells
-    return false;
-}
-void PlayerbotClassAI::DoNextCombatManeuver(Unit *) {}
+void PlayerbotClassAI::DoCombatManeuver(Unit *) {}
 
 void PlayerbotClassAI::DoNonCombatActions(){}
 

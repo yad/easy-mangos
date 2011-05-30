@@ -165,7 +165,7 @@
     <ClCompile Include="..\..\src\game\LFGMgr.cpp">
       <Filter>World/Handlers</Filter>
     </ClCompile>
-	<ClCompile Include="..\..\src\game\LFG.cpp">
+    <ClCompile Include="..\..\src\game\LFG.cpp">
       <Filter>World/Handlers</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\game\LootHandler.cpp">
@@ -484,7 +484,7 @@
     <ClCompile Include="..\..\src\game\AuctionHouseBot\AuctionHouseBot.cpp">
       <Filter>AhBot</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\game\VehicleHandler.cpp" >
+    <ClCompile Include="..\..\src\game\VehicleHandler.cpp">
       <Filter>Object</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\game\vmap\BIH.cpp">
@@ -555,6 +555,10 @@
     </ClCompile>
     <ClCompile Include="..\..\src\game\GuildMgr.cpp">
       <Filter>Object</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\game\MailHandler.cpp" />
+    <ClCompile Include="..\..\src\game\PlayerBot\PlayerbotAIHelpers.cpp">
+      <Filter>Playerbot</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -59,79 +59,57 @@ enum RacialTraits
     WILL_OF_THE_FORSAKEN_ALL       = 7744
 };
 
+enum BotCombatType
+{
+    BOTCOMBAT_RANGED,
+    BOTCOMBAT_CAC
+};
+
 class MANGOS_DLL_SPEC PlayerbotAI
 {
 public:
     enum BotState
     {
-        BOTSTATE_NORMAL,            // normal AI routines are processed
-        BOTSTATE_COMBAT,            // bot is in combat
-        BOTSTATE_DEAD,              // we are dead and wait for becoming ghost
-        BOTSTATE_DEADRELEASED,      // we released as ghost and wait to revive
-        BOTSTATE_LOOTING,           // looting mode, used just after combat
-        BOTSTATE_FLYING             // bot is flying
+        BOTSTATE_NORMAL,
+        BOTSTATE_COMBAT,
+        BOTSTATE_DEAD,
+        BOTSTATE_DEADRELEASED,
+        BOTSTATE_LOOTING,
+        BOTSTATE_FLYING
     };
 
     typedef std::map<uint32, uint32> BotNeedItem;
-    typedef std::list<uint64> BotLootCreature;
+    typedef std::list<Creature*> BotLootCreature;
     typedef std::map<uint32, float> SpellRanges;
     typedef std::vector<uint32> BotTaxiNode;
+    typedef std::map<ObjectGuid, BattleGroundPlayer> BattleGroundPlayerMap;
 
 public:
     PlayerbotAI(PlayerbotMgr * const mgr, Player * const bot);
     virtual ~PlayerbotAI();
+
     void ReinitAI();
     void InitSpells(PlayerbotAI* const ai);
 
-    // This is called from Unit.cpp and is called every second (I think)
     void UpdateAI(const uint32 p_time);
 
-    // This is called by WorldSession.cpp
-    // It provides a view of packets normally sent to the client.
-    // Since there is no client at the other end, the packets are dropped of course.
-    // For a list of opcodes that can be caught see Opcodes.cpp (SMSG_* opcodes only)
     void HandleBotOutgoingPacket(const WorldPacket& packet);
-
-    // This is called by WorldSession.cpp
-    // when it detects that a bot is being teleported. It acknowledges to the server to complete the
-    // teleportation
     void HandleTeleportAck();
 
     PlayerbotClassAI* GetClassAI() { return m_classAI; }
-    PlayerbotMgr* const GetManager() { return m_mgr; }
 
-    // finds spell ID for matching substring args
-    // in priority of full text match, spells not taking reagents, and highest rank
     uint32 getSpellId(const char* args, bool master = false) const;
     uint32 getPetSpellId(const char* args) const;
-    // Initialize spell using rank 1 spell id
     uint32 initSpell(uint32 spellId, bool ignorePossession = false);
     uint32 initPetSpell(uint32 spellIconId);
 
-    // extracts item ids from links
     void extractItemIds(const std::string& text, std::list<uint32>& itemIds) const;
-
-    // extract spellid from links
     bool extractSpellId(const std::string& text, uint32 &spellId) const;
-
-    // extracts currency from a string as #g#s#c and returns the total in copper
     uint32 extractMoney(const std::string& text) const;
-
-    // extracts gameobject info from link
     bool extractGOinfo(const std::string& text, uint32 &guid,  uint32 &entry, int &mapid, float &x, float &y, float &z) const;
 
-    // finds items in bots equipment and adds them to foundItemList, removes found items from itemIdSearchList
     void findItemsInEquip(std::list<uint32>& itemIdSearchList, std::list<Item*>& foundItemList) const;
-    // finds items in bots inventory and adds them to foundItemList, removes found items from itemIdSearchList
     void findItemsInInv(std::list<uint32>& itemIdSearchList, std::list<Item*>& foundItemList) const;
-
-    // currently bots only obey commands from the master
-    bool canObeyCommandFrom(const Player& player) const;
-
-    // get current casting spell (will return NULL if no spell!)
-    Spell* GetCurrentSpell() const;
-
-    bool HasAura(uint32 spellId, const Unit* unit) const;
 
     bool CanReceiveSpecificSpell(uint8 spec, Unit* target) const;
 
@@ -159,18 +137,15 @@ public:
     Item* FindMount(uint32 matchingRidingSkill) const;
     Item* FindItem(uint32 ItemId);
     Item* FindConsumable(uint32 displayId) const;
-    void CheckMount();
-    void UnMount();
-    Player* FindNewGroupLeader();
 
-    // ******* Actions ****************************************
-    // Your handlers can call these actions to make the bot do things.
     bool CastSpell(uint32 spellId);
     bool CastSpell(uint32 spellId, Unit* target);
     bool CastAura(uint32 spellId, Unit* target);
     bool CastPetSpell(uint32 spellId, Unit* target = NULL);
     bool Buff(uint32 spellId, Unit* target, void (*beforeCast)(Player *) = NULL);
     bool SelfBuff(uint32 spellId);
+    Spell* GetCurrentSpell() const;
+    bool HasAura(uint32 spellId, const Unit* unit) const;
 
     void UseItem(Item *item, uint32 targetFlag, ObjectGuid targetGUID);
     void UseItem(Item *item, uint8 targetInventorySlot);
@@ -180,13 +155,15 @@ public:
     void EquipItem(Item& item);
     void Feast();
     void InterruptCurrentCastingSpell();
-    bool GetCombatTarget(Unit* forcedTarged = NULL);
+    void SetCombatTarget(Unit* targetCombat);
     Unit *GetCurrentTarget() { return m_targetCombat; };
-    void DoNextCombatManeuver();
+    Unit *GetNewCombatTarget();
+    void DoCombatManeuver();
+    BotCombatType GetCombatType();
+    void MoveTo(float angle, float minDist = 1.0f, float maxDist = 3.0f, float x = 0.0f, float y = 0.0f, float z = 0.0f);
     void SetIgnoreUpdateTime(uint8 t = 0) { m_ignoreAIUpdatesUntilTime = time(0) + t; };
     void SetEnterBGTime(uint8 t = 0) { m_enterBg = time(0) + t; };
 
-    Player *GetPlayer() const { return m_bot; }
     Player *GetLeader() const;
     void SetLeader(Player* pl);
 
@@ -216,13 +193,13 @@ public:
     void TurnInQuests(WorldObject *questgiver);
 
     bool IsInCombat();
-    Player* TargetPlayerFocus();
-    void SetMovementTarget(Unit *followTarget = NULL);
-    bool isInside(float x1, float y1, float x2, float y2, float x3, float y3, float delta);
     void MovementClear();
-    bool IsMoving();
     bool FindPOI();
     Unit* FindEnemy();
+
+    void CheckMount();
+    void UnMount();
+    Player* FindNewGroupLeader();
 
     bool SetInFront(const Unit* obj);
 
@@ -231,46 +208,37 @@ public:
 
     uint8 GetFreeBagSpace() const;
 
+    void SetFollowTarget(Unit *followTarget);
     Unit* GetFollowTarget() { return m_followTarget; }
 
     void Pull();
 
 private:
-    // ****** Closed Actions ********************************
-    // it is safe to keep these back reference pointers because m_bot
-    // owns the "this" object and m_master owns m_bot. The owner always cleans up.
     PlayerbotMgr* const m_mgr;
     Player* const m_bot;
     PlayerbotClassAI* m_classAI;
     uint16 m_role, m_new_role;
 
-    // ignores AI updates until time specified
-    // no need to waste CPU cycles during casting etc
     time_t m_ignoreAIUpdatesUntilTime;
     time_t m_enterBg, m_leaveBg;
 
-    // defines the state of behaviour of the bot
     BotState m_botState;
 
-    // list of items needed to fullfill quests
     BotNeedItem m_needItemList;
 
-    // list of creatures we recently attacked and want to loot
-    BotLootCreature m_lootCreature;     // list of creatures
-    uint64 m_lootCurrent;               // current remains of interest
-    BotTaxiNode m_taxiNodes;            // flight node chain;
+    BotLootCreature m_lootCreature;
+    Creature* m_lootCurrent;
+    BotTaxiNode m_taxiNodes;
 
     time_t m_TimeDoneEating;
     time_t m_TimeDoneDrinking;
     uint32 m_CurrentlyCastingSpellId;
 
-    // if master commands bot to do something, store here until updateAI
-    // can do it
     uint64 m_targetGuidCommand;
     ObjectGuid m_taxiMaster;
 
-    Unit *m_targetCombat;       // current combat target
-    Unit *m_followTarget;       // whom to follow in non combat situation?
+    Unit *m_targetCombat;
+    Unit *m_followTarget;
 
     float orig_x, orig_y, orig_z;
     uint32 orig_map;

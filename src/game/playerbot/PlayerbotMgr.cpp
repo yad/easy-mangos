@@ -77,23 +77,19 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
                     ChatHandler ch(m_master);
                     {
 
-
                             << " m_ignoreAIUpdatesUntilTime: " << pBot->m_ignoreAIUpdatesUntilTime;
                         ch.SendSysMessage(out.str().c_str());
                     }
                     {
-
 
                             << " m_TimeDoneDrinking: " << pBot->m_TimeDoneDrinking;
                         ch.SendSysMessage(out.str().c_str());
                     }
                     {
 
-
                         ch.SendSysMessage(out.str().c_str());
                     }
                     {
-
 
                         ch.SendSysMessage(out.str().c_str());
                     }
@@ -104,7 +100,6 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
                         ch.SendSysMessage(out.str().c_str());
                     }
                     {
-
 
                         ch.SendSysMessage(out.str().c_str());
                     }
@@ -144,7 +139,7 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
                     {
                         bot = itr->getSource();
                         if (!bot->IsFriendlyTo(thingToAttack) && bot->IsWithinLOSInMap(thingToAttack))
-                            bot->GetPlayerbotAI()->GetCombatTarget(thingToAttack);
+                            bot->GetPlayerbotAI()->SetCombatTarget(thingToAttack);
                     }
                     return;
                 }
@@ -154,7 +149,7 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
                 {
                     Player* const bot = GetPlayerBot(m_master->GetSelectionGuid().GetRawValue());
                     if (bot)
-                        bot->GetPlayerbotAI()->SetMovementTarget();
+                        bot->GetPlayerbotAI()->SetFollowTarget(m_master);
                     else
                     {
                         if (!m_master->GetGroup())
@@ -163,7 +158,7 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
                         for (GroupReference *itr = m_master->GetGroup()->GetFirstMember(); itr != NULL; itr = itr->next())
                         {
                             Player* const bot = itr->getSource();
-                            bot->GetPlayerbotAI()->SetMovementTarget();
+                            bot->GetPlayerbotAI()->SetFollowTarget(m_master);
                         }
                     }
                     return;
@@ -176,7 +171,7 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
                 {
                     Player* const bot = GetPlayerBot(m_master->GetSelectionGuid().GetRawValue());
                     if (bot)
-                        bot->GetPlayerbotAI()->SetMovementTarget(m_master);
+                        bot->GetPlayerbotAI()->SetFollowTarget(m_master);
                     else
                     {
                         if (!m_master->GetGroup())
@@ -185,7 +180,7 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
                         for (GroupReference *itr = m_master->GetGroup()->GetFirstMember(); itr != NULL; itr = itr->next())
                         {
                             Player* const bot = itr->getSource();
-                            bot->GetPlayerbotAI()->SetMovementTarget(m_master);
+                            bot->GetPlayerbotAI()->SetFollowTarget(m_master);
                         }
                     }
                     return;
@@ -368,8 +363,6 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
 
             WorldPacket p(packet);    // WorldPacket packet for CMSG_REPAIR_ITEM, (8+8+1)
 
-            sLog.outDebug("PlayerbotMgr: CMSG_REPAIR_ITEM");
-
             ObjectGuid npcGUID;
             uint64 itemGUID;
             uint8 guildBank;
@@ -394,10 +387,7 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
 
                 Creature *unit = bot->GetNPCIfCanInteractWith(npcGUID, UNIT_NPC_FLAG_REPAIR);
                 if (!unit)     // Check if NPC can repair bot or not
-                {
-                    sLog.outDebug("PlayerbotMgr: HandleRepairItemOpcode - Unit (GUID: %s) not found or you can't interact with him.", npcGUID.GetString().c_str());
                     return;
-                }
 
                 // remove fake death
                 if (bot->hasUnitState(UNIT_STAT_DIED))
@@ -407,17 +397,9 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
                 float discountMod = bot->GetReputationPriceDiscount(unit);
 
                 uint32 TotalCost = 0;
-                if (itemGUID)     // Handle redundant feature (repair individual item) for bot
-                {
-                    sLog.outDebug("ITEM: Repair single item is not applicable for %s", bot->GetName());
-                    continue;
-                }
-                else      // Handle feature (repair all items) for bot
-                {
-                    sLog.outDebug("ITEM: Repair all items, npcGUID = %s", npcGUID.GetString().c_str());
-
+                if (!itemGUID)     // Handle redundant feature (repair individual item) for bot
                     TotalCost = bot->DurabilityRepairAll(true, discountMod, guildBank > 0 ? true : false);
-                }
+
                 if (guildBank)     // Handle guild repair
                 {
                     uint32 GuildId = bot->GetGuildId();
@@ -435,7 +417,6 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
         }
         case CMSG_SPIRIT_HEALER_ACTIVATE:
         {
-            // sLog.outDebug("SpiritHealer is resurrecting the Player %s",m_master->GetName());
             if (!m_master->GetGroup())
                 return;
 

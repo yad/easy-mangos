@@ -109,7 +109,7 @@ void PlayerbotShamanAI::HealTarget(Unit *target, uint8 hp)
     // end HealTarget
 }
 
-void PlayerbotShamanAI::DoNextCombatManeuver(Unit *pTarget)
+void PlayerbotShamanAI::DoCombatManeuver(Unit *pTarget)
 {
     PlayerbotAI *ai = GetAI();
     if (!ai)
@@ -460,7 +460,7 @@ void PlayerbotShamanAI::DoNextCombatManeuver(Unit *pTarget)
                 SpellSequence = SPELL_ENHANCEMENT;
             }
     }
-} // end DoNextCombatManeuver
+} // end DoCombatManeuver
 
 void PlayerbotShamanAI::DoNonCombatActions()
 {

@@ -88,7 +88,7 @@ public:
     virtual ~PlayerbotMageAI();
 
     // all combat actions go here
-    void DoNextCombatManeuver(Unit*);
+    void DoCombatManeuver(Unit*);
 
     // all non combat actions go here, ex buffs, heals, rezzes
     void DoNonCombatActions();

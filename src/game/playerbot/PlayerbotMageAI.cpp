@@ -88,13 +88,11 @@ void PlayerbotMageAI::InitSpells(PlayerbotAI* const ai)
 
 PlayerbotMageAI::~PlayerbotMageAI() {}
 
-void PlayerbotMageAI::DoNextCombatManeuver(Unit *pTarget)
+void PlayerbotMageAI::DoCombatManeuver(Unit *pTarget)
 {
     PlayerbotAI* ai = GetAI();
     Player* m_bot = GetPlayerBot();
     Player* m_master = ai->GetLeader();
-
-    ai->SetInFront(pTarget);
 
     switch (m_bot->getRole())
     {

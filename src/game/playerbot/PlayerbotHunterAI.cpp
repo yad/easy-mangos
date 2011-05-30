@@ -117,7 +117,7 @@ bool PlayerbotHunterAI::HasPet(Player* bot)
         return false;  //hunter either has no pet or stabled
 } // end HasPet
 
-void PlayerbotHunterAI::DoNextCombatManeuver(Unit *pTarget)
+void PlayerbotHunterAI::DoCombatManeuver(Unit *pTarget)
 {
     PlayerbotAI *ai = GetAI();
     if (!ai)
@@ -153,7 +153,7 @@ void PlayerbotHunterAI::DoNextCombatManeuver(Unit *pTarget)
         return;
     else if (m_bot->getRace() == RACE_TROLL && !m_bot->HasAura(BERSERKING, EFFECT_INDEX_0) && ai->CastSpell(BERSERKING, m_bot))
         return;
-    
+
     if (m_bot->IsWithinDist(pTarget, ATTACK_DISTANCE))
         m_rangedCombat = false;
     else
@@ -179,7 +179,7 @@ void PlayerbotHunterAI::DoNextCombatManeuver(Unit *pTarget)
             ybt = (yb < yt) ? (yt - offset_y) : (yt + offset_y);
 
             const TerrainInfo *map = m_bot->GetTerrain();
-            
+
             if (map->GetHeight(xbt, ybt, zb + 2.0f, true) > (zb - 10.0f) && map->GetHeight(xbt, ybt, zb + 2.0f, true) < (zb + 5.0f) && pTarget->IsWithinLOS(xbt, ybt, map->GetHeight(xbt, ybt, zb + 2.0f, true)))
             {
                 m_bot->AttackStop();
@@ -208,13 +208,13 @@ void PlayerbotHunterAI::DoNextCombatManeuver(Unit *pTarget)
         return;
     else if (!m_bot->HasAura(ASPECT_OF_THE_DRAGONHAWK) && ai->GetManaPercent() >= 80 && ai->CastSpell(ASPECT_OF_THE_DRAGONHAWK, m_bot))
         return;
-    
+
     // activate auto shot
     if (!m_bot->FindCurrentSpellBySpellId(AUTO_SHOT))
         ai->CastSpell(AUTO_SHOT, pTarget);
     else if (m_bot->FindCurrentSpellBySpellId(AUTO_SHOT))
         m_bot->InterruptNonMeleeSpells(true, AUTO_SHOT);
-    
+
     // damage spells
 
     if (!pTarget->HasAura(HUNTERS_MARK) && ai->CastSpell(HUNTERS_MARK, pTarget))
@@ -259,7 +259,7 @@ void PlayerbotHunterAI::DoNextCombatManeuver(Unit *pTarget)
 
     if (numberTargets >= 5 && ai->CastSpell(VOLLEY, pTarget))
         return;
-    
+
     // Casting spell cycle
     if (m_rangedCombat)
     {
@@ -288,7 +288,7 @@ void PlayerbotHunterAI::DoNextCombatManeuver(Unit *pTarget)
         }
     }
 
-} // end DoNextCombatManeuver
+} // end DoCombatManeuver
 
 void PlayerbotHunterAI::DoNonCombatActions()
 {
@@ -373,7 +373,6 @@ void PlayerbotHunterAI::DoNonCombatActions()
 
                     if (pet->HaveInDiet(pItemProto)) // is pItem in pets diet
                     {
-                        //sLog.outDebug("Food for pet: %s",pItemProto->Name1);
                         caster->CastSpell(caster, 51284, true); // pet feed visual
                         uint32 count = 1; // number of items used
                         int32 benefit = pet->GetCurrentFoodBenefitLevel(pItemProto->ItemLevel); // nutritional value of food
@@ -401,7 +400,6 @@ void PlayerbotHunterAI::DoNonCombatActions()
 
                             if (pet->HaveInDiet(pItemProto)) // is pItem in pets diet
                             {
-                                //sLog.outDebug("Food for pet: %s",pItemProto->Name1);
                                 caster->CastSpell(caster, 51284, true); // pet feed visual
                                 uint32 count = 1; // number of items used
                                 int32 benefit = pet->GetCurrentFoodBenefitLevel(pItemProto->ItemLevel); // nutritional value of food

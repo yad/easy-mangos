@@ -99,7 +99,7 @@ void PlayerbotWarlockAI::InitSpells(PlayerbotAI* const ai)
 
 PlayerbotWarlockAI::~PlayerbotWarlockAI() {}
 
-void PlayerbotWarlockAI::DoNextCombatManeuver(Unit *pTarget)
+void PlayerbotWarlockAI::DoCombatManeuver(Unit *pTarget)
 {
     PlayerbotAI *ai = GetAI();
     if (!ai)
@@ -351,7 +351,7 @@ void PlayerbotWarlockAI::DoNextCombatManeuver(Unit *pTarget)
                 SpellSequence = SPELL_CURSES;
             }
     }
-} // end DoNextCombatManeuver
+} // end DoCombatManeuver
 
 void PlayerbotWarlockAI::DoNonCombatActions()
 {

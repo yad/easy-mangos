@@ -90,7 +90,7 @@ void PlayerbotDeathKnightAI::InitSpells(PlayerbotAI* const ai)
 
 PlayerbotDeathKnightAI::~PlayerbotDeathKnightAI() {}
 
-void PlayerbotDeathKnightAI::DoNextCombatManeuver(Unit *pTarget)
+void PlayerbotDeathKnightAI::DoCombatManeuver(Unit *pTarget)
 {
     PlayerbotAI *ai = GetAI();
     if (!ai)
@@ -479,7 +479,7 @@ void PlayerbotDeathKnightAI::DoNextCombatManeuver(Unit *pTarget)
                 SpellSequence = SPELL_DK_UNHOLY;
             }
     }
-} // end DoNextCombatManeuver
+} // end DoCombatManeuver
 
 void PlayerbotDeathKnightAI::DoNonCombatActions()
 {

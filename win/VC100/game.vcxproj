@@ -474,6 +474,7 @@
     <ClCompile Include="..\..\src\game\PetitionsHandler.cpp" />
     <ClCompile Include="..\..\src\game\Player.cpp" />
     <ClCompile Include="..\..\src\game\playerbot\PlayerbotAI.cpp" />
+    <ClCompile Include="..\..\src\game\PlayerBot\PlayerbotAIHelpers.cpp" />
     <ClCompile Include="..\..\src\game\playerbot\PlayerbotClassAI.cpp" />
     <ClCompile Include="..\..\src\game\playerbot\PlayerbotDeathKnightAI.cpp" />
     <ClCompile Include="..\..\src\game\playerbot\PlayerbotDruidAI.cpp" />
