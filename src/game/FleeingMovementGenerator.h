@@ -46,6 +46,7 @@ class MANGOS_DLL_SPEC FleeingMovementGenerator
 
         ObjectGuid i_frightGUID;
 
+        TimeTracker i_nextCheckTime;
         DestinationHolder< Traveller<T> > i_destinationHolder;
 };
 

@@ -42,7 +42,7 @@ void FleeingMovementGenerator<T>::_setTargetLocation(T &owner)
 
     owner.addUnitState(UNIT_STAT_FLEEING_MOVE);
     Traveller<T> traveller(owner);
-
+    
     PathInfo path(&owner, x, y, z);
     if(!(path.getPathType() & PATHFIND_NORMAL))
     {
@@ -72,7 +72,7 @@ bool FleeingMovementGenerator<T>::_getPoint(T &owner, float &x, float &y, float 
         return false;
 
     float dist_from_caster, angle_to_caster;
-    if(Unit *fright = ObjectAccessor::GetUnit(owner, i_frightGuid))
+    if(Unit *fright = ObjectAccessor::GetUnit(owner, i_frightGUID))
     {
         dist_from_caster = fright->GetDistance(&owner);
         if(dist_from_caster > 0.2f)
@@ -111,7 +111,7 @@ bool FleeingMovementGenerator<T>::_getPoint(T &owner, float &x, float &y, float 
     z = curr_z;
 
     owner.UpdateAllowedPositionZ(x, y, z);
-
+    
     return true;
 }
 
