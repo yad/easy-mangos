@@ -904,7 +904,7 @@ void PlayerbotAI::MoveTo(float angle, float minDist, float maxDist, float x, flo
                 if (GetCombatType()==BOTCOMBAT_CAC)
                 {
                     MovementClear();
-                    m_bot->GetMotionMaster()->MoveFollow(m_followTarget, 1.0f, angle);
+                    m_bot->GetMotionMaster()->MoveChase(m_followTarget);//MoveFollow(m_followTarget, 1.0f, angle);
                 }
                 else
                 {
@@ -1144,20 +1144,20 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
 
         if (!IsInCombat())
         {
+            m_targetCombat = NULL;
             m_bot->AttackStop();
             m_bot->SetSelectionGuid(ObjectGuid());
             m_bot->InterruptNonMeleeSpells(true);
 
             if (GetLeader()!=m_bot)
             {
-                if (m_bot->getClass()==CLASS_DEATH_KNIGHT && GetLeader()->getLevel()<55)
+                if (m_bot->getClass()==CLASS_DEATH_KNIGHT 
+                    && GetLeader()->getLevel()<55)
                 {
                     SetLeader(m_bot);
                     ReinitAI();
                     return;
                 }
-                m_targetCombat = NULL;
-                SetFollowTarget(GetLeader());
             }
             else
             {
@@ -1172,12 +1172,31 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
                     MoveTo(0.0f, 1.0f, 3.0f, orig_x, orig_y, orig_z);
                 }
             }
-            CheckRoles();
-            if(CheckLevel())
-                CheckStuff();
-        }
+            if (m_botState == BOTSTATE_COMBAT)
+            {
+                SetState(BOTSTATE_LOOTING);
+                SetIgnoreUpdateTime();
+            }
 
-        if (IsInCombat() || m_targetCombat)
+            else if (m_botState == BOTSTATE_LOOTING)
+            {
+                if (m_bot->getClass() == CLASS_HUNTER)
+                       m_bot->HandleEmote(1);
+
+                CastAura(25990, m_bot); // Regen hp + mana : Spell Aura Gruccu Food
+                DoLoot();
+            }
+            else
+            {
+                SetFollowTarget(GetLeader());
+                CheckRoles();
+                if(CheckLevel())
+                    CheckStuff();
+                GetClassAI()->DoNonCombatActions();
+                CheckMount();
+            }
+        }
+        else
         {
             if ((!GetLeader()->IsMounted()) && (m_bot->IsMounted()))
                 UnMount();
@@ -1186,28 +1205,6 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
                 DoCombatManeuver();
             else
                 SetIgnoreUpdateTime(1);
-        }
-
-        else if (m_botState == BOTSTATE_COMBAT)
-        {
-            SetState(BOTSTATE_LOOTING);
-            SetIgnoreUpdateTime();
-        }
-
-        else if (m_botState == BOTSTATE_LOOTING)
-        {
-            if (m_bot->getClass() == CLASS_HUNTER)
-                   m_bot->HandleEmote(1);
-
-            CastAura(25990, m_bot); // Regen hp + mana : Spell Aura Gruccu Food
-            DoLoot();
-        }
-
-        else if (!IsInCombat())
-        {
-            SetFollowTarget(GetLeader());
-            GetClassAI()->DoNonCombatActions();
-            CheckMount();
         }
     }
 }
