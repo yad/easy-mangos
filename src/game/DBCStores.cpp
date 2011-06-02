@@ -145,6 +145,7 @@ DBCStorage <ScalingStatValuesEntry> sScalingStatValuesStore(ScalingStatValuesfmt
 
 DBCStorage <SkillLineEntry> sSkillLineStore(SkillLinefmt);
 DBCStorage <SkillLineAbilityEntry> sSkillLineAbilityStore(SkillLineAbilityfmt);
+DBCStorage <SkillRaceClassInfoEntry> sSkillRaceClassInfoStore(SkillRaceClassInfofmt);
 
 DBCStorage <SoundEntriesEntry> sSoundEntriesStore(SoundEntriesfmt);
 
@@ -375,7 +376,7 @@ void LoadDBCStores(const std::string& dataPath)
         exit(1);
     }
 
-    const uint32 DBCFilesCount = 94;
+    const uint32 DBCFilesCount = 95;
 
     barGoLink bar( (int)DBCFilesCount );
 
@@ -516,6 +517,7 @@ void LoadDBCStores(const std::string& dataPath)
     LoadDBC(availableDbcLocales,bar,bad_dbc_files,sScalingStatValuesStore,   dbcPath,"ScalingStatValues.dbc");
     LoadDBC(availableDbcLocales,bar,bad_dbc_files,sSkillLineStore,           dbcPath,"SkillLine.dbc");
     LoadDBC(availableDbcLocales,bar,bad_dbc_files,sSkillLineAbilityStore,    dbcPath,"SkillLineAbility.dbc");
+    LoadDBC(availableDbcLocales,bar,bad_dbc_files,sSkillRaceClassInfoStore,  dbcPath,"SkillRaceClassInfo.dbc");
     LoadDBC(availableDbcLocales,bar,bad_dbc_files,sSoundEntriesStore,        dbcPath,"SoundEntries.dbc");
     LoadDBC(availableDbcLocales,bar,bad_dbc_files,sSpellStore,               dbcPath,"Spell.dbc", &CustomSpellEntryfmt, &CustomSpellEntryIndex);
     for(uint32 i = 1; i < sSpellStore.GetNumRows(); ++i)
