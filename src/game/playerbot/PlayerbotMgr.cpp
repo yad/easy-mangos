@@ -436,10 +436,6 @@ void PlayerbotMgr::HandleMasterOutgoingPacket(const WorldPacket& packet)
 {
 }
 
-void PlayerbotMgr::Stay()
-{
-}
-
 void PlayerbotMgr::LogoutPlayerBot(ObjectGuid guid)
 {
     Player* bot = GetPlayerBot(guid);

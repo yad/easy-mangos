@@ -54,7 +54,6 @@ public:
 
     void LogoutAllBots();
     void OnBotLogin(Player * const bot);
-    void Stay();
 
 protected:
     Player* m_master;

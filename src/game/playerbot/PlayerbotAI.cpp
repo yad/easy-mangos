@@ -907,7 +907,7 @@ void PlayerbotAI::MoveTo(float angle, float minDist, float maxDist, float x, flo
                 if (GetCombatType()==BOTCOMBAT_CAC)
                 {
                     MovementClear();
-                    m_bot->GetMotionMaster()->MoveChase(m_followTarget);//MoveFollow(m_followTarget, 1.0f, angle);
+                    m_bot->GetMotionMaster()->MoveChase(m_followTarget);
                 }
                 else
                 {
