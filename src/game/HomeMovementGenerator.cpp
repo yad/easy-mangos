@@ -62,16 +62,15 @@ void HomeMovementGenerator<Creature>::_setTargetLocation(Creature & owner)
 bool HomeMovementGenerator<Creature>::Update(Creature &owner, const uint32& time_diff)
 {
     CreatureTraveller traveller( owner);
-
     if (i_destinationHolder.UpdateTraveller(traveller, time_diff, false))
     {
-        if (!IsActive(owner))                               // force stop processing (movement can move out active zone with cleanup movegens list)
-            return true;                                    // not expire now, but already lost
+        if (!IsActive(owner)) // force stop processing (movement can move out active zone with cleanup movegens list)
+            return true; // not expire now, but already lost
     }
 
     if (time_diff >= i_travel_time)
     {
-        i_travel_time = 0;                                  // Used as check in Finalize
+        i_travel_time = 0; // Used as check in Finalize
         return false;
     }
 
@@ -104,3 +103,4 @@ void HomeMovementGenerator<Creature>::Finalize(Creature& owner)
         owner.AI()->JustReachedHome();
     }
 }
+
