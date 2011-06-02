@@ -367,43 +367,26 @@ void PlayerbotPaladinAI::DoNonCombatActions()
     if (!m_bot)
         return;
 
-    Player* m_master = ai->GetLeader();
-    if (!m_master)
-        return;
-
-    // Buff myself
-    BuffPlayer(m_bot);
-
-    // Buff master
-    BuffPlayer(m_master);
-
-    if (DEVOTION_AURA > 0 && !m_bot->HasAura(DEVOTION_AURA, EFFECT_INDEX_0))
-        ai->CastSpell (DEVOTION_AURA, m_bot);
-
-    // heal and buff group
-    if (m_master->GetGroup())
+    Group* m_group = m_bot->GetGroup();
+    GroupReference *ref = (m_group) ? m_group->GetFirstMember() : NULL;
+    do
     {
-        Group::MemberSlotList const& groupSlot = m_master->GetGroup()->GetMemberSlots();
-        for (Group::member_citerator itr = groupSlot.begin(); itr != groupSlot.end(); itr++)
+        Player *g_member = (ref) ? ref->getSource() : m_bot;
+
+        if (!g_member)
+            continue;
+
+        if (!g_member->isAlive())
         {
-            Player *tPlayer = sObjectMgr.GetPlayer(itr->guid);
-            if (!tPlayer)
-                continue;
-
-            if (!tPlayer->isAlive())
-            {
-                if (!ai->CastSpell(REDEMPTION, tPlayer))
-                    continue;
-            }
-
-            if (HealTarget(tPlayer))
+            if (ai->CastSpell(REDEMPTION, g_member))
                 return;
-
-            if (tPlayer != m_bot && tPlayer != m_master)
-                if (BuffPlayer(tPlayer))
-                    return;
         }
-    }
+        else if (HealTarget(g_member))
+            return;
+        else if (BuffPlayer(g_member))
+            return;    
+
+    }while(ref = (ref) ? ref->next() : NULL);
 }
 
 bool PlayerbotPaladinAI::BuffPlayer(Player* target)
