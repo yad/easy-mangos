@@ -690,22 +690,25 @@ void PlayerbotAI::DoCombatManeuver()
     if (m_targetCombat)
     {
         SetInFront(m_targetCombat);
-        if (GetCombatType()==BOTCOMBAT_CAC && m_bot->IsWithinDistInMap(m_targetCombat, ATTACK_DISTANCE))
+        if (GetCombatType()==BOTCOMBAT_CAC)
         {
             if (m_bot->Attack(m_targetCombat,true))
             {
-                m_bot->AddThreat(m_targetCombat);
-                m_bot->SetInCombatWith(m_targetCombat);
-                m_targetCombat->SetInCombatWith(m_bot);
+                m_bot->GetMotionMaster()->MoveChase(m_targetCombat);
             }
-            if (m_bot->isAttackReady())
+            if (m_bot->IsWithinDistInMap(m_targetCombat, ATTACK_DISTANCE))
             {
-                m_bot->AttackerStateUpdate(m_targetCombat);
-                m_bot->resetAttackTimer();
+                if (m_bot->isAttackReady())
+                {
+                    m_bot->AttackerStateUpdate(m_targetCombat);
+                    m_bot->resetAttackTimer();
+                }
             }
+            //else
+                //Buff sur le chemin jusqu'à la cible
             GetClassAI()->DoCombatManeuver(m_targetCombat);
         }
-        else if (GetCombatType()==BOTCOMBAT_RANGED)
+        else
         {
             m_bot->Attack(m_targetCombat,false);
             GetClassAI()->DoCombatManeuver(m_targetCombat);
@@ -919,6 +922,30 @@ void PlayerbotAI::MoveTo(float angle, float minDist, float maxDist, float x, flo
     {
         MovementClear();
         m_bot->GetMotionMaster()->MovePoint(0, x, y, z);
+    }
+}
+
+void PlayerbotAI::MoveInLineOfSight(Unit *u)
+{
+    if (m_bot->getVictim())
+        return;
+
+    if (!m_bot->GetCharmInfo() || !m_bot->GetCharmInfo()->HasReactState(REACT_AGGRESSIVE))
+        return;
+
+    if (u->isTargetableForAttack() && m_bot->IsHostileTo( u ))
+    {
+        if(m_bot->IsWithinDistInMap(u, ATTACK_DISTANCE) && m_bot->GetDistanceZ(u) <= CREATURE_Z_ATTACK_RANGE)
+        {
+            if(m_bot->IsWithinLOSInMap(u))
+            {
+                //AttackStart(u);
+                if (m_bot->Attack(m_targetCombat,true))
+                {
+                    m_bot->GetMotionMaster()->MoveChase(m_targetCombat);
+                }
+            }
+        }
     }
 }
 
@@ -1138,16 +1165,24 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
     }
     else
     {
+        //Never remove it however bots are glued
+        if (!m_followTarget)
+            SetFollowTarget(GetLeader());
+
         Spell* const pSpell = GetCurrentSpell();
         if (pSpell && !(pSpell->IsChannelActive() || pSpell->IsAutoRepeat()))
             InterruptCurrentCastingSpell();
 
         if (!IsInCombat())
         {
-            m_targetCombat = NULL;
-            m_bot->AttackStop();
-            m_bot->SetSelectionGuid(ObjectGuid());
-            m_bot->InterruptNonMeleeSpells(true);
+            if (m_targetCombat)
+            {
+                m_targetCombat = NULL;
+                SetFollowTarget(GetLeader());
+                m_bot->AttackStop();
+                m_bot->SetSelectionGuid(ObjectGuid());
+                m_bot->InterruptNonMeleeSpells(true);
+            }
 
             if (GetLeader()!=m_bot)
             {
@@ -1172,12 +1207,12 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
                     MoveTo(0.0f, 1.0f, 3.0f, orig_x, orig_y, orig_z);
                 }
             }
+
             if (m_botState == BOTSTATE_COMBAT)
             {
                 SetState(BOTSTATE_LOOTING);
                 SetIgnoreUpdateTime();
             }
-
             else if (m_botState == BOTSTATE_LOOTING)
             {
                 if (m_bot->getClass() == CLASS_HUNTER)
@@ -1188,7 +1223,6 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
             }
             else
             {
-                SetFollowTarget(GetLeader());
                 CheckRoles();
                 if(CheckLevel())
                     CheckStuff();

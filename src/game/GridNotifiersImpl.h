@@ -57,6 +57,21 @@ inline void PlayerCreatureRelocationWorker(Player* pl, Creature* c)
     }
 }
 
+inline void PlayerPlayerRelocationWorker(Player* pl1, Player* pl2)
+{
+    if (!pl1->hasUnitState(UNIT_STAT_LOST_CONTROL))
+    {
+        if (pl1->GetPlayerbotAI() && pl1->GetPlayerbotAI()->IsVisible(pl2) && !pl1->GetPlayerbotAI()->IsInEvadeMode())
+            pl1->GetPlayerbotAI()->MoveInLineOfSight(pl2);
+    }
+
+    if (!pl2->hasUnitState(UNIT_STAT_LOST_CONTROL))
+    {
+        if (pl2->GetPlayerbotAI() && pl2->GetPlayerbotAI()->IsVisible(pl1) && !pl2->GetPlayerbotAI()->IsInEvadeMode())
+            pl2->GetPlayerbotAI()->MoveInLineOfSight(pl1);
+    }
+}
+
 inline void CreatureCreatureRelocationWorker(Creature* c1, Creature* c2)
 {
     if (!c1->hasUnitState(UNIT_STAT_LOST_CONTROL))
@@ -72,6 +87,7 @@ inline void CreatureCreatureRelocationWorker(Creature* c1, Creature* c2)
     }
 }
 
+template<>
 inline void MaNGOS::PlayerRelocationNotifier::Visit(CreatureMapType &m)
 {
     if (!i_player.isAlive() || i_player.IsTaxiFlying())
@@ -82,6 +98,20 @@ inline void MaNGOS::PlayerRelocationNotifier::Visit(CreatureMapType &m)
         Creature* c = iter->getSource();
         if (c->isAlive())
             PlayerCreatureRelocationWorker(&i_player, c);
+    }
+}
+
+template<>
+inline void MaNGOS::PlayerRelocationNotifier::Visit(PlayerMapType &m)
+{
+    if (!i_player.isAlive() || i_player.IsTaxiFlying())
+        return;
+
+    for(PlayerMapType::iterator iter=m.begin(); iter != m.end(); ++iter)
+    {
+        Player* player = iter->getSource();
+        if (player->isAlive() && !player->IsTaxiFlying())
+            PlayerPlayerRelocationWorker(player, &i_player);
     }
 }
 

@@ -131,7 +131,9 @@ namespace MaNGOS
         Player &i_player;
         PlayerRelocationNotifier(Player &pl) : i_player(pl) {}
         template<class T> void Visit(GridRefManager<T> &) {}
-        void Visit(CreatureMapType &);
+        #ifdef WIN32
+        template<> void Visit(CreatureMapType &);
+        #endif
     };
 
     struct MANGOS_DLL_DECL CreatureRelocationNotifier
@@ -1294,6 +1296,7 @@ namespace MaNGOS
     };
 
     #ifndef WIN32
+    template<> void PlayerRelocationNotifier::Visit<Player>(PlayerMapType &);
     template<> void PlayerRelocationNotifier::Visit<Creature>(CreatureMapType &);
     template<> void CreatureRelocationNotifier::Visit<Player>(PlayerMapType &);
     template<> void CreatureRelocationNotifier::Visit<Creature>(CreatureMapType &);
