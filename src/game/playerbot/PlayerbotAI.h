@@ -193,7 +193,6 @@ public:
     void TurnInQuests(WorldObject *questgiver);
 
     bool IsInCombat();
-    void MovementClear();
     bool FindPOI();
     Unit* FindEnemy();
 
@@ -208,7 +207,7 @@ public:
 
     uint8 GetFreeBagSpace() const;
 
-    void SetFollowTarget(Unit *followTarget);
+    void SetFollowTarget(Unit *followTarget, bool forced = false);
     Unit* GetFollowTarget() { return m_followTarget; }
 
     void Pull();

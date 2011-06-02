@@ -1153,7 +1153,7 @@ bool PlayerbotAI::CastSpell(uint32 spellId)
 
     SpellCastTimesEntry const * castTimeEntry = sSpellCastTimesStore.LookupEntry(pSpellInfo->CastingTimeIndex);
     if (castTimeEntry && castTimeEntry->CastTime)
-        MovementClear();
+        m_bot->GetMotionMaster()->Clear(true);
 
     m_bot->CastSpell(pTarget, pSpellInfo, false);
 

@@ -53,6 +53,12 @@ void PointMovementGenerator<T>::Initialize(T &unit)
 
     if (unit.GetTypeId() == TYPEID_UNIT && ((Creature*)&unit)->CanFly())
         ((Creature&)unit).AddSplineFlag(SPLINEFLAG_FLYING);
+    /*if (unit.GetTypeId() == TYPEID_PLAYER && ((Player*)&unit)->IsFlying())
+    {
+        ((Player*)&unit)->m_movementInfo.SetMovementFlags(MOVEFLAG_NONE);
+        ((Player*)&unit)->m_movementInfo.AddMovementFlag(MOVEFLAG_LEVITATING);
+        ((Player*)&unit)->m_movementInfo.AddMovementFlag(MOVEFLAG_FLYING);
+    }*/
 }
 
 template<class T>

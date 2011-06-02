@@ -240,6 +240,7 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
             if (guid != m_bot->GetObjectGuid())
                 return;
             m_bot->m_movementInfo.AddMovementFlag(MOVEFLAG_FLYING);
+            SetFollowTarget(GetLeader(), true);
             return;
         }
 
@@ -250,6 +251,7 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
             if (guid != m_bot->GetObjectGuid())
                 return;
             m_bot->m_movementInfo.RemoveMovementFlag(MOVEFLAG_FLYING);
+            SetFollowTarget(GetLeader(), true);
             return;
         }
 
@@ -309,7 +311,7 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
                 }
 
                 m_bot->GetSession()->HandleGroupAcceptOpcode(p);
-                MovementClear();
+                m_bot->GetMotionMaster()->Clear(true);
                 if (!inviter->IsBot())
                 {
                     m_bot->SetDungeonDifficulty(inviter->GetDungeonDifficulty());
@@ -774,15 +776,15 @@ bool PlayerbotAI::IsInCombat()
     return false;
 }
 
-void PlayerbotAI::SetFollowTarget(Unit * followTarget)
+void PlayerbotAI::SetFollowTarget(Unit * followTarget, bool forced)
 {
     if (!followTarget)
     {
-        MovementClear();
+        m_bot->GetMotionMaster()->Clear(true);
         return;
     }
 
-    if (m_followTarget==followTarget)
+    if (!forced && m_followTarget==followTarget)
         return;
 
     m_followTarget = followTarget;
@@ -899,19 +901,20 @@ void PlayerbotAI::MoveTo(float angle, float minDist, float maxDist, float x, flo
                 if (max > 30.0f)
                     max = 30.0f;
 
-                MovementClear();
+                m_bot->GetMotionMaster()->Clear(true);
                 m_bot->GetMotionMaster()->MoveFollow(m_followTarget, rand_float(minDist, max), angle);
             }
             else
             {
-                if (GetCombatType()==BOTCOMBAT_CAC)
+                //TODO fix it... les bots cherchent à attaquer des cibles pacifiques :s
+                if (GetCombatType()==BOTCOMBAT_CAC && GetLeader()!=m_bot)
                 {
-                    MovementClear();
+                    m_bot->GetMotionMaster()->Clear(true);
                     m_bot->GetMotionMaster()->MoveChase(m_followTarget);
                 }
                 else
                 {
-                    MovementClear();
+                    m_bot->GetMotionMaster()->Clear(true);
                     m_bot->GetMotionMaster()->MoveFollow(m_followTarget, rand_float(minDist, max), angle);
                 }
             }
@@ -920,7 +923,7 @@ void PlayerbotAI::MoveTo(float angle, float minDist, float maxDist, float x, flo
     }
     else
     {
-        MovementClear();
+        m_bot->GetMotionMaster()->Clear(true);
         m_bot->GetMotionMaster()->MovePoint(0, x, y, z);
     }
 }
@@ -1025,13 +1028,6 @@ Unit* PlayerbotAI::FindEnemy()
         }
     }
     return NULL;
-}
-
-void PlayerbotAI::MovementClear()
-{
-    m_bot->GetMotionMaster()->Clear(true);
-    m_bot->clearUnitState(UNIT_STAT_CHASE);
-    m_bot->clearUnitState(UNIT_STAT_FOLLOW);
 }
 
 bool PlayerbotAI::SetInFront(const Unit* obj)
@@ -1199,7 +1195,7 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
                 if (FindPOI())
                 {
                     m_ignoreAIUpdatesUntilTime = time(0) + urand(5, 10);
-                    MovementClear();
+                    m_bot->GetMotionMaster()->Clear(true);
                     MoveTo(rand_float(0, M_PI_F), 1.0f, 3.0f, orig_x, orig_y, orig_z);
                 }
                 else
