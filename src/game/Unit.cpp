@@ -748,6 +748,9 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
                 ((Player*)this)->KilledMonster(normalInfo, pVictim->GetObjectGuid());
         }
 
+        if (InstanceData* mapInstance = pVictim->GetInstanceData())
+            mapInstance->OnCreatureDeath(((Creature*)pVictim));
+
         DEBUG_FILTER_LOG(LOG_FILTER_DAMAGE, "DealDamage critter, critter dies");
 
         return damage;
@@ -776,7 +779,7 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
 
     // duel ends when player has 1 or less hp
     bool duel_hasEnded = false;
-    if(pVictim->GetTypeId() == TYPEID_PLAYER && ((Player*)pVictim)->duel && damage >= (health-1))
+    if (pVictim->GetTypeId() == TYPEID_PLAYER && ((Player*)pVictim)->duel && damage >= (health-1))
     {
         // prevent kill only if killed in duel and killed by opponent or opponent controlled creature
         if(((Player*)pVictim)->duel->opponent==this || ((Player*)pVictim)->duel->opponent->GetObjectGuid() == GetOwnerGuid())
@@ -1611,8 +1614,8 @@ void Unit::CalculateMeleeDamage(Unit *pVictim, uint32 damage, CalcDamageInfo *da
     damageInfo->resist           = 0;
     damageInfo->blocked_amount   = 0;
 
-    damageInfo->TargetState      = 0;
-    damageInfo->HitInfo          = 0;
+    damageInfo->TargetState      = VICTIMSTATE_UNAFFECTED;
+    damageInfo->HitInfo          = HITINFO_NORMALSWING;
     damageInfo->procAttacker     = PROC_FLAG_NONE;
     damageInfo->procVictim       = PROC_FLAG_NONE;
     damageInfo->procEx           = PROC_EX_NONE;
@@ -1639,7 +1642,7 @@ void Unit::CalculateMeleeDamage(Unit *pVictim, uint32 damage, CalcDamageInfo *da
         case RANGED_ATTACK:
             damageInfo->procAttacker = PROC_FLAG_SUCCESSFUL_RANGED_HIT;
             damageInfo->procVictim   = PROC_FLAG_TAKEN_RANGED_HIT;
-            damageInfo->HitInfo = 0x08;// test
+            damageInfo->HitInfo = HITINFO_UNK3;             // test (dev note: test what? HitInfo flag possibly not confirmed.)
             break;
         default:
             break;
@@ -1690,7 +1693,7 @@ void Unit::CalculateMeleeDamage(Unit *pVictim, uint32 damage, CalcDamageInfo *da
         case MELEE_HIT_MISS:
         {
             damageInfo->HitInfo    |= HITINFO_MISS;
-            damageInfo->TargetState = VICTIMSTATE_NORMAL;
+            damageInfo->TargetState = VICTIMSTATE_UNAFFECTED;
 
             damageInfo->procEx|=PROC_EX_MISS;
             damageInfo->damage = 0;
@@ -1739,22 +1742,22 @@ void Unit::CalculateMeleeDamage(Unit *pVictim, uint32 damage, CalcDamageInfo *da
         }
         case MELEE_HIT_PARRY:
             damageInfo->TargetState  = VICTIMSTATE_PARRY;
-            damageInfo->procEx |= PROC_EX_PARRY;
+            damageInfo->procEx      |= PROC_EX_PARRY;
             damageInfo->cleanDamage += damageInfo->damage;
             damageInfo->damage = 0;
             break;
 
         case MELEE_HIT_DODGE:
             damageInfo->TargetState  = VICTIMSTATE_DODGE;
-            damageInfo->procEx|=PROC_EX_DODGE;
+            damageInfo->procEx      |= PROC_EX_DODGE;
             damageInfo->cleanDamage += damageInfo->damage;
             damageInfo->damage = 0;
             break;
         case MELEE_HIT_BLOCK:
         {
             damageInfo->TargetState = VICTIMSTATE_NORMAL;
-            damageInfo->HitInfo |= HITINFO_BLOCK;
-            damageInfo->procEx |= PROC_EX_BLOCK;
+            damageInfo->HitInfo    |= HITINFO_BLOCK;
+            damageInfo->procEx     |= PROC_EX_BLOCK;
             damageInfo->blocked_amount = damageInfo->target->GetShieldBlockValue();
 
             // Target has a chance to double the blocked amount if it has SPELL_AURA_MOD_BLOCK_CRIT_CHANCE
@@ -5624,16 +5627,17 @@ void Unit::SendAttackStateUpdate(CalcDamageInfo *damageInfo)
     }
 
     data << uint8(damageInfo->TargetState);
-    data << uint32(0);
-    data << uint32(0);
+    data << uint32(0);                                      // unknown, usually seen with -1, 0 and 1000
+    data << uint32(0);                                      // spell id, seen with heroic strike and disarm as examples.
+                                                            // HITINFO_NOACTION normally set if spell
 
     if(damageInfo->HitInfo & HITINFO_BLOCK)
         data << uint32(damageInfo->blocked_amount);
 
-    if(damageInfo->HitInfo & HITINFO_UNK3)
-        data << uint32(0);
+    if(damageInfo->HitInfo & HITINFO_UNK22)
+        data << uint32(0);                                  // count of some sort?
 
-    if(damageInfo->HitInfo & HITINFO_UNK1)
+    if(damageInfo->HitInfo & HITINFO_UNK0)
     {
         data << uint32(0);
         data << float(0);
@@ -5732,15 +5736,15 @@ FactionTemplateEntry const* Unit::getFactionTemplateEntry() const
 bool Unit::IsHostileTo(Unit const* unit) const
 {
     // always non-hostile to self
-    if(unit==this)
+    if (unit == this)
         return false;
 
     // always non-hostile to GM in GM mode
-    if(unit->GetTypeId()==TYPEID_PLAYER && ((Player const*)unit)->isGameMaster())
+    if (unit->GetTypeId() == TYPEID_PLAYER && ((Player const*)unit)->isGameMaster())
         return false;
 
     // always hostile to enemy
-    if(getVictim()==unit || unit->getVictim()==this)
+    if (getVictim() == unit || unit->getVictim() == this)
         return true;
 
     // test pet/charm masters instead pers/charmeds
@@ -5748,49 +5752,49 @@ bool Unit::IsHostileTo(Unit const* unit) const
     Unit const* targetOwner = unit->GetCharmerOrOwner();
 
     // always hostile to owner's enemy
-    if(testerOwner && (testerOwner->getVictim()==unit || unit->getVictim()==testerOwner))
+    if (testerOwner && (testerOwner->getVictim() == unit || unit->getVictim() == testerOwner))
         return true;
 
     // always hostile to enemy owner
-    if(targetOwner && (getVictim()==targetOwner || targetOwner->getVictim()==this))
+    if (targetOwner && (getVictim() == targetOwner || targetOwner->getVictim() == this))
         return true;
 
     // always hostile to owner of owner's enemy
-    if(testerOwner && targetOwner && (testerOwner->getVictim()==targetOwner || targetOwner->getVictim()==testerOwner))
+    if (testerOwner && targetOwner && (testerOwner->getVictim() == targetOwner || targetOwner->getVictim() == testerOwner))
         return true;
 
     Unit const* tester = testerOwner ? testerOwner : this;
     Unit const* target = targetOwner ? targetOwner : unit;
 
     // always non-hostile to target with common owner, or to owner/pet
-    if(tester==target)
+    if (tester == target)
         return false;
 
     // special cases (Duel, etc)
-    if(tester->GetTypeId()==TYPEID_PLAYER && target->GetTypeId()==TYPEID_PLAYER)
+    if (tester->GetTypeId() == TYPEID_PLAYER && target->GetTypeId() == TYPEID_PLAYER)
     {
         Player const* pTester = (Player const*)tester;
         Player const* pTarget = (Player const*)target;
 
         // Duel
-        if(pTester->duel && pTester->duel->opponent == pTarget && pTester->duel->startTime != 0)
+        if (pTester->IsInDuelWith(pTarget))
             return true;
 
         // Group
-        if(pTester->GetGroup() && pTester->GetGroup()==pTarget->GetGroup())
+        if (pTester->GetGroup() && pTester->GetGroup() == pTarget->GetGroup())
             return false;
 
         // Sanctuary
-        if(pTarget->HasByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_SANCTUARY) && pTester->HasByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_SANCTUARY))
+        if (pTarget->HasByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_SANCTUARY) && pTester->HasByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_SANCTUARY))
             return false;
 
         // PvP FFA state
-        if(pTester->IsFFAPvP() && pTarget->IsFFAPvP())
+        if (pTester->IsFFAPvP() && pTarget->IsFFAPvP())
             return true;
 
         //= PvP states
         // Green/Blue (can't attack)
-        if(pTester->GetTeam()==pTarget->GetTeam())
+        if (pTester->GetTeam() == pTarget->GetTeam())
             return false;
 
         // Red (can attack) if true, Blue/Yellow (can't attack) in another case
@@ -5847,15 +5851,15 @@ bool Unit::IsFriendlyTo(Unit const* unit) const
         return true;
 
     // always friendly to self
-    if(unit==this)
+    if (unit == this)
         return true;
 
     // always friendly to GM in GM mode
-    if(unit->GetTypeId()==TYPEID_PLAYER && ((Player const*)unit)->isGameMaster())
+    if (unit->GetTypeId() == TYPEID_PLAYER && ((Player const*)unit)->isGameMaster())
         return true;
 
     // always non-friendly to enemy
-    if(getVictim()==unit || unit->getVictim()==this)
+    if (getVictim() == unit || unit->getVictim() == this)
         return false;
 
     // test pet/charm masters instead pers/charmeds
@@ -5863,49 +5867,49 @@ bool Unit::IsFriendlyTo(Unit const* unit) const
     Unit const* targetOwner = unit->GetCharmerOrOwner();
 
     // always non-friendly to owner's enemy
-    if(testerOwner && (testerOwner->getVictim()==unit || unit->getVictim()==testerOwner))
+    if (testerOwner && (testerOwner->getVictim() == unit || unit->getVictim() == testerOwner))
         return false;
 
     // always non-friendly to enemy owner
-    if(targetOwner && (getVictim()==targetOwner || targetOwner->getVictim()==this))
+    if (targetOwner && (getVictim() == targetOwner || targetOwner->getVictim() == this))
         return false;
 
     // always non-friendly to owner of owner's enemy
-    if(testerOwner && targetOwner && (testerOwner->getVictim()==targetOwner || targetOwner->getVictim()==testerOwner))
+    if (testerOwner && targetOwner && (testerOwner->getVictim() == targetOwner || targetOwner->getVictim() == testerOwner))
         return false;
 
     Unit const* tester = testerOwner ? testerOwner : this;
     Unit const* target = targetOwner ? targetOwner : unit;
 
     // always friendly to target with common owner, or to owner/pet
-    if(tester==target)
+    if (tester == target)
         return true;
 
     // special cases (Duel)
-    if(tester->GetTypeId()==TYPEID_PLAYER && target->GetTypeId()==TYPEID_PLAYER)
+    if (tester->GetTypeId() == TYPEID_PLAYER && target->GetTypeId() == TYPEID_PLAYER)
     {
         Player const* pTester = (Player const*)tester;
         Player const* pTarget = (Player const*)target;
 
         // Duel
-        if(pTester->duel && pTester->duel->opponent == target && pTester->duel->startTime != 0)
+        if (pTester->IsInDuelWith(pTarget))
             return false;
 
         // Group
-        if(pTester->GetGroup() && pTester->GetGroup()==pTarget->GetGroup())
+        if (pTester->GetGroup() && pTester->GetGroup() == pTarget->GetGroup())
             return true;
 
         // Sanctuary
-        if(pTarget->HasByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_SANCTUARY) && pTester->HasByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_SANCTUARY))
+        if (pTarget->HasByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_SANCTUARY) && pTester->HasByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_SANCTUARY))
             return true;
 
         // PvP FFA state
-        if(pTester->IsFFAPvP() && pTarget->IsFFAPvP())
+        if (pTester->IsFFAPvP() && pTarget->IsFFAPvP())
             return false;
 
         //= PvP states
         // Green/Blue (non-attackable)
-        if(pTester->GetTeam()==pTarget->GetTeam())
+        if (pTester->GetTeam() == pTarget->GetTeam())
             return true;
 
         // Blue (friendly/non-attackable) if not PVP, or Yellow/Red in another case (attackable)
@@ -6284,6 +6288,15 @@ Player* Unit::GetCharmerOrOwnerPlayerOrPlayerItself()
         return ObjectAccessor::FindPlayer(guid);
 
     return GetTypeId()==TYPEID_PLAYER ? (Player*)this : NULL;
+}
+
+Player const* Unit::GetCharmerOrOwnerPlayerOrPlayerItself() const
+{
+    ObjectGuid guid = GetCharmerOrOwnerGuid();
+    if (guid.IsPlayer())
+        return ObjectAccessor::FindPlayer(guid);
+
+    return GetTypeId() == TYPEID_PLAYER ? (Player const*)this : NULL;
 }
 
 Pet* Unit::GetPet() const
@@ -7333,6 +7346,20 @@ bool Unit::IsSpellCrit(Unit *pVictim, SpellEntry const *spellProto, SpellSchoolM
                             }
                         }
                         break;
+                        // Improved Faerie Fire
+                        if(pVictim->HasAura(770) || pVictim->HasAura(16857))
+                        {
+                            AuraList const& ImprovedAura = GetAurasByType(SPELL_AURA_DUMMY);
+                            for(AuraList::const_iterator iter = ImprovedAura.begin(); iter != ImprovedAura.end(); ++iter)
+                            {
+                                if((*iter)->GetEffIndex() == 0 && (*iter)->GetSpellProto()->SpellIconID == 109 && (*iter)->GetSpellProto()->SpellFamilyName == SPELLFAMILY_DRUID)
+                                {
+                                    crit_chance += (*iter)->GetModifier()->m_amount;
+                                    break;
+                                }
+                            }
+                        }
+                        break;
                     case SPELLFAMILY_PALADIN:
                         // Sacred Shield
                         if (spellProto->SpellFamilyFlags & UI64LIT(0x0000000040000000))
@@ -8352,18 +8379,20 @@ void Unit::SetInCombatWith(Unit* enemy)
     Unit* eOwner = enemy->GetCharmerOrOwnerOrSelf();
     if (eOwner->IsPvP())
     {
-        SetInCombatState(true,enemy);
+        SetInCombatState(true, enemy);
         return;
     }
 
     //check for duel
     if (eOwner->GetTypeId() == TYPEID_PLAYER && ((Player*)eOwner)->duel)
     {
-        Unit const* myOwner = GetCharmerOrOwnerOrSelf();
-        if(((Player const*)eOwner)->duel->opponent == myOwner)
+        if (Player const* myOwner = GetCharmerOrOwnerPlayerOrPlayerItself())
         {
-            SetInCombatState(true,enemy);
-            return;
+            if (myOwner->IsInDuelWith((Player const*)eOwner))
+            {
+                SetInCombatState(true,enemy);
+                return;
+            }
         }
     }
 
@@ -10872,8 +10901,17 @@ void Unit::SendPetCastFail(uint32 spellid, SpellCastResult msg)
     data << uint8(0);                                       // cast count?
     data << uint32(spellid);
     data << uint8(msg);
-    // uint32 for some reason
-    // uint32 for some reason
+
+    // More cases exist, see Spell::SendCastResult (can possibly be unified)
+    switch(msg)
+    {
+        case SPELL_FAILED_NOT_READY:
+            data << uint32(0);                              // unknown
+            break;
+        default:
+            break;
+    }
+
     ((Player*)owner)->GetSession()->SendPacket(&data);
 }
 
@@ -11604,7 +11642,7 @@ void Unit::SetContestedPvP(Player *attackedPlayer)
 {
     Player* player = GetCharmerOrOwnerPlayerOrPlayerItself();
 
-    if (!player || (attackedPlayer && (attackedPlayer == player || (player->duel && player->duel->opponent == attackedPlayer))))
+    if (!player || (attackedPlayer && (attackedPlayer == player || player->IsInDuelWith(attackedPlayer))))
         return;
 
     player->SetContestedPvPTimer(30000);
@@ -11899,6 +11937,9 @@ void Unit::MonsterJump(float x, float y, float z, float o, uint32 transitTime, u
 
     if (GetTypeId() != TYPEID_PLAYER)
     {
+        // Interrupt spells cause of movement
+        InterruptNonMeleeSpells(false);
+
         Creature* c = (Creature*)this;
         // Creature relocation acts like instant movement generator, so current generator expects interrupt/reset calls to react properly
         if (!c->GetMotionMaster()->empty())
@@ -12116,13 +12157,13 @@ void Unit::KnockBackFrom(Unit* target, float horizontalSpeed, float verticalSpee
         float fy = oy + dis * vsin;
         float fz = oz;
 
-        float fx2, fy2, fz2;                                // getObjectHitPos overwrite last args in any result case
-        if(VMAP::VMapFactory::createOrGetVMapManager()->getObjectHitPos(GetMapId(), ox,oy,oz+0.5f, fx,fy,oz+0.5f,fx2,fy2,fz2, -0.5f))
-        {
-            fx = fx2;
-            fy = fy2;
-            fz = fz2;
-        }
+        MaNGOS::NormalizeMapCoord(fx); 
+        MaNGOS::NormalizeMapCoord(fy); 
+
+        if (GetTerrain()->CheckPathAccurate(ox,oy,oz,fx,fy,fz, NULL))
+            DEBUG_LOG("Unit::KnockBack unit %u knockbacked back on %f",GetObjectGuid().GetCounter(), GetDistance(fx,fy,fz));
+        else
+            DEBUG_LOG("Unit::KnockBack unit %u NOT knockbacked on full distance, real distance is %f",GetObjectGuid().GetCounter(), GetDistance(fx,fy,fz));
 
         UpdateAllowedPositionZ(fx, fy, fz);
 
@@ -12427,16 +12468,22 @@ bool Unit::IsAllowedDamageInArea(Unit* pVictim) const
     if (pVictim == this)
         return true;
 
-    // non player controlled unit can damage anywhere
-    if (!IsCharmerOrOwnerPlayerOrPlayerItself())
-        return true;
-
     // can damage own pet anywhere
     if (pVictim->GetOwnerGuid() == GetObjectGuid())
         return true;
 
+    // non player controlled unit can damage anywhere
+    Player const* pOwner = GetCharmerOrOwnerPlayerOrPlayerItself();
+    if (!pOwner)
+        return true;
+
     // can damage non player controlled victim anywhere
-    if (!pVictim->IsCharmerOrOwnerPlayerOrPlayerItself())
+    Player const* vOwner = pVictim->GetCharmerOrOwnerPlayerOrPlayerItself();
+    if (!vOwner)
+        return true;
+
+    // can damage opponent in duel
+    if (pOwner->IsInDuelWith(vOwner))
         return true;
 
     // can't damage player controlled unit by player controlled unit in sanctuary
@@ -12560,7 +12607,7 @@ void Unit::SetVehicleId(uint32 entry)
     }
 }
 
-uint32 Unit::CalculateAuraPeriodicTimeWithHaste(SpellEntry const* spellProto, uint32 oldPeriodicTime, SpellEffectIndex eff_idx)
+uint32 Unit::CalculateAuraPeriodicTimeWithHaste(SpellEntry const* spellProto, uint32 oldPeriodicTime)
 {
     if (!spellProto || oldPeriodicTime == 0)
         return 0;
@@ -12583,12 +12630,7 @@ uint32 Unit::CalculateAuraPeriodicTimeWithHaste(SpellEntry const* spellProto, ui
     if (!applyHaste)
         return oldPeriodicTime;
 
-    uint32 _periodicTime = oldPeriodicTime;
-
-    if(IsChanneledSpell(spellProto) && spellProto->EffectAmplitude[eff_idx])
-        _periodicTime = ceil(float(spellProto->EffectAmplitude[eff_idx]) * GetFloatValue(UNIT_MOD_CAST_SPEED));
-    else
-        _periodicTime = ceil(float(oldPeriodicTime) * GetFloatValue(UNIT_MOD_CAST_SPEED));
+    uint32 _periodicTime = ceil(float(oldPeriodicTime) * GetFloatValue(UNIT_MOD_CAST_SPEED)); 
 
     return _periodicTime;
 }

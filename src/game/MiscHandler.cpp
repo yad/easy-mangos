@@ -301,7 +301,9 @@ void WorldSession::HandleLogoutRequestOpcode( WorldPacket & /*recv_data*/ )
     // not set flags if player can't free move to prevent lost state at logout cancel
     if(GetPlayer()->CanFreeMove())
     {
-        GetPlayer()->SetStandState(UNIT_STAND_STATE_SIT);
+        float height = GetPlayer()->GetTerrain()->GetHeight(GetPlayer()->GetPositionX(), GetPlayer()->GetPositionY(), GetPlayer()->GetPositionZ());
+        if ((GetPlayer()->GetPositionZ() < height + 0.1f) && !(GetPlayer()->IsInWater()))
+            GetPlayer()->SetStandState(UNIT_STAND_STATE_SIT);
 
         WorldPacket data( SMSG_FORCE_MOVE_ROOT, (8+4) );    // guess size
         data << GetPlayer()->GetPackGUID();
@@ -1095,16 +1097,6 @@ void WorldSession::HandleSetActionBarTogglesOpcode(WorldPacket& recv_data)
     }
 
     GetPlayer()->SetByteValue(PLAYER_FIELD_BYTES, 2, ActionBar);
-}
-
-void WorldSession::HandleWardenDataOpcode(WorldPacket& recv_data)
-{
-    recv_data.read_skip<uint8>();
-    /*
-        uint8 tmp;
-        recv_data >> tmp;
-        DEBUG_LOG("Received opcode CMSG_WARDEN_DATA, not resolve.uint8 = %u", tmp);
-    */
 }
 
 void WorldSession::HandlePlayedTime(WorldPacket& recv_data)

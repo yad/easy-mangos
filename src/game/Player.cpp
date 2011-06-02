@@ -1374,9 +1374,8 @@ void Player::Update( uint32 update_diff, uint32 p_time )
                 }
             }
 
-            Unit *owner = pVictim->GetOwner();
-            Unit *u = owner ? owner : pVictim;
-            if (u->IsPvP() && (!duel || duel->opponent != u))
+            Player *vOwner = pVictim->GetCharmerOrOwnerPlayerOrPlayerItself();
+            if (vOwner && vOwner->IsPvP() && !IsInDuelWith(vOwner))
             {
                 UpdatePvP(true);
                 RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_ENTER_PVP_COMBAT);
@@ -2191,7 +2190,6 @@ void Player::Regenerate(Powers power, uint32 diff)
         {
             if (HasAuraType(SPELL_AURA_STOP_NATURAL_MANA_REGEN))
                 break;
-
             bool recentCast = IsUnderLastManaUseEffect();
             float ManaIncreaseRate = sWorld.getConfig(CONFIG_FLOAT_RATE_POWER_MANA);
             if (recentCast)
@@ -7173,8 +7171,12 @@ void Player::CheckDuelDistance(time_t currTime)
         return;
 
     GameObject* obj = GetMap()->GetGameObject(GetGuidValue(PLAYER_DUEL_ARBITER));
-    if(!obj)
+    if (!obj)
+    {
+        // player not at duel start map
+        DuelComplete(DUEL_FLED);
         return;
+    }
 
     if (duel->outOfBound == 0)
     {
@@ -7205,7 +7207,7 @@ void Player::CheckDuelDistance(time_t currTime)
 void Player::DuelComplete(DuelCompleteType type)
 {
     // duel not requested
-    if(!duel)
+    if (!duel)
         return;
 
     WorldPacket data(SMSG_DUEL_COMPLETE, (1));
@@ -7213,7 +7215,7 @@ void Player::DuelComplete(DuelCompleteType type)
     GetSession()->SendPacket(&data);
     duel->opponent->GetSession()->SendPacket(&data);
 
-    if(type != DUEL_INTERUPTED)
+    if (type != DUEL_INTERUPTED)
     {
         data.Initialize(SMSG_DUEL_WINNER, (1+20));          // we guess size
         data << (uint8)((type==DUEL_WON) ? 0 : 1);          // 0 = just won; 1 = fled
@@ -7704,9 +7706,20 @@ void Player::ApplyItemEquipSpell(Item *item, bool apply, bool form_change)
         if(!spellData.SpellId )
             continue;
 
-        // wrong triggering type
-        if(apply && spellData.SpellTrigger != ITEM_SPELLTRIGGER_ON_EQUIP)
-            continue;
+        if (apply)
+        {
+            // apply only at-equip spells
+            if (spellData.SpellTrigger != ITEM_SPELLTRIGGER_ON_EQUIP)
+                continue;
+        }
+        else
+        {
+            // at un-apply remove all spells (not only at-apply, so any at-use active affects from item and etc)
+            // except with at-use with negative charges, so allow consuming item spells (including with extra flag that prevent consume really)
+            // applied to player after item remove from equip slot
+            if (spellData.SpellTrigger == ITEM_SPELLTRIGGER_ON_USE && spellData.SpellCharges < 0)
+                continue;
+        }
 
         // check if it is valid spell
         SpellEntry const* spellproto = sSpellStore.LookupEntry(spellData.SpellId);
@@ -9063,12 +9076,23 @@ void Player::SendTalentWipeConfirm(ObjectGuid guid)
 void Player::SendPetSkillWipeConfirm()
 {
     Pet* pet = GetPet();
+
     if(!pet)
         return;
-    WorldPacket data(SMSG_PET_UNLEARN_CONFIRM, (8+4));
-    data << ObjectGuid(pet->GetObjectGuid());
-    data << uint32(pet->resetTalentsCost());
-    GetSession()->SendPacket( &data );
+
+    if (pet->getPetType() != HUNTER_PET || pet->m_usedTalentCount == 0)
+        return;
+
+    CharmInfo* charmInfo = pet->GetCharmInfo();
+
+    if (!charmInfo)
+    {
+        sLog.outError("WorldSession::HandlePetUnlearnOpcode: %s is considered pet-like but doesn't have a charminfo!", pet->GetGuidStr().c_str());
+        return;
+    }
+    pet->resetTalents();
+    SendTalentsInfoData(true);
+
 }
 
 /*********************************************************/
@@ -11622,7 +11646,7 @@ Item* Player::EquipItem( uint16 pos, Item *pItem, bool update )
 
             _ApplyItemMods(pItem, slot, true);
 
-            if(pProto && isInCombat()&& pProto->Class == ITEM_CLASS_WEAPON && m_weaponChangeTimer == 0)
+            if(pProto && isInCombat()&& (pProto->Class == ITEM_CLASS_WEAPON || pProto->InventoryType == INVTYPE_RELIC) && m_weaponChangeTimer == 0)
             {
                 uint32 cooldownSpell = SPELL_ID_WEAPON_SWITCH_COOLDOWN_1_5s;
 
@@ -16164,7 +16188,7 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder *holder )
 
     _LoadBoundInstances(holder->GetResult(PLAYER_LOGIN_QUERY_LOADBOUNDINSTANCES));
 
-    if(!IsPositionValid())
+    if (!IsPositionValid())
     {
         sLog.outError("%s have invalid coordinates (X: %f Y: %f Z: %f O: %f). Teleport to default race/class locations.",
             guid.GetString().c_str(), GetPositionX(), GetPositionY(), GetPositionZ(), GetOrientation());
@@ -16177,13 +16201,13 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder *holder )
 
     _LoadBGData(holder->GetResult(PLAYER_LOGIN_QUERY_LOADBGDATA));
 
-    if(m_bgData.bgInstanceID)                                                //saved in BattleGround
+    if (m_bgData.bgInstanceID)                              //saved in BattleGround
     {
         BattleGround *currentBg = sBattleGroundMgr.GetBattleGround(m_bgData.bgInstanceID, BATTLEGROUND_TYPE_NONE);
 
         bool player_at_bg = currentBg && currentBg->IsPlayerInBattleGround(GetObjectGuid());
 
-        if(player_at_bg && currentBg->GetStatus() != STATUS_WAIT_LEAVE)
+        if (player_at_bg && currentBg->GetStatus() != STATUS_WAIT_LEAVE)
         {
             BattleGroundQueueTypeId bgQueueTypeId = BattleGroundMgr::BGQueueTypeId(currentBg->GetTypeID(), currentBg->GetArenaType());
             AddBattleGroundQueueId(bgQueueTypeId);
@@ -16209,6 +16233,8 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder *holder )
 
             // We are not in BG anymore
             SetBattleGroundId(0, BATTLEGROUND_TYPE_NONE);
+            // remove outdated DB data in DB
+            _SaveBGData();
         }
     }
     else
@@ -16221,6 +16247,11 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder *holder )
             const WorldLocation& _loc = GetBattleGroundEntryPoint();
             SetLocationMapId(_loc.mapid);
             Relocate(_loc.coord_x, _loc.coord_y, _loc.coord_z, _loc.orientation);
+
+            // We are not in BG anymore
+            SetBattleGroundId(0, BATTLEGROUND_TYPE_NONE);
+            // remove outdated DB data in DB
+            _SaveBGData();
         }
     }
 
@@ -18847,7 +18878,7 @@ void Player::SendAttackSwingBadFacingAttack()
 void Player::SendAutoRepeatCancel(Unit *target)
 {
     WorldPacket data(SMSG_CANCEL_AUTO_REPEAT, target->GetPackGUID().size());
-    data << target->GetPackGUID();                          // may be it's target guid
+    data << target->GetPackGUID();
     GetSession()->SendPacket( &data );
 }
 
@@ -20836,6 +20867,13 @@ void Player::SendComboPoints(ObjectGuid targetGuid, uint8 combopoints)
         data << uint8(combopoints);
         GetSession()->SendPacket(&data);
     }
+    /*else
+    {
+        // can be NULL, and then points=0. Use unknown; to reset points of some sort?
+        data << PackedGuid();
+        data << uint8(0);
+        GetSession()->SendPacket(&data);
+    }*/
 }
 
 void Player::SendPetComboPoints(Unit* pet, ObjectGuid targetGuid, uint8 combopoints)

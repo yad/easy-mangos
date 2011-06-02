@@ -663,6 +663,12 @@ bool IsPositiveEffect(SpellEntry const *spellproto, SpellEffectIndex effIndex)
     if (!spellproto)
         return false;
 
+    // explicit targeting set positiveness independent from real effect
+    // Note: IsExplicitNegativeTarget can't be used symmetric (look some TARGET_SINGLE_ENEMY spells for example)
+    if (IsExplicitPositiveTarget(spellproto->EffectImplicitTargetA[effIndex]) ||
+        IsExplicitPositiveTarget(spellproto->EffectImplicitTargetB[effIndex]))
+        return true;
+
     switch(spellproto->Id)
     {
         case 72219:                                         // Gastric Bloat 10 N
@@ -781,7 +787,8 @@ bool IsPositiveEffect(SpellEntry const *spellproto, SpellEffectIndex effIndex)
                             {
                                 // if non-positive trigger cast targeted to positive target this main cast is non-positive
                                 // this will place this spell auras as debuffs
-                                if (IsPositiveTarget(spellTriggeredProto->EffectImplicitTargetA[i], spellTriggeredProto->EffectImplicitTargetB[i]) &&
+                                if (spellTriggeredProto->Effect[i] &&
+                                    IsPositiveTarget(spellTriggeredProto->EffectImplicitTargetA[i], spellTriggeredProto->EffectImplicitTargetB[i]) &&
                                     !IsPositiveEffect(spellTriggeredProto, SpellEffectIndex(i)))
                                     return false;
                             }
@@ -1981,6 +1988,11 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                     if ((spellInfo_1->Id == 8326 && spellInfo_2->Id == 20584) ||
                         (spellInfo_2->Id == 8326 && spellInfo_1->Id == 20584))
                          return false;
+
+                    // Aura of Despair auras
+                    if ((spellInfo_1->Id == 64848 && spellInfo_2->Id == 62692) ||
+                        (spellInfo_2->Id == 64848 && spellInfo_1->Id == 62692))
+                        return false;
 
                     // Blood Fury and Rage of the Unraveller
                     if (spellInfo_1->SpellIconID == 1662 && spellInfo_2->SpellIconID == 1662)
@@ -3262,6 +3274,8 @@ void SpellMgr::LoadSpellScriptTarget()
                 spellProto->EffectImplicitTargetB[i] == TARGET_AREAEFFECT_INSTANT ||
                 spellProto->EffectImplicitTargetA[i] == TARGET_AREAEFFECT_CUSTOM ||
                 spellProto->EffectImplicitTargetB[i] == TARGET_AREAEFFECT_CUSTOM ||
+                spellProto->EffectImplicitTargetA[i] == TARGET_OBJECT_AREA_SRC ||
+                spellProto->EffectImplicitTargetB[i] == TARGET_OBJECT_AREA_SRC ||
                 spellProto->EffectImplicitTargetA[i] == TARGET_AREAEFFECT_GO_AROUND_DEST ||
                 spellProto->EffectImplicitTargetB[i] == TARGET_AREAEFFECT_GO_AROUND_DEST)
             {

@@ -430,6 +430,7 @@ void Spell::EffectSchoolDMG(SpellEffectIndex effect_idx)
                     {
                         damage += uint32(unitTarget->GetMaxPower(POWER_MANA) / 2);
                         damage = std::min(damage, 15000);
+                        break;
                     }
                     // Defile damage depending from scale.
                     case 72754:
@@ -2495,6 +2496,22 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                 {
                     m_caster->RemoveSpellsCausingAura(SPELL_AURA_FLY);
                     m_caster->RemoveSpellsCausingAura(SPELL_AURA_MOD_FLIGHT_SPEED_MOUNTED);
+                    return;
+                }
+                case 58689:                                 // Rock Shards
+                {                                           // (Archavon the Stone Watcher: Left Hand)
+                    if (!unitTarget || roll_chance_i(90))   // only 10% of spikes `proc` dmg (about 1 spike per sec)
+                        return;
+
+                    m_caster->CastSpell(unitTarget, m_caster->GetMap()->IsRegularDifficulty() ? 58695 : 60883, true);
+                    return;
+                }
+                case 58692:                                 // Rock Shards
+                {                                           // (Archavon the Stone Watcher: Right Hand)
+                    if (!unitTarget || roll_chance_i(90))   // only 10% of spikes `proc` dmg (about 1 spike per sec)
+                        return;
+
+                    m_caster->CastSpell(unitTarget, m_caster->GetMap()->IsRegularDifficulty() ? 58696 : 60884, true);
                     return;
                 }
                 case 59640:                                 // Underbelly Elixir
@@ -7498,7 +7515,18 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     // Torture the Torturer: High Executor's Branding Iron Impact
                     unitTarget->CastSpell(unitTarget, 48614, true);
                     return;
+                case 48724:                                 // The Denouncement: Commander Jordan On Death
+                case 48726:                                 // The Denouncement: Lead Cannoneer Zierhut On Death
+                case 48728:                                 // The Denouncement: Blacksmith Goodman On Death
+                case 48730:                                 // The Denouncement: Stable Master Mercer On Death
+                {
+                    // Compelled
+                    if (!unitTarget || !m_caster->HasAura(48714))
+                        return;
 
+                    unitTarget->CastSpell(unitTarget, m_spellInfo->CalculateSimpleValue(eff_idx), true);
+                    return;
+                }
                 // Gender spells
                 case 48762:                                 // A Fall from Grace: Scarlet Raven Priest Image - Master
                 case 45759:                                 // Warsong Orc Disguise
@@ -7922,6 +7950,15 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
 
                     return;
                 }
+                case 58941:                                 // Rock Shards
+                {
+                    if (!unitTarget)
+                        return;
+
+                    m_originalCaster->CastSpell(unitTarget, 58689, true); // Left hand dummy visual
+                    m_originalCaster->CastSpell(unitTarget, 58692, true); // Right hand dummy visual
+                    return;
+                }
                 case 59317:                                 // Teleporting
                 {
                     if (!unitTarget || unitTarget->GetTypeId() != TYPEID_PLAYER)
@@ -8161,7 +8198,7 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                 }
                 case 68861:                                 // Consume Soul (ICC FoS: Bronjahm)
                     if (unitTarget)
-                        unitTarget->CastSpell(unitTarget, 68858, true);
+                        unitTarget->CastSpell(unitTarget, m_spellInfo->CalculateSimpleValue(eff_idx), true);
                     return;
                 case 69377:                                 // Fortitude
                 {
@@ -8294,6 +8331,13 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                         return;
 
                     m_caster->CastSpell(unitTarget, 71480, true);
+                    return;
+                }
+                case 72034:                                 // Whiteout
+                case 72096:                                 // Whiteout (heroic)
+                {
+                    // cast Whiteout visual
+                    m_caster->CastSpell(unitTarget, 72036, true);
                     return;
                 }
                 case 72195:                                 // Blood link
@@ -8899,27 +8943,19 @@ void Spell::EffectDuel(SpellEffectIndex eff_idx)
     Player *target = (Player*)unitTarget;
 
     // caster or target already have requested duel
-    if( caster->duel || target->duel || !target->GetSocial() || target->GetSocial()->HasIgnore(caster->GetObjectGuid()) )
+    if (caster->duel || target->duel || !target->GetSocial() || target->GetSocial()->HasIgnore(caster->GetObjectGuid()))
         return;
 
     // Players can only fight a duel with each other outside (=not inside dungeons and not in capital cities)
-    // Don't have to check the target's map since you cannot challenge someone across maps
-    uint32 mapid = caster->GetMapId();
-    if( mapid != 0 && mapid != 1 && mapid != 530 && mapid != 571 && mapid != 609)
+    AreaTableEntry const* casterAreaEntry = GetAreaEntryByAreaID(caster->GetAreaId());
+    if (casterAreaEntry && !(casterAreaEntry->flags & AREA_FLAG_DUEL))
     {
         SendCastResult(SPELL_FAILED_NO_DUELING);            // Dueling isn't allowed here
         return;
     }
 
-    AreaTableEntry const* casterAreaEntry = GetAreaEntryByAreaID(caster->GetZoneId());
-    if(casterAreaEntry && (casterAreaEntry->flags & AREA_FLAG_CAPITAL) )
-    {
-        SendCastResult(SPELL_FAILED_NO_DUELING);            // Dueling isn't allowed here
-        return;
-    }
-
-    AreaTableEntry const* targetAreaEntry = GetAreaEntryByAreaID(target->GetZoneId());
-    if(targetAreaEntry && (targetAreaEntry->flags & AREA_FLAG_CAPITAL) )
+    AreaTableEntry const* targetAreaEntry = GetAreaEntryByAreaID(target->GetAreaId());
+    if (targetAreaEntry && !(targetAreaEntry->flags & AREA_FLAG_DUEL))
     {
         SendCastResult(SPELL_FAILED_NO_DUELING);            // Dueling isn't allowed here
         return;
@@ -9410,25 +9446,32 @@ void Spell::EffectLeapForward(SpellEffectIndex eff_idx)
 
     if( m_spellInfo->rangeIndex == 1)                       //self range
     {
-        float dis = GetSpellRadius(sSpellRadiusStore.LookupEntry(m_spellInfo->EffectRadiusIndex[eff_idx]));
+        TerrainInfo const* terrain = unitTarget->GetTerrain();
+        if (!terrain)
+            return;
+        float distance = GetSpellRadius(sSpellRadiusStore.LookupEntry(m_spellInfo->EffectRadiusIndex[eff_idx]));
 
-        // before caster
-        float fx, fy, fz;
-        unitTarget->GetClosePoint(fx, fy, fz, unitTarget->GetObjectBoundingRadius(), dis);
+        //Glyph of blink
+        if(m_caster->GetTypeId() == TYPEID_PLAYER)
+            ((Player*)m_caster)->ApplySpellMod(m_spellInfo->Id, SPELLMOD_RADIUS, distance, this);
+
         float ox, oy, oz;
         unitTarget->GetPosition(ox, oy, oz);
+        float fx, fy, fz;
+        fz = oz+2.0;
+        fx = unitTarget->GetPositionX() + distance * cos(unitTarget->GetOrientation());
+        fy = unitTarget->GetPositionY() + distance * sin(unitTarget->GetOrientation());
 
-        float fx2, fy2, fz2;                                // getObjectHitPos overwrite last args in any result case
-        if(VMAP::VMapFactory::createOrGetVMapManager()->getObjectHitPos(unitTarget->GetMapId(), ox,oy,oz+0.5f, fx,fy,oz+0.5f,fx2,fy2,fz2, -0.5f))
-        {
-            fx = fx2;
-            fy = fy2;
-            fz = fz2;
-            unitTarget->UpdateAllowedPositionZ(fx, fy, fz);
-        }
+        MaNGOS::NormalizeMapCoord(fx); 
+        MaNGOS::NormalizeMapCoord(fy); 
+
+        if (terrain->CheckPathAccurate(ox,oy,oz,fx,fy,fz, sWorld.getConfig(CONFIG_BOOL_CHECK_GO_IN_PATH) ? unitTarget : NULL ))
+            DEBUG_LOG("Spell::EffectLeapForward unit %u forwarded on %f",unitTarget->GetObjectGuid().GetCounter(), unitTarget->GetDistance(fx,fy,fz));
+        else
+            DEBUG_LOG("Spell::EffectLeapForward unit %u NOT forwarded on %f, real distance is %f",unitTarget->GetObjectGuid().GetCounter(), distance, unitTarget->GetDistance(fx,fy,fz));
 
         //Prevent Falling during swap building/outerspace
-        unitTarget->UpdateGroundPositionZ(fx, fy, fz);
+        unitTarget->UpdateAllowedPositionZ(fx, fy, fz);
 
         unitTarget->NearTeleportTo(fx, fy, fz, unitTarget->GetOrientation(), unitTarget == m_caster);
     }

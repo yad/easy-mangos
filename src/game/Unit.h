@@ -207,7 +207,7 @@ enum Swing
 
 enum VictimState
 {
-    VICTIMSTATE_UNKNOWN1       = 0,
+    VICTIMSTATE_UNAFFECTED     = 0,                         // seen in relation with HITINFO_MISS
     VICTIMSTATE_NORMAL         = 1,
     VICTIMSTATE_DODGE          = 2,
     VICTIMSTATE_PARRY          = 3,
@@ -221,10 +221,10 @@ enum VictimState
 enum HitInfo
 {
     HITINFO_NORMALSWING         = 0x00000000,
-    HITINFO_UNK1                = 0x00000001,               // req correct packet structure
+    HITINFO_UNK0                = 0x00000001,               // req correct packet structure
     HITINFO_NORMALSWING2        = 0x00000002,
     HITINFO_LEFTSWING           = 0x00000004,
-    HITINFO_UNK2                = 0x00000008,
+    HITINFO_UNK3                = 0x00000008,
     HITINFO_MISS                = 0x00000010,
     HITINFO_ABSORB              = 0x00000020,               // absorbed damage
     HITINFO_ABSORB2             = 0x00000040,               // absorbed damage
@@ -244,7 +244,7 @@ enum HitInfo
     // 0x00100000
     HITINFO_SWINGNOHITSOUND     = 0x00200000,               // guessed
     // 0x00400000
-    HITINFO_UNK3                = 0x00800000
+    HITINFO_UNK22               = 0x00800000
 };
 
 //i would like to remove this: (it is defined in item.h
@@ -1562,6 +1562,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         }
         bool IsCharmerOrOwnerPlayerOrPlayerItself() const;
         Player* GetCharmerOrOwnerPlayerOrPlayerItself();
+        Player const* GetCharmerOrOwnerPlayerOrPlayerItself() const;
         float GetCombatDistance( const Unit* target ) const;
 
         void SetPet(Pet* pet);
@@ -1947,7 +1948,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         uint32 CalcNotIgnoreAbsorbDamage( uint32 damage, SpellSchoolMask damageSchoolMask, SpellEntry const* spellInfo = NULL);
         uint32 CalcNotIgnoreDamageReduction(uint32 damage, SpellSchoolMask damageSchoolMask);
         int32 CalculateAuraDuration(SpellEntry const* spellProto, uint32 effectMask, int32 duration, Unit const* caster);
-        uint32 CalculateAuraPeriodicTimeWithHaste(SpellEntry const* spellProto, uint32 periodicTime, SpellEffectIndex eff_idx);
+        uint32 CalculateAuraPeriodicTimeWithHaste(SpellEntry const* spellProto, uint32 periodicTime);
         uint32 CalculateSpellDurationWithHaste(SpellEntry const* spellProto, uint32 duration);
 
         float CalculateLevelPenalty(SpellEntry const* spellProto) const;

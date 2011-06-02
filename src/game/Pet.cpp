@@ -282,8 +282,8 @@ bool Pet::LoadPetFromDB( Player* owner, uint32 petentry, uint32 petnumber, bool 
     // since last save (in seconds)
     uint32 timediff = uint32(time(NULL) - fields[14].GetUInt64());
 
-    m_resetTalentsCost = fields[15].GetUInt32();
-    m_resetTalentsTime = fields[16].GetUInt64();
+    m_resetTalentsCost = fields[15].GetUInt32();  // deprecated
+    m_resetTalentsTime = fields[16].GetUInt64();  // deprecated
 
     delete result;
 
@@ -1008,6 +1008,7 @@ bool Pet::InitStatsForLevel(uint32 petlevel, Unit* owner)
         {
             SetUInt32Value(UNIT_FIELD_PETEXPERIENCE, 0);
             SetUInt32Value(UNIT_FIELD_PETNEXTLEVELEXP, 1000);
+            SetUInt32Value(UNIT_FIELD_FLAGS, UNIT_FLAG_PVP_ATTACKABLE);
             // DK ghouls have energy
             if (cinfo->family == CREATURE_FAMILY_GHOUL)
                 setPowerType(POWER_ENERGY);
@@ -1736,7 +1737,7 @@ void Pet::InitPetCreateSpells()
     CastPetAuras(false);
 }
 
-bool Pet::resetTalents(bool no_cost)
+bool Pet::resetTalents()
 {
     Unit *owner = GetOwner();
     if (!owner || owner->GetTypeId()!=TYPEID_PLAYER)
@@ -1764,17 +1765,6 @@ bool Pet::resetTalents(bool no_cost)
 
     uint32 cost = 0;
 
-    if(!no_cost)
-    {
-        cost = resetTalentsCost();
-
-        if (player->GetMoney() < cost)
-        {
-            player->SendBuyError( BUY_ERR_NOT_ENOUGHT_MONEY, 0, 0, 0);
-            return false;
-        }
-    }
-
     for (unsigned int i = 0; i < sTalentStore.GetNumRows(); ++i)
     {
         TalentEntry const *talentInfo = sTalentStore.LookupEntry(i);
@@ -1797,13 +1787,6 @@ bool Pet::resetTalents(bool no_cost)
 
     UpdateFreeTalentPoints(false);
 
-    if(!no_cost)
-    {
-        player->ModifyMoney(-(int32)cost);
-
-        m_resetTalentsCost = cost;
-        m_resetTalentsTime = time(NULL);
-    }
     player->PetSpellInitialize();
     return true;
 }
@@ -1816,7 +1799,7 @@ void Pet::resetTalentsForAllPetsOf(Player* owner, Pet* online_pet /*= NULL*/)
 
     // reset for online
     if(online_pet)
-        online_pet->resetTalents(true);
+        online_pet->resetTalents();
 
     // now need only reset for offline pets (all pets except online case)
     uint32 except_petnumber = online_pet ? online_pet->GetCharmInfo()->GetPetNumber() : 0;
@@ -1904,7 +1887,7 @@ void Pet::UpdateFreeTalentPoints(bool resetIfNeed)
         {
             Unit *owner = GetOwner();
             if (!owner || owner->GetTypeId() != TYPEID_PLAYER || ((Player*)owner)->GetSession()->GetSecurity() < SEC_ADMINISTRATOR)
-                resetTalents(true);
+                resetTalents();
             else
                 SetFreeTalentPoints(0);
         }
@@ -1926,24 +1909,6 @@ void Pet::InitTalentForLevel()
 
     if(!m_loading)
         ((Player*)owner)->SendTalentsInfoData(true);
-}
-
-uint32 Pet::resetTalentsCost() const
-{
-    uint32 days = uint32(sWorld.GetGameTime() - m_resetTalentsTime)/DAY;
-
-    // The first time reset costs 10 silver; after 1 day cost is reset to 10 silver
-    if(m_resetTalentsCost < 10*SILVER || days > 0)
-        return 10*SILVER;
-    // then 50 silver
-    else if(m_resetTalentsCost < 50*SILVER)
-        return 50*SILVER;
-    // then 1 gold
-    else if(m_resetTalentsCost < 1*GOLD)
-        return 1*GOLD;
-    // then increasing at a rate of 1 gold; cap 10 gold
-    else
-        return (m_resetTalentsCost + 1*GOLD > 10*GOLD ? 10*GOLD : m_resetTalentsCost + 1*GOLD);
 }
 
 uint8 Pet::GetMaxTalentPointsForLevel(uint32 level)
@@ -2913,8 +2878,6 @@ bool Pet::Summon()
             SetUInt32Value(UNIT_NPC_FLAGS, GetCreatureInfo()->npcflag);
             SetUInt32Value(UNIT_FIELD_FLAGS, 0);
             SetUInt32Value(UNIT_FIELD_BYTES_1, 0);
-            SetUInt32Value(UNIT_FIELD_FLAGS, UNIT_FLAG_PVP_ATTACKABLE);
-//            SetName("");
             SetNeedSave(false);
             owner->AddGuardian(this);
             break;
@@ -2924,10 +2887,8 @@ bool Pet::Summon()
             level = owner->getLevel();
             SetUInt32Value(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_NONE);
             SetUInt32Value(UNIT_FIELD_BYTES_0, 2048);
-            SetUInt32Value(UNIT_FIELD_FLAGS, UNIT_FLAG_PVP_ATTACKABLE);
             SetUInt32Value(UNIT_FIELD_PETEXPERIENCE, 0);
             SetUInt32Value(UNIT_FIELD_PETNEXTLEVELEXP, 1000);
-//            SetName("");
             SetNeedSave(true);
             owner->SetPet(this);
             break;
@@ -2938,7 +2899,6 @@ bool Pet::Summon()
             SetUInt32Value(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_NONE);
             SetUInt32Value(UNIT_FIELD_BYTES_0, 0x02020100);
             SetByteFlag(UNIT_FIELD_BYTES_2, 2, UNIT_CAN_BE_RENAMED | UNIT_CAN_BE_ABANDONED);
-            SetUInt32Value(UNIT_FIELD_FLAGS, UNIT_FLAG_PVP_ATTACKABLE);
             SetUInt32Value(UNIT_FIELD_PETEXPERIENCE, 0);
             SetUInt32Value(UNIT_FIELD_PETNEXTLEVELEXP, sObjectMgr.GetXPForPetLevel(getLevel()));
             SetUInt32Value(UNIT_FIELD_PET_NAME_TIMESTAMP, time(NULL));

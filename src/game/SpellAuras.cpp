@@ -346,7 +346,7 @@ pAuraHandler AuraHandler[TOTAL_AURAS]=
     &Aura::HandleNoImmediateEffect,                         //291 SPELL_AURA_MOD_QUEST_XP_PCT           implemented in Player::GiveXP
     &Aura::HandleAuraOpenStable,                            //292 call stabled pet
     &Aura::HandleAuraAddMechanicAbilities,                  //293 SPELL_AURA_ADD_MECHANIC_ABILITIES  replaces target's action bars with a predefined spellset
-    &Aura::HandleAuraStopNaturalManaRegen,                  //294 No natural mana regen                 implemented in Player:Regenerate
+    &Aura::HandleAuraStopNaturalManaRegen,                  //294 SPELL_AURA_STOP_NATURAL_MANA_REGEN implemented in Player:Regenerate
     &Aura::HandleUnused,                                    //295 unused (3.2.2a)
     &Aura::HandleAuraSetVehicle,                            //296 SPELL_AURA_SET_VEHICLE_ID sets vehicle on target
     &Aura::HandleNULL,                                      //297 1 spell (counter spell school?)
@@ -430,7 +430,7 @@ m_isPersistent(false), m_in_use(0), m_spellAuraHolder(holder)
     if (modOwner && m_modifier.periodictime)
     {
         modOwner->ApplySpellMod(spellproto->Id, SPELLMOD_ACTIVATION_TIME, m_modifier.periodictime);
-        uint32 newperiodictime  = modOwner->CalculateAuraPeriodicTimeWithHaste(spellproto, m_modifier.periodictime, eff);
+        uint32 newperiodictime  = modOwner->CalculateAuraPeriodicTimeWithHaste(spellproto, m_modifier.periodictime);
         if (newperiodictime != m_modifier.periodictime)
             m_modifier.periodictime = newperiodictime;
     }
@@ -3556,10 +3556,10 @@ void Aura::HandleAuraModShapeshift(bool apply, bool Real)
         // now only powertype must be set
         switch (form)
         {
-            case FORM_CAT:
             case FORM_SHADOW_DANCE:
-                PowerType = POWER_ENERGY;
                 target->SetByteValue(UNIT_FIELD_BYTES_2, 3, uint8(FORM_STEALTH));
+            case FORM_CAT:
+                PowerType = POWER_ENERGY;
                 break;
             case FORM_BEAR:
             case FORM_DIREBEAR:
@@ -3701,6 +3701,9 @@ void Aura::HandleAuraModShapeshift(bool apply, bool Real)
 
     if(target->GetTypeId() == TYPEID_PLAYER)
         ((Player*)target)->InitDataForForm();
+
+    target->SendForcedObjectUpdate();
+
 }
 
 void Aura::HandleAuraTransform(bool apply, bool Real)
@@ -5472,6 +5475,8 @@ void Aura::HandlePeriodicTriggerSpell(bool apply, bool /*Real*/)
                     if (pCaster->HasAura(GetModifier()->m_amount))
                         pCaster->CastSpell(target, spellId, true);
                 }
+
+                return;
             default:
                 break;
         }
@@ -9024,6 +9029,14 @@ void Aura::HandleAuraModAllCritChance(bool apply, bool Real)
     ((Player*)target)->UpdateAllSpellCritChances();
 }
 
+void Aura::HandleAuraStopNaturalManaRegen(bool apply, bool real)
+{
+    if (!real)
+        return;
+
+    GetTarget()->ApplyModFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_REGENERATE_POWER, !apply && !GetTarget()->IsUnderLastManaUseEffect());
+}
+
 bool Aura::IsLastAuraOnHolder()
 {
     for (int32 i = 0; i < MAX_EFFECT_INDEX; ++i)
@@ -9085,6 +9098,7 @@ m_permanent(false), m_isRemovedOnShapeLost(true), m_deleted(false), m_in_use(0)
         case 34027:                                         // Kill Command
         case 55166:                                         // Tidal Force
         case 58914:                                         // Kill Command (pet part)
+        case 64455:                                         // Feral Essence
         case 71564:                                         // Deadly Precision
         case 74396:                                         // Fingers of Frost
             m_stackAmount = m_spellProto->StackAmount;
@@ -9892,8 +9906,25 @@ void SpellAuraHolder::HandleSpellSpecificBoosts(bool apply)
         }
         case SPELLFAMILY_DRUID:
         {
+            // Rejuvenation
+            if (GetSpellProto()->SpellFamilyFlags & UI64LIT(0x0000000000000010))
+            {
+                Unit* caster = GetCaster();
+                if (!caster)
+                    return;
+
+                if (caster->HasAura(64760))                 // Item - Druid T8 Restoration 4P Bonus
+                {
+                    Aura* aura = GetAuraByEffectIndex(EFFECT_INDEX_0);
+                    if (!aura)
+                        return;
+
+                    int32 heal = aura->GetModifier()->m_amount;
+                    caster->CastCustomSpell(m_target, 64801, &heal, NULL, NULL, true, NULL);
+                }
+            }
             // Barkskin
-            if (GetId()==22812 && m_target->HasAura(63057)) // Glyph of Barkskin
+            else if (GetId()==22812 && m_target->HasAura(63057)) // Glyph of Barkskin
                 spellId1 = 63058;                           // Glyph - Barkskin 01
             else if (!apply && GetId() == 5229)             // Enrage (Druid Bear)
                 spellId1 = 51185;                           // King of the Jungle (Enrage damage aura)
@@ -10587,21 +10618,3 @@ void Aura::HandleAuraFactionChange(bool apply, bool real)
         target->setFaction(newFaction);
 
 }
-
-void Aura::HandleAuraStopNaturalManaRegen(bool apply, bool real)
-{
-    if (!real)
-        return;
-
-    Unit* target = GetTarget();
-
-    if (!target)
-        return;
-
-    if (apply)
-        target->RemoveFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_REGENERATE_POWER);
-    else
-        target->SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_REGENERATE_POWER);
-
-}
-

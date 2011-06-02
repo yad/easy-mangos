@@ -839,14 +839,13 @@ void Spell::FillTargetMap()
                 break;
         }
 
-        if(m_caster->GetTypeId() == TYPEID_PLAYER)
+        if (m_caster->GetTypeId() == TYPEID_PLAYER)
         {
             Player *me = (Player*)m_caster;
             for (UnitList::const_iterator itr = tmpUnitMap.begin(); itr != tmpUnitMap.end(); ++itr)
             {
-                Unit *owner = (*itr)->GetOwner();
-                Unit *u = owner ? owner : (*itr);
-                if(u!=m_caster && u->IsPvP() && (!me->duel || me->duel->opponent != u))
+                Player *targetOwner = (*itr)->GetCharmerOrOwnerPlayerOrPlayerItself();
+                if (targetOwner && targetOwner != me && targetOwner->IsPvP() && !me->IsInDuelWith(targetOwner))
                 {
                     me->UpdatePvP(true);
                     me->RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_ENTER_PVP_COMBAT);
@@ -1741,14 +1740,27 @@ class ChainHealingFullHealth: std::unary_function<const Unit*, bool>
 
 // Helper for targets nearest to the spell target
 // The spell target is always first unless there is a target at _completely_ the same position (unbelievable case)
-struct TargetDistanceOrder : public std::binary_function<const Unit, const Unit, bool>
+struct TargetDistanceOrderNear : public std::binary_function<const Unit, const Unit, bool>
 {
     const Unit* MainTarget;
-    TargetDistanceOrder(const Unit* Target) : MainTarget(Target) {};
+    TargetDistanceOrderNear(const Unit* Target) : MainTarget(Target) {};
     // functor for operator ">"
     bool operator()(const Unit* _Left, const Unit* _Right) const
     {
         return MainTarget->GetDistanceOrder(_Left, _Right);
+    }
+};
+
+// Helper for targets furthest away to the spell target
+// The spell target is always first unless there is a target at _completely_ the same position (unbelievable case)
+struct TargetDistanceOrderFarAway : public std::binary_function<const Unit, const Unit, bool>
+{
+    const Unit* MainTarget;
+    TargetDistanceOrderFarAway(const Unit* Target) : MainTarget(Target) {};
+    // functor for operator "<"
+    bool operator()(const Unit* _Left, const Unit* _Right) const
+    {
+        return !MainTarget->GetDistanceOrder(_Left, _Right);
     }
 };
 
@@ -1793,6 +1805,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 case 64531:                                 // Rapid Burst (h)
                 case 61916:                                 // Lightning Whirl (10 man)
                 case 63482:                                 // Lightning Whirl (25 man)
+                case 64218:                                 // Overcharge
                 case 66336:                                 // Mistress' Kiss (Trial of the Crusader, ->
                 case 67077:                                 // -> Lord Jaraxxus encounter, 10 and 10 heroic)
                 case 66001:                                 // Touch of Darkness
@@ -1954,6 +1967,10 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
             // This targetMode is often used as 'last' implicitTarget for positive spells, that just require coordinates
             // and no unitTarget (e.g. summon effects). As MaNGOS always needs a unitTarget we add just the caster here.
 
+            // Prevent multiple summons
+            if (m_spellInfo->Effect[effIndex] == SPELL_EFFECT_SUMMON || m_spellInfo->Effect[effIndex] == SPELL_EFFECT_SUMMON_OBJECT_WILD)
+                unMaxTargets = m_spellInfo->CalculateSimpleValue(effIndex);
+
             break;
         }
         case TARGET_TOTEM_EARTH:
@@ -1981,7 +1998,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
             if(tempTargetUnitMap.empty())
                 break;
 
-            tempTargetUnitMap.sort(TargetDistanceOrder(m_caster));
+            tempTargetUnitMap.sort(TargetDistanceOrderNear(m_caster));
 
             //Now to get us a random target that's in the initial range of the spell
             uint32 t = 0;
@@ -1999,7 +2016,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
 
             tempTargetUnitMap.erase(itr);
 
-            tempTargetUnitMap.sort(TargetDistanceOrder(pUnitTarget));
+            tempTargetUnitMap.sort(TargetDistanceOrderNear(pUnitTarget));
 
             t = unMaxTargets - 1;
             Unit *prev = pUnitTarget;
@@ -2019,7 +2036,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 prev = *next;
                 targetUnitMap.push_back(prev);
                 tempTargetUnitMap.erase(next);
-                tempTargetUnitMap.sort(TargetDistanceOrder(prev));
+                tempTargetUnitMap.sort(TargetDistanceOrderNear(prev));
                 next = tempTargetUnitMap.begin();
 
                 --t;
@@ -2041,7 +2058,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
             if(tempTargetUnitMap.empty())
                 break;
 
-            tempTargetUnitMap.sort(TargetDistanceOrder(m_caster));
+            tempTargetUnitMap.sort(TargetDistanceOrderNear(m_caster));
 
             //Now to get us a random target that's in the initial range of the spell
             uint32 t = 0;
@@ -2059,7 +2076,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
 
             tempTargetUnitMap.erase(itr);
 
-            tempTargetUnitMap.sort(TargetDistanceOrder(pUnitTarget));
+            tempTargetUnitMap.sort(TargetDistanceOrderNear(pUnitTarget));
 
             t = unMaxTargets - 1;
             Unit *prev = pUnitTarget;
@@ -2078,7 +2095,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 prev = *next;
                 targetUnitMap.push_back(prev);
                 tempTargetUnitMap.erase(next);
-                tempTargetUnitMap.sort(TargetDistanceOrder(prev));
+                tempTargetUnitMap.sort(TargetDistanceOrderNear(prev));
                 next = tempTargetUnitMap.begin();
                 --t;
             }
@@ -2132,7 +2149,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 if (tempTargetUnitMap.empty())
                     break;
 
-                tempTargetUnitMap.sort(TargetDistanceOrder(pUnitTarget));
+                tempTargetUnitMap.sort(TargetDistanceOrderNear(pUnitTarget));
 
                 if (*tempTargetUnitMap.begin() == pUnitTarget)
                     tempTargetUnitMap.erase(tempTargetUnitMap.begin());
@@ -2158,7 +2175,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                     prev = *next;
                     targetUnitMap.push_back(prev);
                     tempTargetUnitMap.erase(next);
-                    tempTargetUnitMap.sort(TargetDistanceOrder(prev));
+                    tempTargetUnitMap.sort(TargetDistanceOrderNear(prev));
                     next = tempTargetUnitMap.begin();
                     --t;
                 }
@@ -2166,11 +2183,23 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
             break;
         }
         case TARGET_ALL_ENEMY_IN_AREA:
+        {
             if (FillCustomTargetMap(effIndex, targetUnitMap))
                 break;
-            else
-                FillAreaTargets(targetUnitMap, radius, PUSH_DEST_CENTER, SPELL_TARGETS_AOE_DAMAGE);
+
+            FillAreaTargets(targetUnitMap, radius, PUSH_DEST_CENTER, SPELL_TARGETS_AOE_DAMAGE);
+
+            if (m_spellInfo->Id == 42005)                   // Bloodboil
+            {
+                // manually cuting, because the spell hits only the 5 furthest away targets
+                if (targetUnitMap.size() > unMaxTargets)
+                {
+                    targetUnitMap.sort(TargetDistanceOrderFarAway(m_caster));
+                    targetUnitMap.resize(unMaxTargets);
+                }
+            }
             break;
+        }
         case TARGET_AREAEFFECT_INSTANT:
         {
             SpellTargets targetB = SPELL_TARGETS_AOE_DAMAGE;
@@ -2307,38 +2336,32 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
             else
                 break;
 
-            MaNGOS::GameObjectInRangeCheck check(m_caster, x, y, z, radius + 15.0f);
-            std::list<GameObject*> goList;
-            MaNGOS::GameObjectListSearcher<MaNGOS::GameObjectInRangeCheck> searcher(goList, check);
-            Cell::VisitAllObjects(m_caster, searcher, radius);
-            if (!goList.empty())
-            {
-                for (std::list<GameObject*>::const_iterator itr = goList.begin(); itr != goList.end(); ++itr)
-                    AddGOTarget(*itr, effIndex);
-            }
-
-            if (targetMode == TARGET_OBJECT_AREA_SRC || !goList.empty() )
-                break;
-
             // It may be possible to fill targets for some spell effects
             // automatically (SPELL_EFFECT_WMO_REPAIR(88) for example) but
             // for some/most spells we clearly need/want to limit with spell_target_script
-
             // Some spells untested, for affected GO type 33. May need further adjustments for spells related.
 
             SpellScriptTargetBounds bounds = sSpellMgr.GetSpellScriptTargetBounds(m_spellInfo->Id);
-
             std::list<GameObject*> tempTargetGOList;
 
-            for(SpellScriptTarget::const_iterator i_spellST = bounds.first; i_spellST != bounds.second; ++i_spellST)
+            if (bounds.first !=  bounds.second)
             {
-                if (i_spellST->second.type == SPELL_TARGET_TYPE_GAMEOBJECT)
+                for(SpellScriptTarget::const_iterator i_spellST = bounds.first; i_spellST != bounds.second; ++i_spellST)
                 {
-                    // search all GO's with entry, within range of m_destN
-                    MaNGOS::GameObjectEntryInPosRangeCheck go_check(*m_caster, i_spellST->second.targetEntry, m_targets.m_destX, m_targets.m_destY, m_targets.m_destZ, radius);
-                    MaNGOS::GameObjectListSearcher<MaNGOS::GameObjectEntryInPosRangeCheck> checker(tempTargetGOList, go_check);
-                    Cell::VisitGridObjects(m_caster, checker, radius);
+                    if (i_spellST->second.type == SPELL_TARGET_TYPE_GAMEOBJECT)
+                    {
+                        // search all GO's with entry, within range of m_destN
+                        MaNGOS::GameObjectEntryInPosRangeCheck go_check(*m_caster, i_spellST->second.targetEntry, m_targets.m_destX, m_targets.m_destY, m_targets.m_destZ, radius);
+                        MaNGOS::GameObjectListSearcher<MaNGOS::GameObjectEntryInPosRangeCheck> checker(tempTargetGOList, go_check);
+                        Cell::VisitGridObjects(m_caster, checker, radius);
+                    }
                 }
+            }
+            else
+            {
+                MaNGOS::GameObjectInRangeCheck check(m_caster, x, y, z, radius + 15.0f);
+                MaNGOS::GameObjectListSearcher<MaNGOS::GameObjectInRangeCheck> searcher(tempTargetGOList, check);
+                Cell::VisitAllObjects(m_caster, searcher, radius);
             }
 
             if (!tempTargetGOList.empty())
@@ -2372,11 +2395,18 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
             break;
         }
         case TARGET_ALL_PARTY_AROUND_CASTER:
-        case TARGET_ALL_PARTY_AROUND_CASTER_2:
-        case TARGET_ALL_PARTY:
         {
             switch(m_spellInfo->Id)
             {
+                case 24604:                                 // Furious Howl, from 3.1.0
+                case 70728:                                 // Exploit Weakness
+                {
+                    // only affect pet and owner
+                    targetUnitMap.push_back(m_caster);
+                    if (Unit *owner = m_caster->GetOwner())
+                        targetUnitMap.push_back(owner);
+                    break;
+                }
                 case 70893:                                 // Culling the Herd
                 case 53434:                                 // Call of the Wild
                 {
@@ -2390,6 +2420,12 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                     break;
                 }
             }
+            break;
+        }
+        case TARGET_ALL_PARTY_AROUND_CASTER_2:
+        case TARGET_ALL_PARTY:
+        {
+            FillRaidOrPartyTargets(targetUnitMap, m_caster, m_caster, radius, false, true, true);
             break;
         }
         case TARGET_ALL_RAID_AROUND_CASTER:
@@ -2424,7 +2460,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 radius = 20.0f;     // as mentioned in the spell's tooltip (data doesn't appear in dbc)
 
                 FillRaidOrPartyTargets(targetUnitMap, m_caster, m_caster, radius, false, false, true);
-                targetUnitMap.sort(TargetDistanceOrder(m_caster));
+                targetUnitMap.sort(TargetDistanceOrderNear(m_caster));
                 if (targetUnitMap.size() > unMaxTargets)
                     targetUnitMap.resize(unMaxTargets);
                 break;
@@ -2779,7 +2815,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 if (m_caster != pUnitTarget && std::find(tempTargetUnitMap.begin(), tempTargetUnitMap.end(), m_caster) == tempTargetUnitMap.end())
                     tempTargetUnitMap.push_front(m_caster);
 
-                tempTargetUnitMap.sort(TargetDistanceOrder(pUnitTarget));
+                tempTargetUnitMap.sort(TargetDistanceOrderNear(pUnitTarget));
 
                 if (tempTargetUnitMap.empty())
                     break;
@@ -2812,7 +2848,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                     prev = *next;
                     targetUnitMap.push_back(prev);
                     tempTargetUnitMap.erase(next);
-                    tempTargetUnitMap.sort(TargetDistanceOrder(prev));
+                    tempTargetUnitMap.sort(TargetDistanceOrderNear(prev));
                     next = tempTargetUnitMap.begin();
 
                     --t;
@@ -3581,6 +3617,13 @@ void Spell::cast(bool skipCheck)
                 AddTriggeredSpell(55095);                   // Frost Fever
             break;
         }
+        case SPELLFAMILY_WARLOCK:
+        {
+            // Consume shadows - invisible detect part
+            if (m_spellInfo->SpellIconID == 207 && (m_spellInfo->SpellFamilyFlags & UI64LIT(0x000000000000000002000000)))
+                AddPrecastSpell(54501);                     // Consume shadows - MOD_STEALTH_DETECT
+            break;
+        }
         default:
             break;
     }
@@ -4041,6 +4084,9 @@ void Spell::SendCastResult(Player* caster, SpellEntry const* spellInfo, uint8 ca
     data << uint8(result);                                  // problem
     switch (result)
     {
+        case SPELL_FAILED_NOT_READY:
+            data << uint32(0);                              // unknown, value 1 seen for 14177
+            break;
         case SPELL_FAILED_REQUIRES_SPELL_FOCUS:
             data << uint32(spellInfo->RequiresSpellFocus);
             break;
@@ -4083,6 +4129,15 @@ void Spell::SendCastResult(Player* caster, SpellEntry const* spellInfo, uint8 ca
             data << uint32(spellInfo->EquippedItemClass);
             data << uint32(spellInfo->EquippedItemSubClassMask);
             //data << uint32(spellInfo->EquippedItemInventoryTypeMask);
+            break;
+        case SPELL_FAILED_EQUIPPED_ITEM_CLASS_MAINHAND:
+        case SPELL_FAILED_EQUIPPED_ITEM_CLASS_OFFHAND:
+            // same data as SPELL_FAILED_EQUIPPED_ITEM_CLASS ?
+            data << uint32(0);
+            data << uint32(0);
+            break;
+        case SPELL_FAILED_PREVENTED_BY_MECHANIC:
+            data << uint32(0);                              // unknown, mechanic mask?
             break;
         default:
             break;
@@ -5928,20 +5983,22 @@ SpellCastResult Spell::CheckCast(bool strict)
                 }
                 break;
             }
+            case SPELL_EFFECT_LEAP_BACK:
+            {
+                if(m_spellInfo->Id == 781)
+                    if(!m_caster->isInCombat()) 
+                        return SPELL_FAILED_CANT_DO_THAT_RIGHT_NOW; 
+            }
+            // no break here!
             case SPELL_EFFECT_LEAP:
             case SPELL_EFFECT_TELEPORT_UNITS_FACE_CASTER:
             {
+                float direction = (m_spellInfo->Effect[i] == SPELL_EFFECT_LEAP_BACK ? M_PI + m_caster->GetOrientation() : m_caster->GetOrientation());
                 float dis = GetSpellRadius(sSpellRadiusStore.LookupEntry(m_spellInfo->EffectRadiusIndex[i]));
-                float fx = m_caster->GetPositionX() + dis * cos(m_caster->GetOrientation());
-                float fy = m_caster->GetPositionY() + dis * sin(m_caster->GetOrientation());
-                // teleport a bit above terrain level to avoid falling below it
-                float fz = m_caster->GetTerrain()->GetHeight(fx, fy, m_caster->GetPositionZ(), true);
-                if(fz <= INVALID_HEIGHT)                    // note: this also will prevent use effect in instances without vmaps height enabled
-                    return SPELL_FAILED_TRY_AGAIN;
-
-                float caster_pos_z = m_caster->GetPositionZ();
-                // Control the caster to not climb or drop when +-fz > 8
-                if(!(fz <= caster_pos_z + 8 && fz >= caster_pos_z - 8))
+                float fx = m_caster->GetPositionX() + dis * cos(direction);
+                float fy = m_caster->GetPositionY() + dis * sin(direction);
+                // simple check for avoid falling under map
+                if (!m_caster->GetTerrain()->IsNextZcoordOK(fx, fy, m_caster->GetPositionZ(),8.0f))
                     return SPELL_FAILED_TRY_AGAIN;
 
                 // not allow use this effect at battleground until battleground start
@@ -5962,14 +6019,8 @@ SpellCastResult Spell::CheckCast(bool strict)
                     return SPELL_FAILED_BAD_TARGETS;
                 break;
             }
-            case SPELL_EFFECT_LEAP_BACK:
-            {
-                if(m_spellInfo->Id == 781)
-                    if(!m_caster->isInCombat())
-                        return SPELL_FAILED_CANT_DO_THAT_RIGHT_NOW;
+            default:
                 break;
-            }
-            default:break;
         }
     }
 
