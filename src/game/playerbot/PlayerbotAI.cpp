@@ -787,25 +787,19 @@ void PlayerbotAI::SetFollowTarget(Unit * followTarget, bool forced)
         return;
     }
 
+    if (followTarget->GetTypeId() == TYPEID_PLAYER)
+    {
+        Player* target = ((Player*)followTarget);
+        if (target->GetCorpse() && !FollowCheckTeleport(target->GetCorpse()))
+            return;
+        if (!FollowCheckTeleport(followTarget))
+            return;
+    }
+
     if (!forced && m_followTarget==followTarget)
         return;
 
     m_followTarget = followTarget;
-
-    if (m_followTarget->GetTypeId() == TYPEID_PLAYER)
-    {
-        Player* target = ((Player*)m_followTarget);
-        if (target->IsBeingTeleported())
-            return;
-
-        if (target->GetCorpse())
-        {
-            if (!FollowCheckTeleport(target->GetCorpse()))
-                return;
-        }
-        else if (!FollowCheckTeleport(m_followTarget))
-            return;
-    }        
 
     if (m_bot == GetLeader())
     {
@@ -1059,6 +1053,9 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
     if (!m_bot->IsInWorld() || !m_bot->GetMap())
         return;
 
+    if (!CheckTeleport())
+        return;
+
     if (m_bot==GetLeader())
     {
         if (m_bot->GetZoneId()==876)
@@ -1071,9 +1068,6 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
     }
 
     if (m_bot->GetTrader())
-        return;
-
-    if (!CheckTeleport())
         return;
 
     CheckBG();
@@ -1169,8 +1163,8 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
     else
     {
         //Never remove it otherwise bots are glued
-        if (!m_followTarget)
-            SetFollowTarget(GetLeader());
+        if (!m_followTarget || m_bot->GetMotionMaster()->GetCurrentMovementGeneratorType()==IDLE_MOTION_TYPE)
+            SetFollowTarget(GetLeader(), true);
 
         Spell* const pSpell = GetCurrentSpell();
         if (pSpell && !(pSpell->IsChannelActive() || pSpell->IsAutoRepeat()))
@@ -1452,12 +1446,8 @@ bool PlayerbotAI::FollowCheckTeleport(WorldObject *obj)
     if (!m_bot->IsWithinDistInMap(obj, 100, true) && GetLeader()->isAlive() && !GetLeader()->IsTaxiFlying())
     {
         m_targetCombat = NULL;
-        m_followTarget = NULL;
 
         if (m_bot == GetLeader())
-            return false;
-
-        if (m_bot->IsBeingTeleported())
             return false;
 
         Map* pMap = GetLeader()->GetMap();

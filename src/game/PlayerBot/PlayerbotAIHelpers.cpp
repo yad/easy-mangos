@@ -1719,6 +1719,3 @@ void PlayerbotAI::Pull()
         GetClassAI()->DoCombatManeuver(m_targetCombat);
     }
 }
-
-
-
