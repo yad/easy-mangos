@@ -140,6 +140,9 @@ void PlayerbotAI::ReinitAI()
     m_targetCombat = NULL;
     m_followTarget = m_bot;
 
+    if (m_bot->m_movementInfo.HasMovementFlag(MOVEFLAG_FLYING))
+        m_bot->m_movementInfo.RemoveMovementFlag(MOVEFLAG_FLYING);
+
     if (m_bot == GetLeader())
     {
         m_bot->GiveLevel(m_bot->GetLevelAtLoading());
@@ -1053,20 +1056,24 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
         return;
     m_ignoreAIUpdatesUntilTime = currentTime + 1;
 
-
     if (!m_bot->IsInWorld() || !m_bot->GetMap())
         return;
+
+    if (m_bot==GetLeader())
+    {
+        if (m_bot->GetZoneId()==876)
+           return;
+    }
+    else
+    {
+        if (!CheckMaster())
+            return;
+    }
 
     if (m_bot->GetTrader())
         return;
 
     if (!CheckTeleport())
-        return;
-
-    if (!CheckMaster())
-        return;
-
-    if (m_bot==GetLeader() && m_bot->GetZoneId()==876)
         return;
 
     CheckBG();
@@ -1161,7 +1168,7 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
     }
     else
     {
-        //Never remove it however bots are glued
+        //Never remove it otherwise bots are glued
         if (!m_followTarget)
             SetFollowTarget(GetLeader());
 

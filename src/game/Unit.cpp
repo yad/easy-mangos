@@ -482,7 +482,13 @@ void Unit::SendMonsterMoveWithSpeed(float x, float y, float z, uint32 transitTim
         }
     }
     //float orientation = (float)atan2((double)dy, (double)dx);
-    SplineFlags flags = GetTypeId() == TYPEID_PLAYER ? SPLINEFLAG_WALKMODE : ((Creature*)this)->GetSplineFlags();
+    SplineFlags flags = SPLINEFLAG_NONE;
+    if (GetTypeId() == TYPEID_UNIT)
+        flags = ((Creature*)this)->GetSplineFlags();
+    else if (((Player*)this)->IsBot() && ((Player*)this)->IsFlying())
+        flags = SPLINEFLAG_FLYING;
+    else
+        flags = SPLINEFLAG_WALKMODE;
     SendMonsterMove(x, y, z, SPLINETYPE_NORMAL, flags, transitTime, player);
 }
 
@@ -11796,7 +11802,14 @@ void Unit::NearTeleportTo( float x, float y, float z, float orientation, bool ca
 
 void Unit::MonsterMove(float x, float y, float z, uint32 transitTime)
 {
-    SplineFlags flags = GetTypeId() == TYPEID_PLAYER ? SPLINEFLAG_WALKMODE : ((Creature*)this)->GetSplineFlags();
+    SplineFlags flags = SPLINEFLAG_NONE;
+    if (GetTypeId() == TYPEID_UNIT)
+        flags = ((Creature*)this)->GetSplineFlags();
+    else if (((Player*)this)->IsBot() && ((Player*)this)->IsFlying())
+        flags = SPLINEFLAG_FLYING;
+    else
+        flags = SPLINEFLAG_WALKMODE;
+
     SendMonsterMove(x, y, z, SPLINETYPE_NORMAL, flags, transitTime);
 
     if (GetTypeId() != TYPEID_PLAYER)
@@ -11889,7 +11902,14 @@ void Unit::MonsterMoveByPath(float x, float y, float z, uint32 speed, bool smoot
 template<typename PathElem, typename PathNode>
 void Unit::MonsterMoveByPath(Path<PathElem,PathNode> const& path, uint32 start, uint32 end, uint32 transitTime)
 {
-    SplineFlags flags = GetTypeId() == TYPEID_PLAYER ? SPLINEFLAG_WALKMODE : ((Creature*)this)->GetSplineFlags();
+    SplineFlags flags = SPLINEFLAG_NONE;
+    if (GetTypeId() == TYPEID_UNIT)
+        flags = ((Creature*)this)->GetSplineFlags();
+    else if (((Player*)this)->IsBot() && ((Player*)this)->IsFlying())
+        flags = SPLINEFLAG_FLYING;
+    else
+        flags = SPLINEFLAG_WALKMODE;
+
     SendMonsterMoveByPath(path, start, end, flags, transitTime);
 
     if (GetTypeId() != TYPEID_PLAYER)
@@ -12459,7 +12479,6 @@ void Unit::SendMonsterMoveByPath(Path<Elem,Node> const& path, uint32 start, uint
     SendMessageToSet(&data, true);
 }
 
-template void Unit::SendMonsterMoveByPath<PathNode>(const Path<PathNode> &, uint32, uint32, SplineFlags, uint32);
 template void Unit::SendMonsterMoveByPath<TaxiPathNodePtr, const TaxiPathNodeEntry>(const Path<TaxiPathNodePtr, const TaxiPathNodeEntry> &, uint32, uint32, SplineFlags, uint32);
 
 bool Unit::IsAllowedDamageInArea(Unit* pVictim) const

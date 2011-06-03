@@ -131,19 +131,19 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner)
 
         // calculate travel time, set spline, then send path
         uint32 traveltime = uint32(dist / (traveller.Speed()*0.001f));
-        SplineFlags flags = (owner.GetTypeId() == TYPEID_UNIT) ? ((Creature*)&owner)->GetSplineFlags() : SPLINEFLAG_WALKMODE;
+        SplineFlags flags = SPLINEFLAG_NONE;
+        if (owner.GetTypeId() == TYPEID_UNIT)
+            flags = ((Creature*)&owner)->GetSplineFlags();
+        else if (((Player*)&owner)->IsBot() && ((Player*)&owner)->IsFlying())
+            flags = SPLINEFLAG_FLYING;
+        else
+            flags = SPLINEFLAG_WALKMODE;
         owner.SendMonsterMoveByPath(pointPath, 1, endIndex, flags, traveltime);
     }
 
     D::_addUnitStateMove(owner);
     if (owner.GetTypeId() == TYPEID_UNIT && ((Creature*)&owner)->CanFly())
         ((Creature&)owner).AddSplineFlag(SPLINEFLAG_FLYING);
-    /*if (owner.GetTypeId() == TYPEID_PLAYER && ((Player*)&owner)->IsFlying())
-    {
-        ((Player*)&owner)->m_movementInfo.SetMovementFlags(MOVEFLAG_NONE);
-        ((Player*)&owner)->m_movementInfo.AddMovementFlag(MOVEFLAG_LEVITATING);
-        ((Player*)&owner)->m_movementInfo.AddMovementFlag(MOVEFLAG_FLYING);
-    }*/
 }
 
 template<>
@@ -289,14 +289,6 @@ template<>
 void ChaseMovementGenerator<Player>::Initialize(Player &owner)
 {
     owner.addUnitState(UNIT_STAT_CHASE|UNIT_STAT_CHASE_MOVE);
-
-    /*if (((Player*)&owner)->IsFlying())
-    {
-        owner.m_movementInfo.SetMovementFlags(MOVEFLAG_NONE);
-        owner.m_movementInfo.AddMovementFlag(MOVEFLAG_LEVITATING);
-        owner.m_movementInfo.AddMovementFlag(MOVEFLAG_FLYING);
-    }*/
-
     _setTargetLocation(owner);
 }
 
@@ -374,14 +366,6 @@ void FollowMovementGenerator<Player>::Initialize(Player &owner)
     owner.addUnitState(UNIT_STAT_FOLLOW|UNIT_STAT_FOLLOW_MOVE);
     _updateWalkMode(owner);
     _updateSpeed(owner);
-
-    /*if (((Player*)&owner)->IsFlying())
-    {
-        owner.m_movementInfo.SetMovementFlags(MOVEFLAG_NONE);
-        owner.m_movementInfo.AddMovementFlag(MOVEFLAG_LEVITATING);
-        owner.m_movementInfo.AddMovementFlag(MOVEFLAG_FLYING);
-    }*/
-
     _setTargetLocation(owner);
 }
 

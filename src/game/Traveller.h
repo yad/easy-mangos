@@ -121,6 +121,8 @@ inline float Traveller<Player>::Speed()
 {
     if (i_traveller.IsTaxiFlying())
         return PLAYER_FLIGHT_SPEED;
+    else if (i_traveller.IsBot() && i_traveller.IsFlying())
+        return i_traveller.GetSpeed(MOVE_FLIGHT);
     else
         return i_traveller.GetSpeed(i_traveller.m_movementInfo.HasMovementFlag(MOVEFLAG_WALK_MODE) ? MOVE_WALK : MOVE_RUN);
 }
@@ -147,15 +149,19 @@ inline void Traveller<Player>::Relocation(float x, float y, float z, float orien
 template<>
 inline void Traveller<Player>::MoveTo(float x, float y, float z, uint32 t)
 {
-    //Only send SPLINEFLAG_WALKMODE, client has strange issues with other move flags
-    i_traveller.SendMonsterMove(x, y, z, SPLINETYPE_NORMAL, SPLINEFLAG_WALKMODE, t);
+    if (i_traveller.IsBot() && i_traveller.IsFlying())
+        i_traveller.SendMonsterMove(x, y, z, SPLINETYPE_NORMAL, SPLINEFLAG_FLYING, t);
+    else
+        i_traveller.SendMonsterMove(x, y, z, SPLINETYPE_NORMAL, SPLINEFLAG_WALKMODE, t);
 }
 
 template<>
 inline void Traveller<Player>::Stop()
 {
-    //Only send SPLINEFLAG_WALKMODE, client has strange issues with other move flags
-    i_traveller.SendMonsterMove(i_traveller.GetPositionX(), i_traveller.GetPositionY(), i_traveller.GetPositionZ(), SPLINETYPE_STOP, SPLINEFLAG_WALKMODE, 0);
+    if (i_traveller.IsBot() && i_traveller.IsFlying())
+        i_traveller.SendMonsterMove(i_traveller.GetPositionX(), i_traveller.GetPositionY(), i_traveller.GetPositionZ(), SPLINETYPE_STOP, SPLINEFLAG_FLYING, 0);
+    else
+        i_traveller.SendMonsterMove(i_traveller.GetPositionX(), i_traveller.GetPositionY(), i_traveller.GetPositionZ(), SPLINETYPE_STOP, SPLINEFLAG_WALKMODE, 0);
 }
 
 typedef Traveller<Creature> CreatureTraveller;
