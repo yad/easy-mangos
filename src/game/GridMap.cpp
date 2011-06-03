@@ -1046,6 +1046,7 @@ float TerrainInfo::GetWaterOrGroundLevel(float x, float y, float z, float* pGrou
 
 GridMap * TerrainInfo::GetGrid( const float x, const float y )
 {
+    LOCK_GUARD lock(m_mutex);
     // half opt method
     int gx=(int)(32-x/SIZE_OF_GRIDS);                       //grid x
     int gy=(int)(32-y/SIZE_OF_GRIDS);                       //grid y
