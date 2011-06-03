@@ -16042,7 +16042,7 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder *holder )
             {
                 Relocate(16227.69f, 16401.99f, -64.38f, fields[16].GetFloat());
                 SetLocationMapId(1);
-                SetLevelAtLoading(1);
+                SetLevelAtLoading(DEFAULT_MAX_LEVEL);
                 ok = false;
             }
             else
