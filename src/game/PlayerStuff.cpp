@@ -766,7 +766,9 @@ void Player::RemoveMyEquipement(bool destroy)
             break;
     }
 
-    if (!pItem)
+    if (pItem && pItem->GetProto()->Class != ITEM_CLASS_QUIVER)
+        pItem = NULL;
+    if (!pItem && IsBot())
         pItem = GetItemByPos(INVENTORY_SLOT_BAG_0, INVENTORY_SLOT_BAG_END-1);
     if (pItem)
         DestroyItem(INVENTORY_SLOT_BAG_0, pItem->GetSlot(), true);
