@@ -143,6 +143,9 @@ void PlayerbotAI::ReinitAI()
     if (m_bot->m_movementInfo.HasMovementFlag(MOVEFLAG_FLYING))
         m_bot->m_movementInfo.RemoveMovementFlag(MOVEFLAG_FLYING);
 
+    if (m_bot->isDead())
+        m_bot->ResurrectPlayer(100.0f);
+
     if (m_bot == GetLeader())
     {
         m_bot->GiveLevel(m_bot->GetLevelAtLoading());
@@ -850,7 +853,6 @@ void PlayerbotAI::SetFollowTarget(Unit * followTarget, bool forced)
                             SpellRangeEntry const *TempRange = GetSpellRangeStore()->LookupEntry(sp->m_spellInfo->rangeIndex);
                             if (!TempRange)
                             {
-                                m_followTarget = GetLeader();
                                 MoveTo(rand_float(M_PI_F/2.0f, 3.0f*M_PI_F/2.0f)); //RANGED
                             }
                             else
@@ -863,7 +865,6 @@ void PlayerbotAI::SetFollowTarget(Unit * followTarget, bool forced)
                         }
                         else
                         {
-                            m_followTarget = GetLeader();
                             MoveTo(rand_float(M_PI_F/2.0f, 3.0f*M_PI_F/2.0f)); //RANGED
                         }
                     }
@@ -1175,10 +1176,11 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
             if (m_targetCombat)
             {
                 m_targetCombat = NULL;
-                SetFollowTarget(GetLeader());
+                SetFollowTarget(GetLeader(), true);
                 m_bot->AttackStop();
                 m_bot->SetSelectionGuid(ObjectGuid());
-                m_bot->InterruptNonMeleeSpells(true);
+                for (uint8 i = 0; i < CURRENT_MAX_SPELL; ++i)
+                    m_bot->InterruptSpell(CurrentSpellTypes(i), true, false);
             }
 
             if (GetLeader()!=m_bot)
