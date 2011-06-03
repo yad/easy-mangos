@@ -1543,7 +1543,7 @@ void WorldObject::UpdateAllowedPositionZ(float x, float y, float &z) const
             if (((Player*)this)->IsBot() && ((Player*)this)->IsFlying())
                 return;
             // for server controlled moves playr work same as creature (but it can always swim)
-            else if (!((Player const*)this)->CanFly())
+            if (!((Player const*)this)->CanFly())
             {
                 float ground_z = z;
                 float max_z = GetTerrain()->GetWaterOrGroundLevel(x, y, z, &ground_z, !((Unit const*)this)->HasAuraType(SPELL_AURA_WATER_WALK));
