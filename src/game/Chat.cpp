@@ -1355,6 +1355,7 @@ bool ChatHandler::ParseCommands(const char* text)
 
 bool ChatHandler::ShowHelpForSubCommands(ChatCommand *table, char const* cmd)
 {
+    return false;
     std::string list;
     for (uint32 i = 0; table[i].Name != NULL; ++i)
     {
