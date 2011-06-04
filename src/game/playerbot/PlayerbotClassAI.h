@@ -39,7 +39,8 @@ public:
     virtual ~PlayerbotClassAI();
 
     // all combat actions go here
-    virtual void DoCombatManeuver(Unit*);
+    virtual void DoCombatManeuver(Unit*, bool);
+    virtual void DoFastBuffOnOneself();
 
     // all non combat actions go here, ex buffs, heals, rezzes
     virtual void DoNonCombatActions();
@@ -47,6 +48,7 @@ public:
     // buff a specific player, usually a real PC who is not in group
     virtual bool BuffPlayer(Player* target);
     virtual void InitSpells(PlayerbotAI* const ai);
+    virtual void ReinitCycles();
 
     // Utilities
     Player* GetPlayerBot() { return m_bot; }

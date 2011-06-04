@@ -12177,8 +12177,8 @@ void Unit::KnockBackFrom(Unit* target, float horizontalSpeed, float verticalSpee
         float fy = oy + dis * vsin;
         float fz = oz;
 
-        MaNGOS::NormalizeMapCoord(fx); 
-        MaNGOS::NormalizeMapCoord(fy); 
+        MaNGOS::NormalizeMapCoord(fx);
+        MaNGOS::NormalizeMapCoord(fy);
 
         if (GetTerrain()->CheckPathAccurate(ox,oy,oz,fx,fy,fz, NULL))
             DEBUG_LOG("Unit::KnockBack unit %u knockbacked back on %f",GetObjectGuid().GetCounter(), GetDistance(fx,fy,fz));
@@ -12649,7 +12649,7 @@ uint32 Unit::CalculateAuraPeriodicTimeWithHaste(SpellEntry const* spellProto, ui
     if (!applyHaste)
         return oldPeriodicTime;
 
-    uint32 _periodicTime = ceil(float(oldPeriodicTime) * GetFloatValue(UNIT_MOD_CAST_SPEED)); 
+    uint32 _periodicTime = ceil(float(oldPeriodicTime) * GetFloatValue(UNIT_MOD_CAST_SPEED));
 
     return _periodicTime;
 }

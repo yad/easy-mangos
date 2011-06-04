@@ -142,7 +142,7 @@ void WorldSession::SendPacket(WorldPacket const* packet)
         }*/
 
         ReadInvitePaquet(packet);
-        if (IsBotSession() && GetPlayer()->GetPlayerbotAI())
+        if (IsBotSession() && GetPlayer()->GetPlayerbotAI() && GetPlayer()->GetPlayerbotAI()->GetLeader())
             GetPlayer()->GetPlayerbotAI()->HandleBotOutgoingPacket(*packet);
     }
 

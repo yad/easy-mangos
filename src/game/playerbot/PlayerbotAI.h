@@ -138,9 +138,10 @@ public:
     Item* FindItem(uint32 ItemId);
     Item* FindConsumable(uint32 displayId) const;
 
+    bool CastAura(uint32 spellId, Unit* target);
     bool CastSpell(uint32 spellId);
     bool CastSpell(uint32 spellId, Unit* target);
-    bool CastAura(uint32 spellId, Unit* target);
+    bool CastPetAura(uint32 spellId, Unit* target);
     bool CastPetSpell(uint32 spellId, Unit* target = NULL);
     bool Buff(uint32 spellId, Unit* target, void (*beforeCast)(Player *) = NULL);
     bool SelfBuff(uint32 spellId);
@@ -155,7 +156,7 @@ public:
     void EquipItem(Item& item);
     void Feast();
     void InterruptCurrentCastingSpell();
-    void SetCombatTarget(Unit* targetCombat);
+    void ChangeCombatTarget(Unit* targetCombat);
     Unit *GetCurrentTarget() { return m_targetCombat; };
     Unit *GetNewCombatTarget();
     void DoCombatManeuver();
@@ -180,7 +181,8 @@ public:
     void GetTaxi(ObjectGuid guid, BotTaxiNode& nodes);
 
     bool CheckTeleport();
-    bool CheckMaster();
+    bool CheckLeader();
+    bool CheckGroup();
     bool CheckLevel();
     void CheckStuff();
     void CheckRoles();
@@ -213,7 +215,7 @@ public:
     void Pull();
 
     void MoveInLineOfSight(Unit *);               //Usefull call in mangos update position system
-    void AttackStart(Unit *) {};                  //Useless by we can rewrite code to use it
+    void AttackStart(Unit *) {};                  //Useless but we can rewrite code to use it
     void EnterEvadeMode() {};                     //Implemented later
     void AttackedBy(Unit*) {};                    //Not used for now
     bool IsVisible(Unit *) const {return true;};  //Fake but need to be implemented later

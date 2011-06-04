@@ -117,7 +117,7 @@ bool PlayerbotHunterAI::HasPet(Player* bot)
         return false;  //hunter either has no pet or stabled
 } // end HasPet
 
-void PlayerbotHunterAI::DoCombatManeuver(Unit *pTarget)
+void PlayerbotHunterAI::DoCombatManeuver(Unit *pTarget, bool cac)
 {
     PlayerbotAI *ai = GetAI();
     if (!ai)

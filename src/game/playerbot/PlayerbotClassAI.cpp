@@ -22,10 +22,12 @@
 PlayerbotClassAI::PlayerbotClassAI(Player* const bot, PlayerbotAI* const ai): m_bot(bot), m_ai(ai) {}
 PlayerbotClassAI::~PlayerbotClassAI() {}
 
-void PlayerbotClassAI::DoCombatManeuver(Unit *) {}
+void PlayerbotClassAI::DoCombatManeuver(Unit *, bool) {}
+void PlayerbotClassAI::DoFastBuffOnOneself() {}
 
 void PlayerbotClassAI::DoNonCombatActions(){}
 
 bool PlayerbotClassAI::BuffPlayer(Player* target) { return false; }
 
 void PlayerbotClassAI::InitSpells(PlayerbotAI* const ai) {}
+void PlayerbotClassAI::ReinitCycles() {};

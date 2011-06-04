@@ -67,12 +67,13 @@ public:
     virtual ~PlayerbotWarriorAI();
 
     // all combat actions go here
-    void DoCombatManeuver(Unit*);
+    void DoCombatManeuver(Unit*, bool);
 
     // all non combat actions go here, ex buffs, heals, rezzes
     void DoNonCombatActions();
 
     void InitSpells(PlayerbotAI* const ai);
+    void ReinitCycles();
 
 private:
     // ARMS

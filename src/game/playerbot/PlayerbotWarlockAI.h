@@ -108,6 +108,7 @@ enum WarlockSpells
     ENSLAVE_DEMON_1                 = 1098,
     EYE_OF_KILROGG_1                = 126,
     FEAR_1                          = 5782,
+    SIPHON_LIFE_1                   = 86667,
     FEL_ARMOR_1                     = 28176,
     FEL_DOMINATION_1                = 18708,
     HAUNT_1                         = 48181,
@@ -153,7 +154,7 @@ public:
     virtual ~PlayerbotWarlockAI();
 
     // all combat actions go here
-    void DoCombatManeuver(Unit*);
+    void DoCombatManeuver(Unit*, bool);
 
     // all non combat actions go here, ex buffs, heals, rezzes
     void DoNonCombatActions();
@@ -162,6 +163,9 @@ public:
     //void BuffPlayer(Player *target);
 
     void InitSpells(PlayerbotAI* const ai);
+    bool InitPet();
+    void ReinitCycles();
+    bool IsBetterPet(DemonEntry);
 
 private:
 
@@ -184,7 +188,8 @@ private:
            SEED_OF_CORRUPTION,
            DARK_PACT,
            HOWL_OF_TERROR,
-           FEAR;
+           FEAR,
+           SIPHON_LIFE;
 
     // DESTRUCTION
     uint32 SHADOW_BOLT,
@@ -256,14 +261,8 @@ private:
            BERSERKING,
            WILL_OF_THE_FORSAKEN;
 
-    uint32 SpellSequence,
-           LastSpellCurse,
-           LastSpellAffliction,
-           LastSpellDestruction;
-
-    uint32 m_lastDemon;      // Last demon entry used for spell initialization
-    uint32 m_demonOfChoice;  // Preferred demon entry
-    bool   m_isTempImp;      // True if imp summoned temporarily until soul shard acquired for demon of choice.
+    uint32 LastSpellCurses, LastSpellSummoning, LastSpellDestruction;
+    bool petInitAi;
 };
 
 #endif

@@ -28,6 +28,13 @@ PlayerbotMageAI::PlayerbotMageAI(Player* const bot, PlayerbotAI* const ai): Play
     LastSpellArcane = 0;
 }
 
+void PlayerbotMageAI::ReinitCycles()
+{
+    LastSpellFrost = 0;
+    LastSpellFire = 0;
+    LastSpellArcane = 0;
+}
+
 void PlayerbotMageAI::InitSpells(PlayerbotAI* const ai)
 {
     ARCANE_MISSILES         = ai->initSpell(ARCANE_MISSILES_1);
@@ -88,7 +95,7 @@ void PlayerbotMageAI::InitSpells(PlayerbotAI* const ai)
 
 PlayerbotMageAI::~PlayerbotMageAI() {}
 
-void PlayerbotMageAI::DoCombatManeuver(Unit *pTarget)
+void PlayerbotMageAI::DoCombatManeuver(Unit *pTarget, bool cac)
 {
     PlayerbotAI* ai = GetAI();
     Player* m_bot = GetPlayerBot();
@@ -98,14 +105,17 @@ void PlayerbotMageAI::DoCombatManeuver(Unit *pTarget)
     {
         case MageFire:
         {
-            static uint32 SpellFire[] = {SCORCH, FROSTFIRE_BOLT, FIRE_BLAST, SCORCH, FIREBALL,
+            static const uint32 SpellFire[] = {SCORCH, FROSTFIRE_BOLT, FIRE_BLAST, SCORCH, FIREBALL,
                 FLAMESTRIKE, SCORCH, FIREBALL, BLAST_WAVE, SCORCH, PYROBLAST, SCORCH, FIREBALL,
                 LIVING_BOMB, DRAGONS_BREATH};
             static uint32 elt = sizeof(SpellFire)/sizeof(uint32);
 
             for (uint32 i = 1; i <= elt; ++i)
             {
-                if (ai->CastSpell(SpellFire[(i+LastSpellFire)%elt], pTarget))
+                uint32 spellId = SpellFire[(i+LastSpellFire)%elt];
+                if (!cac && (spellId==BLAST_WAVE||spellId==DRAGONS_BREATH))
+                   continue;
+                if (ai->CastSpell(spellId, pTarget))
                 {
                     LastSpellFire = (i+LastSpellFire)%elt;
                     break;
@@ -115,13 +125,16 @@ void PlayerbotMageAI::DoCombatManeuver(Unit *pTarget)
         }
         case MageArcane:
         {
-            static uint32 SpellArcane[] = {ARCANE_MISSILES, ARCANE_BLAST, ARCANE_BLAST, ARCANE_BLAST,
+            static const uint32 SpellArcane[] = {ARCANE_MISSILES, ARCANE_BLAST, ARCANE_BLAST, ARCANE_BLAST,
                 ARCANE_BLAST, ARCANE_MISSILES, ARCANE_BARRAGE};
             static uint32 elt = sizeof(SpellArcane)/sizeof(uint32);
 
             for (uint32 i = 1; i <= elt; ++i)
             {
-                if (ai->CastSpell(SpellArcane[(i+LastSpellArcane)%elt]), pTarget)
+                uint32 spellId = SpellArcane[(i+LastSpellArcane)%elt];
+                if (!cac && (spellId==ARCANE_BLAST))
+                   continue;
+                if (ai->CastSpell(spellId, pTarget))
                 {
                     LastSpellArcane = (i+LastSpellArcane)%elt;
                     break;
@@ -131,13 +144,16 @@ void PlayerbotMageAI::DoCombatManeuver(Unit *pTarget)
         }
         case MageFrost:
         {
-            static uint32 SpellFrost[] = {FROSTFIRE_BOLT, FROSTBOLT, FROSTBOLT, ICE_LANCE, FROSTBOLT,
+            static const uint32 SpellFrost[] = {FROSTFIRE_BOLT, FROSTBOLT, FROSTBOLT, ICE_LANCE, FROSTBOLT,
                 FROSTBOLT, CONE_OF_COLD, FROSTBOLT, FROSTBOLT, ICE_LANCE, FROST_NOVA, BLIZZARD};
             static uint32 elt = sizeof(SpellFrost)/sizeof(uint32);
 
             for (uint32 i = 1; i <= elt; ++i)
             {
-                if (ai->CastSpell(SpellFrost[(i+LastSpellFrost)%elt]), pTarget)
+                uint32 spellId = SpellFrost[(i+LastSpellFrost)%elt];
+                if (!cac && (spellId==FROST_NOVA||spellId==CONE_OF_COLD))
+                   continue;
+                if (ai->CastSpell(spellId, pTarget))
                 {
                     LastSpellFrost = (i+LastSpellFrost)%elt;
                     break;
@@ -180,6 +196,9 @@ void PlayerbotMageAI::DoNonCombatActions()
             if (!ai->CastAura(ICE_ARMOR, m_bot))
                 if (ai->CastAura(FROST_ARMOR, m_bot))
                     return;
+
+            if (!m_bot->GetPet() && ai->CastSpell(SUMMON_WATER_ELEMENTAL, m_bot))
+                return;
             break;
         }
     }

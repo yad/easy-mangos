@@ -88,7 +88,7 @@ public:
     virtual ~PlayerbotMageAI();
 
     // all combat actions go here
-    void DoCombatManeuver(Unit*);
+    void DoCombatManeuver(Unit*, bool);
 
     // all non combat actions go here, ex buffs, heals, rezzes
     void DoNonCombatActions();
@@ -97,6 +97,7 @@ public:
     bool BuffPlayer();
 
     void InitSpells(PlayerbotAI* const ai);
+    void ReinitCycles();
 
 private:
     // ARCANE

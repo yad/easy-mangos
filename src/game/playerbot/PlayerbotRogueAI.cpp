@@ -75,7 +75,7 @@ void PlayerbotRogueAI::InitSpells(PlayerbotAI* const ai)
 
 PlayerbotRogueAI::~PlayerbotRogueAI() {}
 
-void PlayerbotRogueAI::DoCombatManeuver(Unit *pTarget)
+void PlayerbotRogueAI::DoCombatManeuver(Unit *pTarget, bool cac)
 {
     if (!pTarget)
         return;
@@ -93,7 +93,7 @@ void PlayerbotRogueAI::DoCombatManeuver(Unit *pTarget)
         return;
 
     //TODO implement STEALTH
-    
+
     ai->SetInFront(pTarget);
     Unit* pVictim = pTarget->getVictim();
     float fTargetDist = m_bot->GetDistance(pTarget);

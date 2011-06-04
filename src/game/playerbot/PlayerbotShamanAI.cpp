@@ -109,7 +109,7 @@ void PlayerbotShamanAI::HealTarget(Unit *target, uint8 hp)
     // end HealTarget
 }
 
-void PlayerbotShamanAI::DoCombatManeuver(Unit *pTarget)
+void PlayerbotShamanAI::DoCombatManeuver(Unit *pTarget, bool cac)
 {
     PlayerbotAI *ai = GetAI();
     if (!ai)

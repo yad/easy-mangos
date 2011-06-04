@@ -28,6 +28,13 @@ PlayerbotWarriorAI::PlayerbotWarriorAI(Player* const bot, PlayerbotAI* const ai)
     LastSpellFury = 0;
 }
 
+void PlayerbotWarriorAI::ReinitCycles()
+{
+    LastSpellArms = 0;
+    LastSpellProtection = 0;
+    LastSpellFury = 0;
+}
+
 void PlayerbotWarriorAI::InitSpells(PlayerbotAI* const ai)
 {
     BATTLE_STANCE           = ai->initSpell(BATTLE_STANCE_1); //ARMS
@@ -95,9 +102,10 @@ void PlayerbotWarriorAI::InitSpells(PlayerbotAI* const ai)
     BERSERKING              = ai->initSpell(BERSERKING_ALL); // troll
     WILL_OF_THE_FORSAKEN    = ai->initSpell(WILL_OF_THE_FORSAKEN_ALL); // undead
 }
+
 PlayerbotWarriorAI::~PlayerbotWarriorAI() {}
 
-void PlayerbotWarriorAI::DoCombatManeuver(Unit *pTarget)
+void PlayerbotWarriorAI::DoCombatManeuver(Unit *pTarget, bool cac)
 {
     PlayerbotAI* ai = GetAI();
     Player* m_bot = GetPlayerBot();
@@ -107,7 +115,8 @@ void PlayerbotWarriorAI::DoCombatManeuver(Unit *pTarget)
     {
         case WarriorArms:
         {
-            static uint32 SpellArms[] = {BLOODTHIRST, WHIRLWIND, BLOODTHIRST, BLOODTHIRST, CLEAVE,  WHIRLWIND, BLOODTHIRST, BLOODTHIRST, WHIRLWIND, BLOODTHIRST, HEROIC_STRIKE};
+            static const uint32 SpellArms[] = {BLOODTHIRST, WHIRLWIND, BLOODTHIRST, BLOODTHIRST, CLEAVE,
+                WHIRLWIND, BLOODTHIRST, BLOODTHIRST, WHIRLWIND, BLOODTHIRST, HEROIC_STRIKE};
             static uint32 elt = sizeof(SpellArms)/sizeof(uint32);
 
             for (uint32 i = 1; i <= elt; ++i)
@@ -122,7 +131,8 @@ void PlayerbotWarriorAI::DoCombatManeuver(Unit *pTarget)
         }
         case WarriorProtection:
         {
-            static uint32 SpellProtection[] = {CHARGE, REND, THUNDER_CLAP, CLEAVE, SHOCKWAVE, SUNDER_ARMOR, HEROIC_STRIKE, DEVASTATE, SHIELD_SLAM, REVENGE};
+            static const uint32 SpellProtection[] = {CHARGE, REND, THUNDER_CLAP, CLEAVE, SHOCKWAVE,
+                SUNDER_ARMOR, HEROIC_STRIKE, DEVASTATE, SHIELD_SLAM, REVENGE};
             static uint32 elt = sizeof(SpellProtection)/sizeof(uint32);
 
             for (uint32 i = 1; i <= elt; ++i)
@@ -137,7 +147,8 @@ void PlayerbotWarriorAI::DoCombatManeuver(Unit *pTarget)
         }
         case WarriorFury:
         {
-            static uint32 SpellFury[] = {BLOODTHIRST, WHIRLWIND, BLOODTHIRST, BLOODTHIRST, CLEAVE,  WHIRLWIND, BLOODTHIRST, BLOODTHIRST, WHIRLWIND, BLOODTHIRST, HEROIC_STRIKE};
+            static const uint32 SpellFury[] = {BLOODTHIRST, WHIRLWIND, BLOODTHIRST, BLOODTHIRST, CLEAVE,
+                WHIRLWIND, BLOODTHIRST, BLOODTHIRST, WHIRLWIND, BLOODTHIRST, HEROIC_STRIKE};
             static uint32 elt = sizeof(SpellFury)/sizeof(uint32);
 
             for (uint32 i = 1; i <= elt; ++i)

@@ -1003,11 +1003,18 @@ uint32 PlayerbotAI::EstRepair(uint16 pos)
 
 bool PlayerbotAI::CheckTeleport()
 {
-    if (GetLeader()->IsBeingTeleported())
+    //Don't remove this check !
+    if (GetLeader() && GetLeader()->IsBeingTeleported())
+    {
+        m_bot->GetMotionMaster()->Clear(true);
         return false;
+    }
 
     if (m_bot->IsBeingTeleported())
+    {
+        m_bot->GetMotionMaster()->Clear(true);
         return false;
+    }
 
     if (m_bot->GetGroup())
     {
@@ -1015,14 +1022,17 @@ bool PlayerbotAI::CheckTeleport()
         while (ref)
         {
             if (ref->getSource()->IsBeingTeleported())
+            {
+                m_bot->GetMotionMaster()->Clear(true);
                 return false;
+            }
             ref = ref->next();
         }
     }
     return true;
 }
 
-bool PlayerbotAI::CheckMaster()
+bool PlayerbotAI::CheckLeader()
 {
     if (!GetLeader() || !GetLeader()->IsInWorld())
     {
@@ -1030,7 +1040,11 @@ bool PlayerbotAI::CheckMaster()
         ReinitAI();
         return false;
     }
+    return true;
+}
 
+bool PlayerbotAI::CheckGroup()
+{
     if (!m_bot->GetGroup())
     {
         SetLeader(m_bot);
@@ -1148,9 +1162,9 @@ bool PlayerbotAI::CastSpell(uint32 spellId)
         SetInFront(pTarget);
     }
 
-    SpellCastTimesEntry const * castTimeEntry = sSpellCastTimesStore.LookupEntry(pSpellInfo->CastingTimeIndex);
+    /*SpellCastTimesEntry const * castTimeEntry = sSpellCastTimesStore.LookupEntry(pSpellInfo->CastingTimeIndex);
     if (castTimeEntry && castTimeEntry->CastTime)
-        m_bot->GetMotionMaster()->Clear(true);
+        m_bot->GetMotionMaster()->Clear(true);*/
 
     m_bot->CastSpell(pTarget, pSpellInfo, false);
 
@@ -1162,6 +1176,14 @@ bool PlayerbotAI::CastSpell(uint32 spellId)
     m_ignoreAIUpdatesUntilTime = time(0) + (int32) ((float) pSpell->GetCastTime() / 1000.0f) + 1;
 
     return true;
+}
+
+bool PlayerbotAI::CastPetAura(uint32 spellId, Unit* target)
+{
+    if (HasAura(spellId, target))
+        return true;
+
+    return CastPetSpell(spellId, target);
 }
 
 bool PlayerbotAI::CastPetSpell(uint32 spellId, Unit* target)
@@ -1712,10 +1734,10 @@ void PlayerbotAI::Pull()
 
         m_followTarget = m_targetCombat;
 
-        SetCombatTarget(m_targetCombat);
+        ChangeCombatTarget(m_targetCombat);
         SetInFront(m_targetCombat);
         SetFollowTarget(m_targetCombat);
         m_bot->Attack(m_targetCombat, true);
-        GetClassAI()->DoCombatManeuver(m_targetCombat);
+        GetClassAI()->DoCombatManeuver(m_targetCombat, true);
     }
 }

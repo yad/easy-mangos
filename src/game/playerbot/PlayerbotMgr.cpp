@@ -139,7 +139,7 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
                     {
                         bot = itr->getSource();
                         if (!bot->IsFriendlyTo(thingToAttack) && bot->IsWithinLOSInMap(thingToAttack))
-                            bot->GetPlayerbotAI()->SetCombatTarget(thingToAttack);
+                            bot->GetPlayerbotAI()->ChangeCombatTarget(thingToAttack);
                     }
                     return;
                 }
@@ -486,25 +486,5 @@ void PlayerbotMgr::OnBotLogin(Player * const bot)
             bot->SetPlayerbotAI(ai);
     }
     ai = bot->GetPlayerbotAI();
-
-    for (uint8 i = 0; i < MAX_ARENA_SLOT; ++i)
-    {
-        uint32 a_id = bot->GetArenaTeamId(i);
-        if (a_id==0)
-            continue;
-
-        ArenaTeam *at = sObjectMgr.GetArenaTeamById(a_id);
-        if (!at)
-           continue;
-
-        at->DelMember(bot->GetObjectGuid());
-    }
-
-    if (bot->GetGroup())
-        bot->RemoveFromGroup();
-
-    bot->GiveLevel(bot->GetLevelAtLoading());
-    bot->GMStartup();
-    bot->SetHealth(bot->GetMaxHealth());
-    bot->SetPower(bot->getPowerType(), bot->GetMaxPower(bot->getPowerType()));
+    SetLeader(NULL);
 }

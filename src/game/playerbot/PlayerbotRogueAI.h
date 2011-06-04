@@ -91,7 +91,7 @@ public:
     virtual ~PlayerbotRogueAI();
 
     // all combat actions go here
-    void DoCombatManeuver(Unit*);
+    void DoCombatManeuver(Unit*, bool);
 
     // all non combat actions go here, ex buffs, heals, rezzes
     void DoNonCombatActions();

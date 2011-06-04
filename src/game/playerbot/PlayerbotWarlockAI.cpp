@@ -23,9 +23,160 @@ class PlayerbotAI;
 PlayerbotWarlockAI::PlayerbotWarlockAI(Player* const bot, PlayerbotAI* const ai): PlayerbotClassAI(bot, ai)
 {
     InitSpells(ai);
-    m_lastDemon = 0;
-    m_demonOfChoice = DEMON_IMP;
-    m_isTempImp = false;
+    LastSpellCurses = 0;
+    LastSpellSummoning = 0;
+    LastSpellDestruction = 0;
+    petInitAi = false;
+}
+
+bool PlayerbotWarlockAI::InitPet()
+{
+    PlayerbotAI* ai = GetAI();
+    Player* m_bot = GetPlayerBot();
+    Pet* demon = m_bot->GetPet();
+
+    if (m_bot->getRole()==WarlockSummoning)
+    {
+        if (!demon)
+        {
+            if (ai->CastSpell(SUMMON_FELGUARD, m_bot))
+            {
+                petInitAi = true;
+                return true;
+            }
+            else if (ai->CastSpell(SUMMON_FELHUNTER, m_bot))
+            {
+                petInitAi = true;
+                return true;
+            }
+            else if (ai->CastSpell(SUMMON_SUCCUBUS, m_bot))
+            {
+                petInitAi = true;
+                return true;
+            }
+            else if (ai->CastSpell(SUMMON_VOIDWALKER, m_bot))
+            {
+                petInitAi = true;
+                return true;
+            }
+            else if (ai->CastSpell(SUMMON_IMP, m_bot))
+            {
+                petInitAi = true;
+                return true;
+            }
+        }
+        else
+        {
+            if (IsBetterPet(DEMON_FELGUARD) && m_bot->HasSpell(SUMMON_FELGUARD))
+            {
+                m_bot->RemovePet(PET_SAVE_AS_DELETED);
+                if (ai->CastSpell(SUMMON_FELGUARD, m_bot))
+                {
+                    petInitAi = true;
+                    return true;
+                }
+            }
+            else if (IsBetterPet(DEMON_FELHUNTER) && m_bot->HasSpell(SUMMON_FELHUNTER))
+            {
+                m_bot->RemovePet(PET_SAVE_AS_DELETED);
+                if (ai->CastSpell(SUMMON_FELHUNTER, m_bot))
+                {
+                    petInitAi = true;
+                    return true;
+                }
+            }
+            else if (IsBetterPet(DEMON_SUCCUBUS) && m_bot->HasSpell(SUMMON_SUCCUBUS))
+            {
+                m_bot->RemovePet(PET_SAVE_AS_DELETED);
+                if (ai->CastSpell(SUMMON_SUCCUBUS, m_bot))
+                {
+                    petInitAi = true;
+                    return true;
+                }
+            }
+            else if (IsBetterPet(DEMON_VOIDWALKER) && m_bot->HasSpell(SUMMON_VOIDWALKER))
+            {
+                m_bot->RemovePet(PET_SAVE_AS_DELETED);
+                if (ai->CastSpell(SUMMON_VOIDWALKER, m_bot))
+                {
+                    petInitAi = true;
+                    return true;
+                }
+            }
+            else if (IsBetterPet(DEMON_IMP) && m_bot->HasSpell(SUMMON_IMP))
+            {
+                m_bot->RemovePet(PET_SAVE_AS_DELETED);
+                if (ai->CastSpell(SUMMON_IMP, m_bot))
+                {
+                    petInitAi = true;
+                    return true;
+                }
+            }
+        }
+    }
+    else
+    {
+        if (demon && demon->GetEntry()==DEMON_IMP)
+            return false;
+
+        if (ai->CastSpell(SUMMON_IMP, m_bot))
+        {
+            petInitAi = true;
+            return true;
+        }
+    }
+    return false;
+}
+
+bool PlayerbotWarlockAI::IsBetterPet(DemonEntry newdemon)
+{
+    DemonEntry currentdemon = DemonEntry(GetPlayerBot()->GetPet()->GetEntry());
+
+    if (newdemon==currentdemon)
+        return false;
+
+    switch (newdemon)
+    {
+        case DEMON_IMP:
+        {
+            return false;
+        }
+        case DEMON_VOIDWALKER:
+        {
+            if (currentdemon==DEMON_IMP)
+                return true;
+            return false;
+        }
+        case DEMON_SUCCUBUS:
+        {
+            if (currentdemon==DEMON_IMP||currentdemon==DEMON_VOIDWALKER)
+                return true;
+            return false;
+        }
+        case DEMON_FELHUNTER:
+        {
+            if (currentdemon==DEMON_IMP||currentdemon==DEMON_VOIDWALKER
+                ||currentdemon==DEMON_SUCCUBUS)
+                return true;
+            return false;
+        }
+        case DEMON_FELGUARD:
+        {
+            if (currentdemon==DEMON_IMP||currentdemon==DEMON_VOIDWALKER
+                ||currentdemon==DEMON_SUCCUBUS||currentdemon==DEMON_FELHUNTER)
+                return true;
+            return false;
+        }
+        default:
+            return false;
+    }
+}
+
+void PlayerbotWarlockAI::ReinitCycles()
+{
+    LastSpellCurses = 0;
+    LastSpellSummoning = 0;
+    LastSpellDestruction = 0;
 }
 
 void PlayerbotWarlockAI::InitSpells(PlayerbotAI* const ai)
@@ -62,6 +213,7 @@ void PlayerbotWarlockAI::InitSpells(PlayerbotAI* const ai)
     DARK_PACT             = ai->initSpell(DARK_PACT_1);
     HOWL_OF_TERROR        = ai->initSpell(HOWL_OF_TERROR_1);
     FEAR                  = ai->initSpell(FEAR_1);
+    SIPHON_LIFE           = ai->initSpell(SIPHON_LIFE_1);
     // DEMONOLOGY
     DEMON_SKIN            = ai->initSpell(DEMON_SKIN_1);
     DEMON_ARMOR           = ai->initSpell(DEMON_ARMOR_1);
@@ -95,369 +247,182 @@ void PlayerbotWarlockAI::InitSpells(PlayerbotAI* const ai)
     EVERY_MAN_FOR_HIMSELF = ai->initSpell(EVERY_MAN_FOR_HIMSELF_ALL); // human
     BLOOD_FURY            = ai->initSpell(BLOOD_FURY_WARLOCK); // orc
     WILL_OF_THE_FORSAKEN  = ai->initSpell(WILL_OF_THE_FORSAKEN_ALL); // undead
+    InitPet();
 }
 
 PlayerbotWarlockAI::~PlayerbotWarlockAI() {}
 
-void PlayerbotWarlockAI::DoCombatManeuver(Unit *pTarget)
+void PlayerbotWarlockAI::DoCombatManeuver(Unit *pTarget, bool cac)
 {
-    PlayerbotAI *ai = GetAI();
-    if (!ai)
-        return;
-
-    Player * m_bot = GetPlayerBot();
-    if (!m_bot)
-        return;
-
+    PlayerbotAI* ai = GetAI();
+    Player* m_bot = GetPlayerBot();
     Player* m_master = ai->GetLeader();
-    if (!m_master)
-        return;
 
-    //ai->SetMovementTarget( PlayerbotAI::MOVEMENT_FOLLOW, m_master ); // dont want to melee mob
-
-    ai->SetInFront(pTarget);
-    Unit* pVictim = pTarget->getVictim();
-    Pet *pet = m_bot->GetPet();
-
-    // Empower demon
-    if (pet && DEMONIC_EMPOWERMENT && !m_bot->HasSpellCooldown(DEMONIC_EMPOWERMENT))
-        ai->CastSpell(DEMONIC_EMPOWERMENT);
-
-    // Use voidwalker sacrifice on low health if possible
-    if (ai->GetHealthPercent() < 50)
+    switch (m_bot->getRole())
     {
-        if (pet && pet->GetEntry() == DEMON_VOIDWALKER && SACRIFICE && !m_bot->HasAura(SACRIFICE))
-            ai->CastPetSpell(SACRIFICE);
+        case WarlockDestruction:
+        {
+            static const uint32 SpellFire[] = {CURSE_OF_AGONY, IMMOLATE, INCINERATE};
+            static uint32 elt = sizeof(SpellFire)/sizeof(uint32);
+
+            for (uint32 i = 1; i <= elt; ++i)
+            {
+                uint32 spellId = SpellFire[(i+LastSpellDestruction)%elt];
+                if (spellId==INCINERATE && !m_bot->HasSpell(INCINERATE))
+                   spellId = SHADOW_BOLT;
+                if (ai->CastSpell(spellId, pTarget))
+                {
+                    LastSpellDestruction = (i+LastSpellDestruction)%elt;
+                    break;
+                }
+            }
+            break;
+        }
+        case WarlockCurses:
+        {
+            static const uint32 SpellArcane[] = {HAUNT, SHADOW_BOLT, UNSTABLE_AFFLICTION, IMMOLATE,
+                CORRUPTION, CURSE_OF_AGONY, SIPHON_LIFE};
+            static uint32 elt = sizeof(SpellArcane)/sizeof(uint32);
+
+            for (uint32 i = 1; i <= elt; ++i)
+            {
+                uint32 spellId = SpellArcane[(i+LastSpellCurses)%elt];
+
+                if (spellId==IMMOLATE && pTarget->GetHealthPercent() < 35.0f)
+                   continue;
+                if (spellId==SHADOW_BOLT && pTarget->GetHealthPercent() < 25.0f)
+                   spellId=DRAIN_SOUL;
+
+                if (ai->CastSpell(spellId, pTarget))
+                {
+                    LastSpellCurses = (i+LastSpellCurses)%elt;
+                    break;
+                }
+            }
+            break;
+        }
+        case WarlockSummoning:
+        {
+            static const uint32 SpellFrost[] = {CURSE_OF_AGONY, CORRUPTION, IMMOLATE, INCINERATE};
+            static uint32 elt = sizeof(SpellFrost)/sizeof(uint32);
+
+            for (uint32 i = 1; i <= elt; ++i)
+            {
+                uint32 spellId = SpellFrost[(i+LastSpellSummoning)%elt];
+                if (spellId==INCINERATE && !m_bot->HasSpell(INCINERATE))
+                   spellId = SHADOW_BOLT;
+                if (ai->CastSpell(spellId, pTarget))
+                {
+                    LastSpellSummoning = (i+LastSpellSummoning)%elt;
+                    break;
+                }
+            }
+            break;
+        }
     }
-
-    // Use healthstone
-    if (ai->GetHealthPercent() < 30)
-    {
-        Item* healthStone = ai->FindConsumable(HEALTHSTONE_DISPLAYID);
-        if (healthStone)
-            ai->UseItem(healthStone);
-    }
-
-    // Damage Spells
-    switch (SpellSequence)
-    {
-        case SPELL_CURSES:
-            if (CURSE_OF_AGONY && !pTarget->HasAura(CURSE_OF_AGONY) && !pTarget->HasAura(SHADOWFLAME) && LastSpellCurse < 1)
-            {
-                ai->CastSpell(CURSE_OF_AGONY, pTarget);
-                SpellSequence = SPELL_AFFLICTION;
-                ++LastSpellCurse;
-                break;
-            }
-            else if (CURSE_OF_THE_ELEMENTS && !pTarget->HasAura(CURSE_OF_THE_ELEMENTS) && !pTarget->HasAura(SHADOWFLAME) && !pTarget->HasAura(CURSE_OF_AGONY) && !pTarget->HasAura(CURSE_OF_WEAKNESS) && LastSpellCurse < 2)
-            {
-                ai->CastSpell(CURSE_OF_THE_ELEMENTS, pTarget);
-                SpellSequence = SPELL_AFFLICTION;
-                ++LastSpellCurse;
-                break;
-            }
-            else if (CURSE_OF_WEAKNESS && !pTarget->HasAura(CURSE_OF_WEAKNESS) && !pTarget->HasAura(SHADOWFLAME) && !pTarget->HasAura(CURSE_OF_AGONY) && !pTarget->HasAura(CURSE_OF_THE_ELEMENTS) && LastSpellCurse < 3)
-            {
-                ai->CastSpell(CURSE_OF_WEAKNESS, pTarget);
-                SpellSequence = SPELL_AFFLICTION;
-                ++LastSpellCurse;
-                break;
-            }
-            else if (CURSE_OF_TONGUES && !pTarget->HasAura(CURSE_OF_TONGUES) && !pTarget->HasAura(SHADOWFLAME) && !pTarget->HasAura(CURSE_OF_WEAKNESS) && !pTarget->HasAura(CURSE_OF_AGONY) && !pTarget->HasAura(CURSE_OF_THE_ELEMENTS) && LastSpellCurse < 4)
-            {
-                ai->CastSpell(CURSE_OF_TONGUES, pTarget);
-                SpellSequence = SPELL_AFFLICTION;
-                ++LastSpellCurse;
-                break;
-            }
-            LastSpellCurse = 0;
-        //SpellSequence = SPELL_AFFLICTION;
-        //break;
-
-        case SPELL_AFFLICTION:
-            if (LIFE_TAP && LastSpellAffliction < 1 && ai->GetManaPercent() <= 50 && ai->GetHealthPercent() > 50)
-            {
-                ai->CastSpell(LIFE_TAP, m_bot);
-                SpellSequence = SPELL_DESTRUCTION;
-                ++LastSpellAffliction;
-                break;
-            }
-            else if (CORRUPTION && !pTarget->HasAura(CORRUPTION) && !pTarget->HasAura(SHADOWFLAME) && !pTarget->HasAura(SEED_OF_CORRUPTION) && LastSpellAffliction < 2)
-            {
-                ai->CastSpell(CORRUPTION, pTarget);
-                SpellSequence = SPELL_DESTRUCTION;
-                ++LastSpellAffliction;
-                break;
-            }
-            else if (DRAIN_SOUL && pTarget->GetHealth() < pTarget->GetMaxHealth() * 0.40 && !pTarget->HasAura(DRAIN_SOUL) && LastSpellAffliction < 3)
-            {
-                ai->CastSpell(DRAIN_SOUL, pTarget);
-                //ai->SetIgnoreUpdateTime(15);
-                SpellSequence = SPELL_DESTRUCTION;
-                ++LastSpellAffliction;
-                break;
-            }
-            else if (DRAIN_LIFE && LastSpellAffliction < 4 && !pTarget->HasAura(DRAIN_SOUL) && !pTarget->HasAura(SEED_OF_CORRUPTION) && !pTarget->HasAura(DRAIN_LIFE) && !pTarget->HasAura(DRAIN_MANA) && ai->GetHealthPercent() <= 70)
-            {
-                ai->CastSpell(DRAIN_LIFE, pTarget);
-                //ai->SetIgnoreUpdateTime(5);
-                SpellSequence = SPELL_DESTRUCTION;
-                ++LastSpellAffliction;
-                break;
-            }
-            else if (UNSTABLE_AFFLICTION && LastSpellAffliction < 5 && !pTarget->HasAura(UNSTABLE_AFFLICTION) && !pTarget->HasAura(SHADOWFLAME))
-            {
-                ai->CastSpell(UNSTABLE_AFFLICTION, pTarget);
-                SpellSequence = SPELL_DESTRUCTION;
-                ++LastSpellAffliction;
-                break;
-            }
-            else if (HAUNT && LastSpellAffliction < 6 && !pTarget->HasAura(HAUNT))
-            {
-                ai->CastSpell(HAUNT, pTarget);
-                SpellSequence = SPELL_DESTRUCTION;
-                ++LastSpellAffliction;
-                break;
-            }
-            else if (SEED_OF_CORRUPTION && !pTarget->HasAura(SEED_OF_CORRUPTION) && LastSpellAffliction < 7)
-            {
-                ai->CastSpell(SEED_OF_CORRUPTION, pTarget);
-                SpellSequence = SPELL_DESTRUCTION;
-                ++LastSpellAffliction;
-                break;
-            }
-            else if (HOWL_OF_TERROR && !pTarget->HasAura(HOWL_OF_TERROR) && LastSpellAffliction < 8)
-            {
-                ai->CastSpell(HOWL_OF_TERROR, pTarget);
-
-                SpellSequence = SPELL_DESTRUCTION;
-                ++LastSpellAffliction;
-                break;
-            }
-            else if (FEAR && !pTarget->HasAura(FEAR) && pVictim == m_bot && LastSpellAffliction < 9)
-            {
-                ai->CastSpell(FEAR, pTarget);
-
-                //ai->SetIgnoreUpdateTime(1.5);
-                SpellSequence = SPELL_DESTRUCTION;
-                ++LastSpellAffliction;
-                break;
-            }
-            else if ((pet)
-                     && (DARK_PACT > 0 && ai->GetManaPercent() <= 50 && LastSpellAffliction < 10 && pet->GetPower(POWER_MANA) > 0))
-            {
-                ai->CastSpell(DARK_PACT, m_bot);
-                SpellSequence = SPELL_DESTRUCTION;
-                ++LastSpellAffliction;
-                break;
-            }
-            LastSpellAffliction = 0;
-        //SpellSequence = SPELL_DESTRUCTION;
-        //break;
-
-        case SPELL_DESTRUCTION:
-            if (SHADOWFURY && LastSpellDestruction < 1 && !pTarget->HasAura(SHADOWFURY))
-            {
-                ai->CastSpell(SHADOWFURY, pTarget);
-                SpellSequence = SPELL_CURSES;
-                ++LastSpellDestruction;
-                break;
-            }
-            else if (SHADOW_BOLT && LastSpellDestruction < 2)
-            {
-                ai->CastSpell(SHADOW_BOLT, pTarget);
-                SpellSequence = SPELL_CURSES;
-                ++LastSpellDestruction;
-                break;
-            }
-            else if (RAIN_OF_FIRE && LastSpellDestruction < 3)
-            {
-                ai->CastSpell(RAIN_OF_FIRE, pTarget);
-
-                //ai->SetIgnoreUpdateTime(8);
-                SpellSequence = SPELL_CURSES;
-                ++LastSpellDestruction;
-                break;
-            }
-            else if (SHADOWFLAME && !pTarget->HasAura(SHADOWFLAME) && LastSpellDestruction < 4)
-            {
-                ai->CastSpell(SHADOWFLAME, pTarget);
-                SpellSequence = SPELL_CURSES;
-                ++LastSpellDestruction;
-                break;
-            }
-            else if (IMMOLATE && !pTarget->HasAura(IMMOLATE) && !pTarget->HasAura(SHADOWFLAME) && LastSpellDestruction < 5)
-            {
-                ai->CastSpell(IMMOLATE, pTarget);
-                SpellSequence = SPELL_CURSES;
-                ++LastSpellDestruction;
-                break;
-            }
-            else if (CONFLAGRATE && LastSpellDestruction < 6)
-            {
-                ai->CastSpell(CONFLAGRATE, pTarget);
-                SpellSequence = SPELL_CURSES;
-                ++LastSpellDestruction;
-                break;
-            }
-            else if (INCINERATE && LastSpellDestruction < 7)
-            {
-                ai->CastSpell(INCINERATE, pTarget);
-                SpellSequence = SPELL_CURSES;
-                ++LastSpellDestruction;
-                break;
-            }
-            else if (SEARING_PAIN && LastSpellDestruction < 8)
-            {
-                ai->CastSpell(SEARING_PAIN, pTarget);
-                SpellSequence = SPELL_CURSES;
-                ++LastSpellDestruction;
-                break;
-            }
-            else if (SOUL_FIRE && LastSpellDestruction < 9)
-            {
-                ai->CastSpell(SOUL_FIRE, pTarget);
-                //ai->SetIgnoreUpdateTime(6);
-                SpellSequence = SPELL_CURSES;
-                ++LastSpellDestruction;
-                break;
-            }
-            else if (CHAOS_BOLT && LastSpellDestruction < 10)
-            {
-                ai->CastSpell(CHAOS_BOLT, pTarget);
-                SpellSequence = SPELL_CURSES;
-                ++LastSpellDestruction;
-                break;
-            }
-            else if (SHADOWBURN && LastSpellDestruction < 11 && pTarget->GetHealth() < pTarget->GetMaxHealth() * 0.20 && !pTarget->HasAura(SHADOWBURN))
-            {
-                ai->CastSpell(SHADOWBURN, pTarget);
-                SpellSequence = SPELL_CURSES;
-                ++LastSpellDestruction;
-                break;
-            }
-            else if (HELLFIRE && LastSpellDestruction < 12 && !m_bot->HasAura(HELLFIRE) && ai->GetHealthPercent() >= 50)
-            {
-                ai->CastSpell(HELLFIRE);
-
-                //ai->SetIgnoreUpdateTime(15);
-                SpellSequence = SPELL_CURSES;
-                ++LastSpellDestruction;
-                break;
-            }
-            else
-            {
-                LastSpellDestruction = 0;
-                SpellSequence = SPELL_CURSES;
-            }
-    }
-} // end DoCombatManeuver
+}
 
 void PlayerbotWarlockAI::DoNonCombatActions()
 {
-    SpellSequence = SPELL_CURSES;
-
-    PlayerbotAI *ai = GetAI();
-    if (!ai)
-        return;
-
-    Player * m_bot = GetPlayerBot();
-    if (!m_bot)
-        return;
-
+    PlayerbotAI* ai = GetAI();
+    Player* m_bot = GetPlayerBot();
     Player* m_master = ai->GetLeader();
-    if (!m_master)
+
+    if (!ai->CastAura(FEL_ARMOR, m_bot))
+        if (!ai->CastAura(DEMON_ARMOR, m_bot))
+            if (ai->CastAura(DEMON_SKIN, m_bot))
+                return;
+
+    uint8 shardCount = m_bot->GetItemCount(SOUL_SHARD, false, NULL);
+    uint8 freeSpace = ai->GetFreeBagSpace();
+    if (shardCount > MAX_SHARD_COUNT && freeSpace == 0 && shardCount > 1)
+        m_bot->DestroyItemCount(SOUL_SHARD, shardCount > MAX_SHARD_COUNT ? shardCount - MAX_SHARD_COUNT : 1, true, false);
+    else if(shardCount==0 && freeSpace!=0)
+        m_bot->StoreNewItemInBestSlots(SOUL_SHARD, 1);
+
+    if (InitPet())
         return;
 
     Pet *pet = m_bot->GetPet();
-
-    // Initialize pet spells
-    if (pet && pet->GetEntry() != m_lastDemon)
+    if (pet)
     {
-        switch (pet->GetEntry())
+        if (petInitAi)
+        {
+            switch (pet->GetEntry())
+            {
+                case DEMON_IMP:
+                {
+                    BLOOD_PACT       = ai->initPetSpell(BLOOD_PACT_ICON);
+                    FIREBOLT         = ai->initPetSpell(FIREBOLT_ICON);
+                    FIRE_SHIELD      = ai->initPetSpell(FIRE_SHIELD_ICON);
+                    break;
+                }
+                case DEMON_VOIDWALKER:
+                {
+                    CONSUME_SHADOWS  = ai->initPetSpell(CONSUME_SHADOWS_ICON);
+                    SACRIFICE        = ai->initPetSpell(SACRIFICE_ICON);
+                    SUFFERING        = ai->initPetSpell(SUFFERING_ICON);
+                    TORMENT          = ai->initPetSpell(TORMENT_ICON);
+                    break;
+                }
+                case DEMON_SUCCUBUS:
+                {
+                    LASH_OF_PAIN     = ai->initPetSpell(LASH_OF_PAIN_ICON);
+                    SEDUCTION        = ai->initPetSpell(SEDUCTION_ICON);
+                    SOOTHING_KISS    = ai->initPetSpell(SOOTHING_KISS_ICON);
+                    break;
+                }
+                case DEMON_FELHUNTER:
+                {
+                    DEVOUR_MAGIC     = ai->initPetSpell(DEVOUR_MAGIC_ICON);
+                    FEL_INTELLIGENCE = ai->initPetSpell(FEL_INTELLIGENCE_ICON);
+                    SHADOW_BITE      = ai->initPetSpell(SHADOW_BITE_ICON);
+                    SPELL_LOCK       = ai->initPetSpell(SPELL_LOCK_ICON);
+                    break;
+                }
+                case DEMON_FELGUARD:
+                {
+                    ANGUISH          = ai->initPetSpell(ANGUISH_ICON);
+                    CLEAVE           = ai->initPetSpell(CLEAVE_ICON);
+                    INTERCEPT        = ai->initPetSpell(INTERCEPT_ICON);
+                    break;
+                }
+            }
+            petInitAi = false;
+        }
+
+        if (!m_bot->HasAura(SOUL_LINK_AURA) && ai->CastSpell(SOUL_LINK, m_bot))
+            return;
+
+        switch(pet->GetEntry())
         {
             case DEMON_IMP:
             {
-                BLOOD_PACT       = ai->initPetSpell(BLOOD_PACT_ICON);
-                FIREBOLT         = ai->initPetSpell(FIREBOLT_ICON);
-                FIRE_SHIELD      = ai->initPetSpell(FIRE_SHIELD_ICON);
+                if (pet->GetHealthPercent() < 75 && ai->CastPetAura(BLOOD_PACT, m_bot))
+                    return;
                 break;
             }
             case DEMON_VOIDWALKER:
             {
-                CONSUME_SHADOWS  = ai->initPetSpell(CONSUME_SHADOWS_ICON);
-                SACRIFICE        = ai->initPetSpell(SACRIFICE_ICON);
-                SUFFERING        = ai->initPetSpell(SUFFERING_ICON);
-                TORMENT          = ai->initPetSpell(TORMENT_ICON);
-                break;
-            }
-            case DEMON_SUCCUBUS:
-            {
-                LASH_OF_PAIN     = ai->initPetSpell(LASH_OF_PAIN_ICON);
-                SEDUCTION        = ai->initPetSpell(SEDUCTION_ICON);
-                SOOTHING_KISS    = ai->initPetSpell(SOOTHING_KISS_ICON);
+                if (pet->GetHealthPercent() < 75 && ai->CastPetAura(CONSUME_SHADOWS, m_bot))
+                    return;
                 break;
             }
             case DEMON_FELHUNTER:
             {
-                DEVOUR_MAGIC     = ai->initPetSpell(DEVOUR_MAGIC_ICON);
-                FEL_INTELLIGENCE = ai->initPetSpell(FEL_INTELLIGENCE_ICON);
-                SHADOW_BITE      = ai->initPetSpell(SHADOW_BITE_ICON);
-                SPELL_LOCK       = ai->initPetSpell(SPELL_LOCK_ICON);
-                break;
-            }
-            case DEMON_FELGUARD:
-            {
-                ANGUISH          = ai->initPetSpell(ANGUISH_ICON);
-                CLEAVE           = ai->initPetSpell(CLEAVE_ICON);
-                INTERCEPT        = ai->initPetSpell(INTERCEPT_ICON);
+                if (ai->CastPetAura(FEL_INTELLIGENCE, m_bot))
+                    return;
                 break;
             }
         }
-
-        m_lastDemon = pet->GetEntry();
-
-        if (!m_isTempImp)
-            m_demonOfChoice = pet->GetEntry();
     }
 
-    // Destroy extra soul shards
-    uint8 shardCount = m_bot->GetItemCount(SOUL_SHARD, false, NULL);
-    uint8 freeSpace = ai->GetFreeBagSpace();
-    if (shardCount > MAX_SHARD_COUNT || (freeSpace == 0 && shardCount > 1))
-        m_bot->DestroyItemCount(SOUL_SHARD, shardCount > MAX_SHARD_COUNT ? shardCount - MAX_SHARD_COUNT : 1, true, false);
-
-    // buff myself DEMON_SKIN, DEMON_ARMOR, FEL_ARMOR
-    if (FEL_ARMOR)
-    {
-        if (ai->SelfBuff(FEL_ARMOR))
-            return;
-    }
-    else if (DEMON_ARMOR)
-    {
-        if (ai->SelfBuff(DEMON_ARMOR))
-            return;
-    }
-    else if (DEMON_SKIN)
-    {
-        if (ai->SelfBuff(DEMON_SKIN))
-            return;
-    }
-
-    // healthstone creation
-    if (CREATE_HEALTHSTONE && shardCount > 0)
-    {
-        Item* const healthStone = ai->FindConsumable(HEALTHSTONE_DISPLAYID);
-        if (!healthStone && ai->CastSpell(CREATE_HEALTHSTONE))
-            return;
-    }
-
-    // soulstone creation and use
-    if (CREATE_SOULSTONE)
+    if (m_bot->HasSpell(CREATE_SOULSTONE))
     {
         Item* soulStone = ai->FindConsumable(SOULSTONE_DISPLAYID);
         if (!soulStone)
         {
+            shardCount = m_bot->GetItemCount(SOUL_SHARD, false, NULL);
             if (shardCount > 0 && !m_bot->HasSpellCooldown(CREATE_SOULSTONE) && ai->CastSpell(CREATE_SOULSTONE))
                 return;
         }
@@ -471,96 +436,4 @@ void PlayerbotWarlockAI::DoNonCombatActions()
             }
         }
     }
-
-    // firestone creation and use
-    Item* const weapon = m_bot->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND);
-    if (weapon && weapon->GetEnchantmentId(TEMP_ENCHANTMENT_SLOT) == 0)
-    {
-        Item* const stone = ai->FindConsumable(FIRESTONE_DISPLAYID);
-        if (!stone)
-        {
-            if (CREATE_FIRESTONE && shardCount > 0 && ai->CastSpell(CREATE_FIRESTONE))
-                return;
-        }
-        else
-        {
-            ai->UseItem(stone, EQUIPMENT_SLOT_MAINHAND);
-            return;
-        }
-    }
-
-    if (m_bot->getStandState() != UNIT_STAND_STATE_STAND)
-        m_bot->SetStandState(UNIT_STAND_STATE_STAND);
-
-    // mana check
-    if (pet && DARK_PACT && pet->GetPower(POWER_MANA) > 0 && ai->GetManaPercent() <= 50)
-    {
-        if (ai->CastSpell(DARK_PACT, m_bot))
-            return;
-    }
-
-    if (LIFE_TAP && ai->GetManaPercent() <= 50 && ai->GetHealthPercent() > 50)
-    {
-        if (ai->CastSpell(LIFE_TAP, m_bot))
-            return;
-    }
-
-    //Heal Voidwalker
-    if (pet && pet->GetEntry() == DEMON_VOIDWALKER && CONSUME_SHADOWS && pet->GetHealthPercent() < 75 && !pet->HasAura(CONSUME_SHADOWS))
-        ai->CastPetSpell(CONSUME_SHADOWS);
-
-    // Summon demon
-    if (!pet || m_isTempImp)
-    {
-        uint32 summonSpellId;
-        if (m_demonOfChoice != DEMON_IMP && shardCount > 0)
-        {
-            switch (m_demonOfChoice)
-            {
-                case DEMON_VOIDWALKER:
-                    summonSpellId = SUMMON_VOIDWALKER;
-                    break;
-                case DEMON_FELGUARD:
-                    summonSpellId = SUMMON_FELGUARD;
-                    break;
-                case DEMON_FELHUNTER:
-                    summonSpellId = SUMMON_FELHUNTER;
-                    break;
-                case DEMON_SUCCUBUS:
-                    summonSpellId = SUMMON_SUCCUBUS;
-                    break;
-                default:
-                    summonSpellId = 0;
-            }
-            if (ai->CastSpell(summonSpellId))
-            {
-
-                m_isTempImp = false;
-                return;
-            }
-        }
-        else
-        {
-            if (!pet && SUMMON_IMP && ai->CastSpell(SUMMON_IMP))
-            {
-                if (m_demonOfChoice != DEMON_IMP)
-                    m_isTempImp = true;
-
-
-                return;
-            }
-        }
-    }
-
-    // Soul link demon
-    if (pet && SOUL_LINK && !m_bot->HasAura(SOUL_LINK_AURA) && ai->CastSpell(SOUL_LINK, m_bot))
-        return;
-
-    // Check demon buffs
-    if (pet && pet->GetEntry() == DEMON_IMP && BLOOD_PACT && !m_bot->HasAura(BLOOD_PACT) && ai->CastPetSpell(BLOOD_PACT))
-        return;
-
-    if (pet && pet->GetEntry() == DEMON_FELHUNTER && FEL_INTELLIGENCE && !m_bot->HasAura(FEL_INTELLIGENCE) && ai->CastPetSpell(FEL_INTELLIGENCE))
-        return;
-
-} // end DoNonCombatActions
+}

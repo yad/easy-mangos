@@ -119,7 +119,7 @@ bool PlayerbotDruidAI::HealTarget(Unit *target)
     return false;
 } // end HealTarget
 
-void PlayerbotDruidAI::DoCombatManeuver(Unit *pTarget)
+void PlayerbotDruidAI::DoCombatManeuver(Unit *pTarget, bool cac)
 {
     PlayerbotAI *ai = GetAI();
     if (!ai)

@@ -113,7 +113,7 @@ bool PlayerbotPaladinAI::HealTarget(Unit *target)
     return false;
 } // end HealTarget
 
-void PlayerbotPaladinAI::DoCombatManeuver(Unit *pTarget)
+void PlayerbotPaladinAI::DoCombatManeuver(Unit *pTarget, bool cac)
 {
     Unit* pVictim = pTarget->getVictim();
 
@@ -384,7 +384,7 @@ void PlayerbotPaladinAI::DoNonCombatActions()
         else if (HealTarget(g_member))
             return;
         else if (BuffPlayer(g_member))
-            return;    
+            return;
 
     }while(ref = (ref) ? ref->next() : NULL);
 }

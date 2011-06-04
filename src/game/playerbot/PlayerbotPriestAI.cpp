@@ -94,7 +94,7 @@ bool PlayerbotPriestAI::HealTarget(Unit* target)
 
     if (target->isInCombat() && hp < 80 && !target->HasAura(WEAKENED_SOUL) && !target->HasAura(POWER_WORD_SHIELD) && ai->CastSpell(POWER_WORD_SHIELD, target))
         return true;
-    
+
     if (hp < 40 && ai->CastSpell(FLASH_HEAL, target))
         return true;
     else if (hp < 60 && ai->CastSpell(GREATER_HEAL, target))
@@ -105,7 +105,7 @@ bool PlayerbotPriestAI::HealTarget(Unit* target)
         return false;
 } // end HealTarget
 
-void PlayerbotPriestAI::DoCombatManeuver(Unit *pTarget)
+void PlayerbotPriestAI::DoCombatManeuver(Unit *pTarget, bool cac)
 {
     Unit* pVictim = pTarget->getVictim();
     PlayerbotAI* ai = GetAI();
@@ -130,7 +130,7 @@ void PlayerbotPriestAI::DoCombatManeuver(Unit *pTarget)
         if (targetOfTarget.IsPlayer())
         {
             Player *tank = sObjectMgr.GetPlayer(pTarget->GetTargetGuid());
-            
+
             if (tank->isAlive() && tank->IsInSameRaidWith(m_bot) && tank->GetHealthPercent() < 80)
             {
                 // Cast binding heal if target and caster have low health

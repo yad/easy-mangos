@@ -83,8 +83,6 @@ PlayerbotAI::PlayerbotAI(PlayerbotMgr* const mgr, Player* const bot) : m_mgr(mgr
     m_enterBg = 0;
     m_leaveBg = 0;
 
-    SetLeader(bot);
-
     m_botState = BOTSTATE_NORMAL;
     m_targetCombat = NULL;
     m_followTarget = m_bot;
@@ -477,7 +475,7 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
                 Unit* pTarget = ObjectAccessor::GetUnit(*m_bot, GetLeader()->GetSelectionGuid());
                 if (pTarget && pTarget->IsHostileTo(m_bot))
                 {
-                    SetCombatTarget(pTarget);
+                    ChangeCombatTarget(pTarget);
                     Spell* const pSpell = GetCurrentSpell();
                     if ((!GetLeader()->IsMounted()) && (m_bot->IsMounted()))
                         UnMount();
@@ -686,13 +684,13 @@ void PlayerbotAI::DoCombatManeuver()
     {
         if (!m_targetCombat || m_targetCombat->isDead() || !m_targetCombat->IsInWorld()
             || !m_bot->IsInMap(m_targetCombat) || !((Player*)m_targetCombat)->GetBattleGround())
-            SetCombatTarget(GetNewCombatTarget());
+            ChangeCombatTarget(GetNewCombatTarget());
     }
     else
     {
         if (!m_targetCombat || m_targetCombat->isDead() || !m_targetCombat->IsInWorld()
             || !m_bot->IsWithinDistInMap(m_targetCombat, 50.0f) || !m_bot->IsHostileTo(m_targetCombat))
-            SetCombatTarget(GetNewCombatTarget());
+            ChangeCombatTarget(GetNewCombatTarget());
     }
 
     if (m_targetCombat)
@@ -711,24 +709,31 @@ void PlayerbotAI::DoCombatManeuver()
                     m_bot->AttackerStateUpdate(m_targetCombat);
                     m_bot->resetAttackTimer();
                 }
+                GetClassAI()->DoCombatManeuver(m_targetCombat, true);
             }
-            //else
-                //Buff sur le chemin jusqu'à la cible
-            GetClassAI()->DoCombatManeuver(m_targetCombat);
+            else
+            {
+                GetClassAI()->DoFastBuffOnOneself();
+            }
         }
         else
         {
-            m_bot->Attack(m_targetCombat,false);
-            GetClassAI()->DoCombatManeuver(m_targetCombat);
+            if (m_bot->Attack(m_targetCombat,false))
+            {
+                m_bot->GetMotionMaster()->MoveChase(m_targetCombat, 30.0f);
+            }
+            GetClassAI()->DoCombatManeuver(m_targetCombat, m_bot->IsWithinDistInMap(m_targetCombat, ATTACK_DISTANCE));
         }        
     }
 }
 
-void PlayerbotAI::SetCombatTarget(Unit* targetCombat)
+void PlayerbotAI::ChangeCombatTarget(Unit* targetCombat)
 {
     m_targetCombat = targetCombat;
     if (m_targetCombat)
     {
+        GetClassAI()->ReinitCycles();
+
         m_bot->SetSelectionGuid((m_targetCombat->GetObjectGuid()));
         SetFollowTarget(m_targetCombat);
 
@@ -848,7 +853,11 @@ void PlayerbotAI::SetFollowTarget(Unit * followTarget, bool forced)
                     else
                     {
                         Spell* sp = GetCurrentSpell();
-                        if (sp && sp->IsRangedSpell())
+                        if (!sp)
+                        {
+                            MoveTo(rand_float(M_PI_F/2.0f, 3.0f*M_PI_F/2.0f)); //RANGED
+                        }
+                        else if (sp->IsRangedSpell())
                         {
                             SpellRangeEntry const *TempRange = GetSpellRangeStore()->LookupEntry(sp->m_spellInfo->rangeIndex);
                             if (!TempRange)
@@ -859,7 +868,7 @@ void PlayerbotAI::SetFollowTarget(Unit * followTarget, bool forced)
                             {
                                 if (!m_bot->IsInRange(m_followTarget,TempRange->minRange,TempRange->maxRange))
                                 {
-                                    MoveTo(rand_float(M_PI_F/2.0f, 3.0f*M_PI_F/2.0f)+M_PI_F, rand_float(TempRange->minRange, TempRange->maxRange)); //RANGED
+                                    MoveTo(rand_float(M_PI_F/2.0f, 3.0f*M_PI_F/2.0f)+M_PI_F, TempRange->maxRange); //RANGED
                                 }
                             }
                         }
@@ -1051,10 +1060,12 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
         return;
     m_ignoreAIUpdatesUntilTime = currentTime + 1;
 
-    if (!m_bot->IsInWorld() || !m_bot->GetMap())
-        return;
+    //Usefull comment to test bots !
+    /*if (!m_bot->GetGroup())
+        return;*/
 
-    if (!CheckTeleport())
+    //ALWAYS RESPECT THIS ORDER !!!!
+    if (!m_bot->IsInWorld() || !m_bot->GetMap() || !CheckTeleport() || !CheckLeader())
         return;
 
     if (m_bot==GetLeader())
@@ -1064,7 +1075,7 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
     }
     else
     {
-        if (!CheckMaster())
+        if (!CheckGroup())
             return;
     }
 
@@ -1163,13 +1174,13 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
     }
     else
     {
-        //Never remove it otherwise bots are glued
-        if (!m_followTarget || m_bot->GetMotionMaster()->GetCurrentMovementGeneratorType()==IDLE_MOTION_TYPE)
-            SetFollowTarget(GetLeader(), true);
-
         Spell* const pSpell = GetCurrentSpell();
         if (pSpell && !(pSpell->IsChannelActive() || pSpell->IsAutoRepeat()))
             InterruptCurrentCastingSpell();
+
+        //Never remove it otherwise bots are glued
+        if (!m_followTarget || (!pSpell && m_bot->GetMotionMaster()->GetCurrentMovementGeneratorType()==IDLE_MOTION_TYPE))
+            SetFollowTarget(GetLeader(), true);
 
         if (!IsInCombat())
         {

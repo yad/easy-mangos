@@ -1252,7 +1252,7 @@ bool TerrainInfo::CheckPathAccurate(float srcX, float srcY, float srcZ, float& d
                     }
                 }
             }
-            else 
+            else
                 ++goodCount;
         }
         else

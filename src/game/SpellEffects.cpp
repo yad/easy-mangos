@@ -9462,8 +9462,8 @@ void Spell::EffectLeapForward(SpellEffectIndex eff_idx)
         fx = unitTarget->GetPositionX() + distance * cos(unitTarget->GetOrientation());
         fy = unitTarget->GetPositionY() + distance * sin(unitTarget->GetOrientation());
 
-        MaNGOS::NormalizeMapCoord(fx); 
-        MaNGOS::NormalizeMapCoord(fy); 
+        MaNGOS::NormalizeMapCoord(fx);
+        MaNGOS::NormalizeMapCoord(fy);
 
         if (terrain->CheckPathAccurate(ox,oy,oz,fx,fy,fz, sWorld.getConfig(CONFIG_BOOL_CHECK_GO_IN_PATH) ? unitTarget : NULL ))
             DEBUG_LOG("Spell::EffectLeapForward unit %u forwarded on %f",unitTarget->GetObjectGuid().GetCounter(), unitTarget->GetDistance(fx,fy,fz));

@@ -90,7 +90,7 @@ void PlayerbotDeathKnightAI::InitSpells(PlayerbotAI* const ai)
 
 PlayerbotDeathKnightAI::~PlayerbotDeathKnightAI() {}
 
-void PlayerbotDeathKnightAI::DoCombatManeuver(Unit *pTarget)
+void PlayerbotDeathKnightAI::DoCombatManeuver(Unit *pTarget, bool cac)
 {
     PlayerbotAI *ai = GetAI();
     if (!ai)
