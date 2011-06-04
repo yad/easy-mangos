@@ -48,8 +48,6 @@
 #include "../MotionMaster.h"
 #include "../BattleGroundMgr.h"
 
-#define MAX_RANGE_MOVEMENT 500.0f
-
 float rand_float(float low, float high)
 {
     return (rand() / (static_cast<float> (RAND_MAX) + 1.0)) * (high - low) + low;
@@ -644,7 +642,6 @@ Unit* PlayerbotAI::GetNewCombatTarget()
                 ref = ref->next();
             }
         }
-        /*//TODO add multipet support
         if (m_bot->GetPet() && !m_bot->GetPet()->getAttackers().empty())
         {
             for(Unit::AttackerSet::const_iterator itr = m_bot->GetPet()->getAttackers().begin(); itr != m_bot->GetPet()->getAttackers().end(); ++itr)
@@ -652,7 +649,8 @@ Unit* PlayerbotAI::GetNewCombatTarget()
                 newCombatTarget = (*itr)->GetOwner();
                 if (!newCombatTarget || !newCombatTarget->isAlive())
                     newCombatTarget = (*itr);
-                return newCombatTarget;
+                if (newCombatTarget && newCombatTarget->isAlive())
+                    return newCombatTarget;
             }
         }
         if (m_bot->GetGroup())
@@ -660,19 +658,29 @@ Unit* PlayerbotAI::GetNewCombatTarget()
             GroupReference *ref = m_bot->GetGroup()->GetFirstMember();
             while (ref)
             {
-                if (ref->getSource()->GetPet() && !ref->getSource()->GetPet()->getAttackers().empty())
+                if (!ref->getSource()->getAttackers().empty())
                 {
-                    for(Unit::AttackerSet::const_iterator itr = ref->getSource()->GetPet()->getAttackers().begin(); itr != ref->getSource()->GetPet()->getAttackers().end(); ++itr)
+                    for(Unit::AttackerSet::const_iterator itr = ref->getSource()->getAttackers().begin(); itr != ref->getSource()->getAttackers().end(); ++itr)
                     {
                         newCombatTarget = (*itr)->GetOwner();
                         if (!newCombatTarget || !newCombatTarget->isAlive())
                             newCombatTarget = (*itr);
-                        return newCombatTarget;
+                        if (newCombatTarget && newCombatTarget->isAlive())
+                            return newCombatTarget;
                     }
+                }
+
+                if (ref->getSource()->getVictim())
+                {
+                    newCombatTarget = ref->getSource()->getVictim()->GetOwner();
+                    if (!newCombatTarget || !newCombatTarget->isAlive())
+                            newCombatTarget = ref->getSource()->getVictim();
+                    if (newCombatTarget && newCombatTarget->isAlive())
+                        return newCombatTarget;
                 }
                 ref = ref->next();
             }
-        }*/
+        }
     }
     //TODO ajouter de quoi rendre les bots agressifs
     return NULL;
@@ -695,6 +703,12 @@ void PlayerbotAI::DoCombatManeuver()
 
     if (m_targetCombat)
     {
+        if (m_bot->GetHealthPercent() < MIN_HP_PERCENT_BEFORE_FLEEING)
+        {
+            m_bot->GetMotionMaster()->MoveFleeing(m_targetCombat);
+            //Add some stuff here to heal himself
+            return;
+        }
         SetInFront(m_targetCombat);
         if (GetCombatType()==BOTCOMBAT_CAC)
         {
@@ -913,8 +927,7 @@ void PlayerbotAI::MoveTo(float angle, float minDist, float maxDist, float x, flo
             }
             else
             {
-                //TODO fix it... les bots cherchent à attaquer des cibles pacifiques :s
-                if (GetCombatType()==BOTCOMBAT_CAC && GetLeader()!=m_bot)
+                if (m_bot->IsHostileTo(m_followTarget))
                 {
                     m_bot->GetMotionMaster()->Clear(true);
                     m_bot->GetMotionMaster()->MoveChase(m_followTarget);
@@ -949,7 +962,6 @@ void PlayerbotAI::MoveInLineOfSight(Unit *u)
         {
             if(m_bot->IsWithinLOSInMap(u))
             {
-                //AttackStart(u);
                 if (m_bot->Attack(m_targetCombat,true))
                 {
                     m_bot->GetMotionMaster()->MoveChase(m_targetCombat);
@@ -1065,7 +1077,7 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
         return;*/
 
     //ALWAYS RESPECT THIS ORDER !!!!
-    if (!m_bot->IsInWorld() || !m_bot->GetMap() || !CheckTeleport() || !CheckLeader())
+    if (!CheckLeader() || !CheckTeleport())
         return;
 
     if (m_bot==GetLeader())

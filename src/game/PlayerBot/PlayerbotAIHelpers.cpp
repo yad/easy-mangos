@@ -1003,12 +1003,8 @@ uint32 PlayerbotAI::EstRepair(uint16 pos)
 
 bool PlayerbotAI::CheckTeleport()
 {
-    //Don't remove this check !
-    if (GetLeader() && GetLeader()->IsBeingTeleported())
-    {
-        m_bot->GetMotionMaster()->Clear(true);
+    if (!m_bot->GetMap() || !m_bot->GetTerrain())
         return false;
-    }
 
     if (m_bot->IsBeingTeleported())
     {
@@ -1016,11 +1012,40 @@ bool PlayerbotAI::CheckTeleport()
         return false;
     }
 
+    //Don't remove this check !
+    if (GetLeader() && m_bot!=GetLeader())
+    {
+        if (!GetLeader()->GetMap() || !GetLeader()->GetTerrain())
+        {
+            m_bot->GetMotionMaster()->Clear(true);
+            return false;
+        }
+
+        if (!m_bot->IsInMap(GetLeader()))
+        {
+            m_bot->GetMotionMaster()->Clear(true);
+            this->SetFollowTarget(GetLeader(), true);
+            return false;
+        }
+
+        if (GetLeader()->IsBeingTeleported())
+        {
+            m_bot->GetMotionMaster()->Clear(true);
+            return false;
+        }
+    }
+
     if (m_bot->GetGroup())
     {
         GroupReference *ref = m_bot->GetGroup()->GetFirstMember();
         while (ref)
         {
+            if (!ref->getSource()->GetMap() || !ref->getSource()->GetTerrain())
+            {
+                m_bot->GetMotionMaster()->Clear(true);
+                return false;
+            }
+
             if (ref->getSource()->IsBeingTeleported())
             {
                 m_bot->GetMotionMaster()->Clear(true);
@@ -1034,7 +1059,7 @@ bool PlayerbotAI::CheckTeleport()
 
 bool PlayerbotAI::CheckLeader()
 {
-    if (!GetLeader() || !GetLeader()->IsInWorld())
+    if (!GetLeader() || (!GetLeader()->IsInWorld() && !GetLeader()->IsBeingTeleported()))
     {
         SetLeader(m_bot);
         ReinitAI();

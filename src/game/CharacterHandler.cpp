@@ -897,7 +897,7 @@ void PlayerbotMgr::AddAllBots()
                         break;
                 }
             }
-            while (result->NextRow() && cycle < 2 && (itrAlliance < nbBotsWantedAlliance || itrHorde < nbBotsWantedHorde));
+            while (result->NextRow() && cycle < 5 && (itrAlliance < nbBotsWantedAlliance || itrHorde < nbBotsWantedHorde));
             delete result;
         }
     }
