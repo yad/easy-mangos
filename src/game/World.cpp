@@ -876,6 +876,7 @@ void World::LoadConfigSettings(bool reload)
     setConfig(CONFIG_INT32_MAX_BOT_ALLIANCE_SIDE,           PlBotCfg.GetIntDefault("PlayerBot.MaxBots.AllianceSide", 100));
     setConfig(CONFIG_INT32_MAX_BOT_HORDE_SIDE,              PlBotCfg.GetIntDefault("PlayerBot.MaxBots.HordeSide", 100));
     setConfig(CONFIG_UINT32_BOT_JOIN_BG,                    PlBotCfg.GetIntDefault("PlayerBot.Join.Battleground", 0));
+    setConfig(CONFIG_BOOL_LEARN_SPELLS_AT_LEVEL_UP, "LearnSpellsAtLevelUp", false);
 }
 
 /// Initialize the World

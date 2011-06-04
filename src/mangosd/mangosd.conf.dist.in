@@ -766,6 +766,10 @@ LogColors = "13 7 11 9"
 #        may use many CPU resources!
 #        Default: 0
 #
+#    LearnSpellsAtLevelUp
+#        If enable, players learn their spells for their level at levelup
+#        Default: 0
+#
 ###################################################################################################################
 
 GameType = 1
@@ -842,6 +846,7 @@ WaitAtStartupError = 0
 Motd = "Welcome to the Massive Network Game Object Server."
 Raid.MinLevel = 10
 CheckGOInPath = 0
+LearnSpellsAtLevelUp = 1
 
 ###################################################################################################################
 # PLAYER INTERACTION

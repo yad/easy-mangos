@@ -2731,6 +2731,9 @@ void Player::GiveLevel(uint32 level)
 
     GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_REACH_LEVEL);
 
+    if (!IsBot() && sWorld.getConfig(CONFIG_BOOL_LEARN_SPELLS_AT_LEVEL_UP))
+        LearnAllMySpellsForMyLevel();
+
     GetLFGState()->Update();
 
 }
