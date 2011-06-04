@@ -5013,6 +5013,9 @@ void ChatHandler::HandleCharacterLevel(Player* player, ObjectGuid player_guid, u
         player->InitTalentForLevel();
         player->SetUInt32Value(PLAYER_XP,0);
 
+        if (sWorld.getConfig(CONFIG_BOOL_LEARN_SPELLS_AT_LEVEL_UP))
+            player->LearnAllMySpellsForMyLevel();
+
         if(needReportToTarget(player))
         {
             if(oldlevel == newlevel)
