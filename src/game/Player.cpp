@@ -603,6 +603,8 @@ Player::Player (WorldSession *session): Unit(), m_mover(this), m_camera(this), m
 
     SetPendingBind(NULL, 0);
     m_LFGState = new LFGPlayerState(this);
+
+    m_chaos_mode = false;
 }
 
 Player::~Player ()
@@ -1441,6 +1443,12 @@ void Player::Update( uint32 update_diff, uint32 p_time )
 
         if (sWorld.getConfig(CONFIG_BOOL_NO_COOLDOWN))
             RemoveAllSpellCooldown();
+
+        if (m_chaos_mode && !getAttackers().empty())
+        {
+            Unit* enemy = *getAttackers().begin();
+            DealDamage(enemy, enemy->GetHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, NULL, false);
+        }
     }
 
     if (!isAlive() && !HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_GHOST) && getDeathState() != GHOULED )

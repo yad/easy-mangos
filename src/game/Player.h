@@ -2508,6 +2508,9 @@ class MANGOS_DLL_SPEC Player : public Unit
         uint32 GetTimeInArenaQueue(uint8 index) { return timeInArenaQueue[index]; }
         void SetTimeInArenaQueue(uint8 index, uint32 t) { timeInArenaQueue[index] = t; }
 
+        bool GetChaosMode() { return m_chaos_mode; }
+        void SetChaosMode(bool c) { m_chaos_mode = c; }
+
     protected:
 
         uint32 m_contestedPvPTimer;
@@ -2742,6 +2745,8 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         /// class dependent melee diminishing constant for dodge/parry/missed chances
         static const float m_diminishing_k[MAX_CLASSES];
+
+        bool m_chaos_mode;
 
     private:
         void _HandleDeadlyPoison(Unit* Target, WeaponAttackType attType, SpellEntry const *spellInfo);

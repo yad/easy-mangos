@@ -18,6 +18,7 @@
 
 #include "Player.h"
 #include "Chat.h"
+#include "Language.h"
 #include "ArenaTeam.h"
 #include "SpellMgr.h"
 #include "ObjectMgr.h"
@@ -2729,6 +2730,39 @@ bool ChatHandler::HandleGMStartUpCommand(char* args)
         return true;
 
     player->GMStartup();
+    return true;
+}
+
+bool ChatHandler::HandleGMChaosCommand(char* args)
+{
+    if(!*args)
+    {
+        if(m_session->GetPlayer()->GetChaosMode())
+            m_session->SendNotification("Chaos on");
+        else
+            m_session->SendNotification("Chaos off");
+        return true;
+    }
+
+    bool value;
+    if (!ExtractOnOff(&args, value))
+    {
+        SendSysMessage(LANG_USE_BOL);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    if (value)
+    {
+        m_session->GetPlayer()->SetChaosMode(true);
+        m_session->SendNotification("Chaos on");
+    }
+    else
+    {
+        m_session->GetPlayer()->SetChaosMode(false);
+        m_session->SendNotification("Chaos off");
+    }
+
     return true;
 }
 
