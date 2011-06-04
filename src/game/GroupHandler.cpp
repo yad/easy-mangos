@@ -101,8 +101,11 @@ void WorldSession::HandleGroupInviteOpcode( WorldPacket & recv_data )
 
     if(group && group->isRaidGroup() && !player->GetAllowLowLevelRaid() && (player->getLevel() < sWorld.getConfig(CONFIG_UINT32_MIN_LEVEL_FOR_RAID)))
     {
-        SendPartyResult(PARTY_OP_INVITE, "", ERR_RAID_DISALLOWED_BY_LEVEL);
-        return;
+        if (!player->IsBot())
+        {
+            SendPartyResult(PARTY_OP_INVITE, "", ERR_RAID_DISALLOWED_BY_LEVEL);
+            return;
+        }
     }
 
     Group *group2 = player->GetGroup();
