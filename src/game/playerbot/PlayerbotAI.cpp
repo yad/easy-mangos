@@ -1186,7 +1186,9 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
         m_bot->GetIndispensableItems();
 
         //Never remove it otherwise bots are glued
-        if (!m_followTarget || (!pSpell && m_bot->GetMotionMaster()->GetCurrentMovementGeneratorType()==IDLE_MOTION_TYPE))
+        if (!m_followTarget
+            || (!pSpell && m_bot->GetMotionMaster()->GetCurrentMovementGeneratorType()==IDLE_MOTION_TYPE)
+            || !m_bot->IsWithinDistInMap(GetLeader(), 100.0f))
             SetFollowTarget(GetLeader(), true);
 
         if (!IsInCombat())
@@ -1197,8 +1199,6 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
                 SetFollowTarget(GetLeader(), true);
                 m_bot->AttackStop();
                 m_bot->SetSelectionGuid(ObjectGuid());
-                for (uint8 i = 0; i < CURRENT_MAX_SPELL; ++i)
-                    m_bot->InterruptSpell(CurrentSpellTypes(i), true, false);
             }
 
             if (GetLeader()!=m_bot)
