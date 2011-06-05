@@ -1444,7 +1444,7 @@ void Player::Update( uint32 update_diff, uint32 p_time )
         if (sWorld.getConfig(CONFIG_BOOL_NO_COOLDOWN))
             RemoveAllSpellCooldown();
 
-        if (m_chaos_mode && !getAttackers().empty())
+        while (m_chaos_mode && !getAttackers().empty())
         {
             Unit* enemy = *getAttackers().begin();
             DealDamage(enemy, enemy->GetHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, NULL, false);
