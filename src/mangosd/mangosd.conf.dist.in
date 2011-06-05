@@ -766,10 +766,6 @@ LogColors = "13 7 11 9"
 #        may use many CPU resources!
 #        Default: 0
 #
-#    LearnSpellsAtLevelUp
-#        If enable, players learn their spells for their level at levelup
-#        Default: 0
-#
 ###################################################################################################################
 
 GameType = 1
@@ -846,7 +842,6 @@ WaitAtStartupError = 0
 Motd = "Welcome to the Massive Network Game Object Server."
 Raid.MinLevel = 10
 CheckGOInPath = 0
-LearnSpellsAtLevelUp = 1
 
 ###################################################################################################################
 # PLAYER INTERACTION
@@ -1687,6 +1682,14 @@ LFG.MaxKicks            = 5
 #         Set it to 1 to have unlimited ammo
 #     Default : 0
 #
+#     Custom.UnLimitedIndispensableItems
+#         Set it to 1 to have unlimited indispensable items
+#     Default : 0
+#
+#    Custom.LearnSpellsAtLevelUp
+#        If enable, players learn their spells for their level at levelup
+#    Default: 0
+#
 ###################################################################################################################
 
 Custom.SpeedGame = 1
@@ -1696,3 +1699,5 @@ Custom.HurtInRealTime = 0
 Custom.NoWaitAfterCast = 0
 Custom.AllowFlyingMountsEverywhere = 0
 Custom.UnLimitedAmmo = 0
+Custom.UnLimitedIndispensableItems = 0
+Custom.LearnSpellsAtLevelUp = 0

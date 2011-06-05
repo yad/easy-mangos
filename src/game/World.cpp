@@ -808,6 +808,8 @@ void World::LoadConfigSettings(bool reload)
     setConfig(CONFIG_BOOL_NO_WAIT_AFTER_CAST,             "Custom.NoWaitAfterCast",             false);
     setConfig(CONFIG_BOOL_ALLOW_FLYING_MOUNTS_EVERYWHERE, "Custom.AllowFlyingMountsEverywhere", false);
     setConfig(CONFIG_BOOL_UNLIMITED_AMMO,                 "Custom.UnLimitedAmmo",               false);
+    setConfig(CONFIG_BOOL_UNLIMITED_INDISPENDABLE_ITEMS,  "Custom.UnLimitedIndispensableItems", false);
+    setConfig(CONFIG_BOOL_LEARN_SPELLS_AT_LEVEL_UP,       "Custom.LearnSpellsAtLevelUp",        false);
 
     setConfig(CONFIG_BOOL_RAID_FLAGS_UNIQUE,      "RaidFlags.Unique", false);
     setConfig(CONFIG_BOOL_ARMORY_SUPPORT, "WOWArmorySupport", false);
@@ -876,7 +878,6 @@ void World::LoadConfigSettings(bool reload)
     setConfig(CONFIG_INT32_MAX_BOT_ALLIANCE_SIDE,           PlBotCfg.GetIntDefault("PlayerBot.MaxBots.AllianceSide", 100));
     setConfig(CONFIG_INT32_MAX_BOT_HORDE_SIDE,              PlBotCfg.GetIntDefault("PlayerBot.MaxBots.HordeSide", 100));
     setConfig(CONFIG_UINT32_BOT_JOIN_BG,                    PlBotCfg.GetIntDefault("PlayerBot.Join.Battleground", 0));
-    setConfig(CONFIG_BOOL_LEARN_SPELLS_AT_LEVEL_UP, "LearnSpellsAtLevelUp", false);
 }
 
 /// Initialize the World

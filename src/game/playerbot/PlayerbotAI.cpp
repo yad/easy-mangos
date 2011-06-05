@@ -144,8 +144,7 @@ void PlayerbotAI::ReinitAI()
 
     if (m_bot == GetLeader())
     {
-        m_bot->GiveLevel(m_bot->GetLevelAtLoading());
-        InitBotStatsForLevel();
+        InitBotStatsForLevel(m_bot->GetLevelAtLoading());
         m_bot->TeleportTo(orig_map, orig_x, orig_y, orig_z, 0.0f);
         for (uint8 i = 0; i < MAX_ARENA_SLOT; ++i)
         {
@@ -1169,10 +1168,10 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
 
             if (m_bot->getAttackers().empty())
             {
-                uint32 lvl = m_bot->getLevel() +1;
-                if (lvl < 81 && m_bot == GetLeader())
-                    m_bot->GiveLevel(lvl);
-                InitBotStatsForLevel();
+                uint32 lvl = m_bot->getLevel();
+                if (m_bot == GetLeader())
+                    lvl = (lvl+1) > DEFAULT_MAX_LEVEL ? DEFAULT_MAX_LEVEL : (lvl+1);
+                InitBotStatsForLevel(lvl);
             }
 
             SetState(BOTSTATE_NORMAL);
@@ -1242,8 +1241,8 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
             else
             {
                 CheckRoles();
-                if(CheckLevel())
-                    InitBotStatsForLevel();
+                if (GetLeader()->getLevel() != m_bot->getLevel())
+                    InitBotStatsForLevel(GetLeader()->getLevel());
                 GetClassAI()->DoNonCombatActions();
                 CheckMount();
             }

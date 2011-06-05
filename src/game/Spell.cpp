@@ -413,6 +413,10 @@ Spell::Spell( Unit* caster, SpellEntry const *info, bool triggered, ObjectGuid o
     }
 
     CleanupTargetList();
+
+    if(sWorld.getConfig(CONFIG_BOOL_NO_COOLDOWN))
+        if(m_caster->GetTypeId() == TYPEID_PLAYER)
+            ((Player*)m_caster)->RemoveSpellCooldown(m_spellInfo->Id, true);
 }
 
 Spell::~Spell()

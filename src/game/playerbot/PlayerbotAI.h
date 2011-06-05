@@ -185,8 +185,7 @@ public:
     bool CheckTeleport();
     bool CheckLeader();
     bool CheckGroup();
-    bool CheckLevel();
-    void InitBotStatsForLevel();
+    void InitBotStatsForLevel(uint32, bool = false);
     void CheckRoles();
     void CheckBG();
 

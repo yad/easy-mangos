@@ -1095,18 +1095,23 @@ bool PlayerbotAI::CheckGroup()
     return true;
 }
 
-bool PlayerbotAI::CheckLevel()
+void PlayerbotAI::InitBotStatsForLevel(uint32 level, bool forced)
 {
-    if (GetLeader()->getLevel() == m_bot->getLevel())
-        return false;
+    if (forced)
+    {
+        m_bot->CombatStop();
+        m_bot->CombatStopWithPets();
+        for (uint32 i = 0; i < CURRENT_MAX_SPELL; ++i)
+            m_bot->InterruptSpell(CurrentSpellTypes(i));
+        m_bot->RemoveAllAttackers();
+    }
 
-    m_bot->GiveLevel(GetLeader()->getLevel());
-    return true;
-}
+    uint16 eDest;
+    if (m_bot->CanEquipNewItem(NULL_SLOT, eDest, 38/*Recruit's Shirt*/, true)!=EQUIP_ERR_OK)
+        return;
 
-void PlayerbotAI::InitBotStatsForLevel()
-{
     m_bot->GMStartup(true);
+    m_bot->GiveLevel(level);
     m_bot->SetHealth(m_bot->GetMaxHealth());
     m_bot->SetPower(m_bot->getPowerType(), m_bot->GetMaxPower(m_bot->getPowerType()));
     GetClassAI()->InitSpells(m_bot->GetPlayerbotAI());

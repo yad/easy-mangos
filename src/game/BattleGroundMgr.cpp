@@ -964,8 +964,7 @@ void BattleGroundQueue::Update(BattleGroundTypeId bgTypeId, BattleGroundBracketI
                 for(std::list<Player *>::iterator tIter = team.begin(); tIter != team.end(); ++tIter)
                 {
                     Player* p = *tIter;
-                    p->GiveLevel(leader->getLevel());
-                    p->GetPlayerbotAI()->InitBotStatsForLevel();
+                    p->GetPlayerbotAI()->InitBotStatsForLevel(leader->getLevel());
 
                     if (team.front()->GetGroup() && !team.front()->GetGroup()->isRaidGroup() && team.front()->GetGroup()->IsFull())
                     {
@@ -1200,8 +1199,7 @@ void BattleGroundQueue::Update(BattleGroundTypeId bgTypeId, BattleGroundBracketI
                 for(std::list<Player *>::iterator tIter = team.begin(); tIter != team.end(); ++tIter)
                 {
                     Player* p = *tIter;
-                    p->GiveLevel(leader->getLevel());
-                    p->GetPlayerbotAI()->InitBotStatsForLevel();
+                    p->GetPlayerbotAI()->InitBotStatsForLevel(leader->getLevel());
 
                     if (team.front() == p)
                     {

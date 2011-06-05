@@ -1451,7 +1451,7 @@ void Player::Update( uint32 update_diff, uint32 p_time )
             DealDamage(enemy, enemy->GetHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, NULL, false);
         }
 
-        if (!IsBot())
+        if (!IsBot() && sWorld.getConfig(CONFIG_BOOL_UNLIMITED_INDISPENDABLE_ITEMS))
             GetIndispensableItems();
     }
 
@@ -10898,7 +10898,7 @@ InventoryResult Player::CanEquipItem( uint8 slot, uint16 &dest, Item *pItem, boo
                 // - in-progress arenas
                 if (!pProto->CanChangeEquipStateInCombat())
                 {
-                    if( isInCombat() && !((Player*)this)->IsBot() )
+                    if( isInCombat() )
                         return EQUIP_ERR_NOT_IN_COMBAT;
 
                     if (BattleGround* bg = GetBattleGround())
@@ -10910,7 +10910,7 @@ InventoryResult Player::CanEquipItem( uint8 slot, uint16 &dest, Item *pItem, boo
                 if (GetSession()->isLogingOut())
                     return EQUIP_ERR_YOU_ARE_STUNNED;
 
-                if (isInCombat() && !((Player*)this)->IsBot() && pProto->Class == ITEM_CLASS_WEAPON && m_weaponChangeTimer != 0)
+                if (isInCombat() && pProto->Class == ITEM_CLASS_WEAPON && m_weaponChangeTimer != 0)
                     return EQUIP_ERR_CANT_DO_RIGHT_NOW;         // maybe exist better err
 
                 if (IsNonMeleeSpellCasted(false))
@@ -11033,7 +11033,7 @@ InventoryResult Player::CanUnequipItem( uint16 pos, bool swap ) const
     // - in-progress arenas
     if( !pProto->CanChangeEquipStateInCombat() )
     {
-        if( isInCombat() && !((Player*)this)->IsBot() )
+        if( isInCombat() )
             return EQUIP_ERR_NOT_IN_COMBAT;
 
         if(BattleGround* bg = GetBattleGround())

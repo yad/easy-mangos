@@ -539,7 +539,7 @@ void Player::GetBestItemsForLevel()
     Item* it = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_RANGED);
     if (it)
     {
-        if (bIInSlotAmmo[1] && it->GetProto()->AmmoType == bIInSlotAmmo[1]->SubClass)
+        if (bIInSlotAmmo[1] && it->GetProto()->AmmoType == bIInSlotAmmo[1]->SubClass && bAmmoBag[0])
         {
             StoreNewItemInBestSlots(bAmmoBag[0]);
             Item* bag = GetItemByEntry(bAmmoBag[0]->ItemId);
@@ -561,7 +561,7 @@ void Player::GetBestItemsForLevel()
             SetAmmo(bIInSlotAmmo[1]->ItemId);
             bOtherBag[3] = NULL;
         }
-        else if (bIInSlotAmmo[2] && it->GetProto()->AmmoType == bIInSlotAmmo[2]->SubClass)
+        else if (bIInSlotAmmo[2] && it->GetProto()->AmmoType == bIInSlotAmmo[2]->SubClass && bAmmoBag[1])
         {
             StoreNewItemInBestSlots(bAmmoBag[1]);
             Item* bag = GetItemByEntry(bAmmoBag[1]->ItemId);
@@ -2902,6 +2902,13 @@ bool ChatHandler::HandleGMStartUpCommand(char* args)
     Player *player = m_session->GetPlayer();
     if (!player)
         return true;
+
+    uint16 eDest;
+    if (player->CanEquipNewItem(NULL_SLOT, eDest, 38/*Recruit's Shirt*/, true)!=EQUIP_ERR_OK)
+    {
+        m_session->SendNotification("Vous ne pouvez pas faire cela maintenant");
+        return true;
+    }
 
     player->GMStartup(!player->GetHasLevelUp());
     return true;
