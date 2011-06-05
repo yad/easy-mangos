@@ -139,7 +139,7 @@ pAuraHandler AuraHandler[TOTAL_AURAS]=
     &Aura::HandleModRegen,                                  // 84 SPELL_AURA_MOD_REGEN
     &Aura::HandleModPowerRegen,                             // 85 SPELL_AURA_MOD_POWER_REGEN
     &Aura::HandleChannelDeathItem,                          // 86 SPELL_AURA_CHANNEL_DEATH_ITEM
-    &Aura::HandleNoImmediateEffect,                         // 87 SPELL_AURA_MOD_DAMAGE_PERCENT_TAKEN implemented in Unit::MeleeDamageBonusTaken and Unit::SpellDamageBonusTaken
+    &Aura::HandleDamagePercentTaken,                        // 87 SPELL_AURA_MOD_DAMAGE_PERCENT_TAKEN implemented in Unit::MeleeDamageBonusTaken and Unit::SpellDamageBonusTaken
     &Aura::HandleNoImmediateEffect,                         // 88 SPELL_AURA_MOD_HEALTH_REGEN_PERCENT implemented in Player::RegenerateHealth
     &Aura::HandlePeriodicDamagePCT,                         // 89 SPELL_AURA_PERIODIC_DAMAGE_PERCENT
     &Aura::HandleUnused,                                    // 90 unused (3.0.8a-3.2.2a) old SPELL_AURA_MOD_RESIST_CHANCE
@@ -1933,7 +1933,13 @@ void Aura::TriggerSpell()
                 triggerTarget->CastSpell(triggerTarget, trigger_spell_id, true, NULL, this);
                 return;
             case 53563:                                     // Beacon of Light
-                // original caster must be target (beacon)
+            case 52658:                                     // Static Overload (normal&heroic) (Ionar in Halls of Lightning)
+            case 59795:
+            case 63018:                                     // Searing Light (normal&heroic) (XT-002 in Ulduar)
+            case 65121:
+            case 63024:                                     // Gravity Bomb (normal&heroic) (XT-002 in Ulduar)
+            case 64234:
+                // original caster must be target
                 target->CastSpell(target, trigger_spell_id, true, NULL, this, target->GetObjectGuid());
                 return;
             case 56654:                                     // Rapid Recuperation (triggered energize have baspioints == 0)
@@ -2152,6 +2158,9 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                         target->HandleEmote(EMOTE_STATE_WORK);
                         // Pet will be following owner, this makes him stop
                         target->addUnitState(UNIT_STAT_STUNNED);
+                        return;
+                    case 52921:                             // Arc Lightning (Halls of Lighning: Loken)
+                        target->CastSpell(target, 52924, false);
                         return;
                     case 55328:                                 // Stoneclaw Totem I
                         target->CastSpell(target, 5728, true);
@@ -3545,10 +3554,12 @@ void Aura::HandleAuraModShapeshift(bool apply, bool Real)
     if (apply)
     {
         // remove other shapeshift before applying a new one
-        target->RemoveSpellsCausingAura(SPELL_AURA_MOD_SHAPESHIFT, GetHolder());
-
-        // need send to client not form active state, or at re-apply form client go crazy
-        target->SendForcedObjectUpdate();
+        if (target->HasAuraType(SPELL_AURA_MOD_SHAPESHIFT))
+        {
+            target->RemoveSpellsCausingAura(SPELL_AURA_MOD_SHAPESHIFT, GetHolder());
+            // need send to client not form active state, or at re-apply form client go crazy
+            target->AddToClientUpdateList();
+        }
 
         if (modelid > 0)
             target->SetDisplayId(modelid);
@@ -3701,8 +3712,6 @@ void Aura::HandleAuraModShapeshift(bool apply, bool Real)
 
     if(target->GetTypeId() == TYPEID_PLAYER)
         ((Player*)target)->InitDataForForm();
-
-    target->SendForcedObjectUpdate();
 
 }
 
@@ -4443,7 +4452,7 @@ void Aura::HandleModCharm(bool apply, bool Real)
             // restore faction
             if(((Creature*)target)->IsPet())
             {
-                if(Unit* owner = target->GetOwner())
+                if(Unit* owner = ((Pet*)target)->GetOwner())
                     target->setFaction(owner->getFaction());
                 else if(cinfo)
                     target->setFaction(cinfo->faction_A);
@@ -4597,6 +4606,15 @@ void Aura::HandleAuraModStun(bool apply, bool Real)
         data << target->GetPackGUID();
         data << uint32(0);
         target->SendMessageToSet(&data, true);
+
+        // Deep Freeze damage part
+        if(GetId() == 44572 && !(target->IsCharmerOrOwnerPlayerOrPlayerItself() || target->IsVehicle()) && target->IsImmuneToSpellEffect(GetSpellProto(), EFFECT_INDEX_0))
+        {
+            Unit* caster = GetCaster();
+            if(!caster)
+                return;
+            caster->CastSpell(target, 71757, true); 
+        }
 
         // Summon the Naj'entus Spine GameObject on target if spell is Impaling Spine
         if(GetId() == 39837)
@@ -5684,6 +5702,34 @@ void Aura::HandlePeriodicHeal(bool apply, bool /*Real*/)
         }
 
         m_modifier.m_amount = caster->SpellHealingBonusDone(target, GetSpellProto(), m_modifier.m_amount, DOT, GetStackAmount());
+    }
+}
+
+void Aura::HandleDamagePercentTaken(bool apply, bool Real)
+{
+    m_isPeriodic = apply;
+
+    Unit* target = GetTarget();
+
+    if (!Real)
+        return;
+
+    // For prevent double apply bonuses
+    bool loading = (target->GetTypeId() == TYPEID_PLAYER && ((Player*)target)->GetSession()->PlayerLoading());
+
+    if (apply)
+    {
+        if (loading)
+            return;
+
+        // Hand of Salvation (only it have this aura and mask)
+        if (GetSpellProto()->IsFitToFamily(SPELLFAMILY_PALADIN, UI64LIT(0x0000000000000100)))
+        {
+            // Glyph of Salvation
+            if (target->GetObjectGuid() == GetCasterGuid())
+                if (Aura* aur = target->GetAura(63225, EFFECT_INDEX_0))
+                    m_modifier.m_amount -= aur->GetModifier()->m_amount;
+        }
     }
 }
 
@@ -8762,10 +8808,12 @@ void Aura::HandleAuraLinked(bool apply, bool Real)
 
     if (apply)
     {
-        if (GetCaster()->GetTypeId() == TYPEID_PLAYER &&
+        if (GetCaster() &&
+            GetCaster()->GetTypeId() == TYPEID_PLAYER &&
+            GetTarget() &&
             GetTarget()->GetTypeId() != TYPEID_PLAYER &&
-            spellInfo->AttributesEx  &  SPELL_ATTR_EX_UNK28
-            && spellInfo->Attributes &  SPELL_ATTR_UNK8)
+            spellInfo->AttributesEx  &  SPELL_ATTR_EX_UNK28 &&
+            spellInfo->Attributes &  SPELL_ATTR_UNK8)
         {
             float healBonus   = float(GetCaster()->GetTotalAuraModifier(SPELL_AURA_MOD_HEALING_PCT))/100.0;
             if (healBonus < 0.0)

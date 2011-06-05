@@ -136,9 +136,6 @@ bool GameObject::Create(uint32 guidlow, uint32 name_id, Map *map, uint32 phaseMa
 
     SetObjectScale(goinfo->size);
 
-    rotation2 = (rotation2 == 0.0f) ? sin(ang/2) : rotation2;
-    rotation3 = (rotation3 == 0.0f) ? cos(ang/2) : rotation3;
-
     SetRotationQuat(rotation0,rotation1,rotation2,rotation3);
 
     SetUInt32Value(GAMEOBJECT_FACTION, goinfo->faction);
@@ -524,9 +521,13 @@ void GameObject::Update(uint32 update_diff, uint32 diff)
             if (GetGOInfo()->IsDespawnAtAction() || GetGoAnimProgress() > 0)
             {
                 SendObjectDeSpawnAnim(GetObjectGuid());
-                // reset flags: In Instances do not restore GO_FLAG_LOCKED or GO_FLAG_NO_INTERACT
+                // reset flags
                 if (GetMap()->Instanceable())
-                    SetUInt32Value(GAMEOBJECT_FLAGS, GetGOInfo()->flags & ~(GO_FLAG_LOCKED | GO_FLAG_NO_INTERACT));
+                {
+                    // In Instances GO_FLAG_LOCKED or GO_FLAG_NO_INTERACT are not changed
+                    uint32 currentLockOrInteractFlags = GetUInt32Value(GAMEOBJECT_FLAGS) & (GO_FLAG_LOCKED | GO_FLAG_NO_INTERACT);
+                    SetUInt32Value(GAMEOBJECT_FLAGS, GetGOInfo()->flags & ~(GO_FLAG_LOCKED | GO_FLAG_NO_INTERACT) | currentLockOrInteractFlags);
+                }
                 else
                     SetUInt32Value(GAMEOBJECT_FLAGS, GetGOInfo()->flags);
             }

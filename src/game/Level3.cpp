@@ -5067,8 +5067,8 @@ bool ChatHandler::HandleCharacterLevelCommand(char* args)
     if (newlevel > STRONG_MAX_LEVEL)                        // hardcoded maximum level
         newlevel = STRONG_MAX_LEVEL;
 
-    if ((uint32)newlevel > sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL))
-        newlevel = sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL);
+    if (newlevel > int32(sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL)))
+        newlevel = int32(sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL));
 
     HandleCharacterLevel(target, target_guid, oldlevel, newlevel);
 
@@ -5115,8 +5115,8 @@ bool ChatHandler::HandleLevelUpCommand(char* args)
     if (newlevel > STRONG_MAX_LEVEL)                        // hardcoded maximum level
         newlevel = STRONG_MAX_LEVEL;
 
-    if ((uint32)newlevel > sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL))
-        newlevel = sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL);
+    if (newlevel > int32(sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL)))
+        newlevel = int32(sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL));
 
     HandleCharacterLevel(target, target_guid, oldlevel, newlevel);
 

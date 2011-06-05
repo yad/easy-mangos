@@ -569,6 +569,7 @@ class ObjectMgr
         CreatureModelInfo const *GetCreatureModelInfo( uint32 modelid );
         CreatureModelInfo const* GetCreatureModelRandomGender(uint32 display_id);
         uint32 GetCreatureModelAlternativeModel(uint32 modelId);
+        CreatureSpellsList const* GetCreatureSpells( uint32 id );
 
         EquipmentInfo const *GetEquipmentInfo( uint32 entry );
         static CreatureDataAddon const *GetCreatureAddon( uint32 lowguid )
@@ -750,6 +751,7 @@ class ObjectMgr
         void LoadCreatureAddons();
         void LoadCreatureModelInfo();
         void LoadCreatureModelRace();
+        void LoadCreatureSpells();
         void LoadEquipmentTemplates();
         void LoadGameObjectLocales();
         void LoadGameobjects();
@@ -1252,6 +1254,8 @@ class ObjectMgr
 
         typedef std::map<uint32, PetScalingDataList*> PetScalingDataMap;
         PetScalingDataMap m_PetScalingData;                 // [creature_id]
+
+        CreatureSpellStorage   m_creatureSpellStorage;
 
         PlayerClassInfo playerClassInfo[MAX_CLASSES];
 
