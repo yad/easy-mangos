@@ -1407,6 +1407,7 @@ void Player::GMStartup()
     {
         RemoveAllAuras(AURA_REMOVE_BY_DELETE);
         resetSpells();
+        resetTalents(true, true);
     }
     RemoveMyEquipement(true);
 
@@ -2374,12 +2375,6 @@ bool Player::LearnAllMyTalentsForMyLevel()
 
         if(talentInfo->Row < ((level-5) / 5))
             learnSpellHighRank(talentInfo->RankID[0]);
-        else
-        {
-            for (int i = 0; i < MAX_TALENT_RANK; ++i)
-                if (talentInfo->RankID[i] && HasSpell(talentInfo->RankID[i]))
-                    removeSpell(talentInfo->RankID[i], false, false);
-        }
     }
 
     SendTalentsInfoData(false);
