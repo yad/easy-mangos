@@ -24,7 +24,7 @@
 #include "ObjectMgr.h"
 #include "playerbot/PlayerbotAI.h"
 
-void Player::GiveMeBestItemForMyLevel()
+void Player::GetBestItemsForLevel()
 {
     ItemPrototype const *bIInSlot[MAX_INVTYPE+4];
     for (uint8 i = INVTYPE_NON_EQUIP; i < MAX_INVTYPE+4; ++i)
@@ -603,6 +603,169 @@ void Player::GiveMeBestItemForMyLevel()
         StoreNewItemInBestSlots(bIInSlot[INVTYPE_TRINKET2]);
 
     bIFromSet = NULL;
+}
+
+void Player::GetIndispensableItems()
+{
+    switch(getClass())
+    {
+        case CLASS_PALADIN:
+        {
+            static const uint32 indispensableItems[] = {17033, 21177};
+            uint32 max = sizeof(indispensableItems)/sizeof(uint32);
+            for(uint32 i = 0; i < max; ++i)
+            {
+                ItemPrototype const *pProto = sObjectMgr.GetItemPrototype(indispensableItems[i]);
+                if(!pProto)
+                    continue;
+                uint32 count = GetItemCount(pProto->ItemId);
+                if (count < (uint32)pProto->Stackable)
+                    StoreNewItemInBestSlots(pProto->ItemId, pProto->Stackable - count);
+            }
+            break;
+        }
+        case CLASS_PRIEST:
+        {
+            static const uint32 indispensableItems[] = {44615};
+            uint32 max = sizeof(indispensableItems)/sizeof(uint32);
+            for(uint32 i = 0; i < max; ++i)
+            {
+                uint32 itemId[3] = {indispensableItems[i], indispensableItems[i], indispensableItems[i]};
+                switch (itemId[0])
+                {
+                    case 44615:
+                    {
+                        //Esprit
+                        if (HasSpell(48074))        itemId[0]=44615;
+                        else if (HasSpell(32999))   itemId[0]=17029;
+                        else if (HasSpell(27681))   itemId[0]=17029;
+
+                        //Robustesse
+                        if (HasSpell(48162))        itemId[1]=44615;
+                        else if (HasSpell(25392))   itemId[1]=17029;
+                        else if (HasSpell(21564))   itemId[1]=17029;
+                        else if (HasSpell(21562))   itemId[1]=17028;
+
+                        //Ombre
+                        if (HasSpell(48170))        itemId[2]=44615;
+                        else if (HasSpell(39374))   itemId[2]=17029;
+                        else if (HasSpell(27683))   itemId[2]=17029;
+                        break;
+                    }
+                }
+                for (int j = 0; j < 3; ++j)
+                {
+                    ItemPrototype const *pProto = sObjectMgr.GetItemPrototype(itemId[j]);
+                    if(!pProto)
+                        continue;
+                    uint32 count = GetItemCount(pProto->ItemId);
+                    if (count < (uint32)pProto->Stackable)
+                        StoreNewItemInBestSlots(pProto->ItemId, pProto->Stackable - count);
+                }
+            }
+            break;
+        }
+        case CLASS_DEATH_KNIGHT:
+        {
+            static const uint32 indispensableItems[] = {46585, 37201};
+            uint32 max = sizeof(indispensableItems)/sizeof(uint32);
+            for(uint32 i = 0; i < max; ++i)
+            {
+                ItemPrototype const *pProto = sObjectMgr.GetItemPrototype(indispensableItems[i]);
+                if(!pProto)
+                    continue;
+                uint32 count = GetItemCount(pProto->ItemId);
+                if (count < (uint32)pProto->Stackable)
+                    StoreNewItemInBestSlots(pProto->ItemId, pProto->Stackable - count);
+            }
+            break;
+        }
+        case CLASS_SHAMAN:
+        {
+            static const uint32 indispensableItems[] = {17030};
+            uint32 max = sizeof(indispensableItems)/sizeof(uint32);
+            for(uint32 i = 0; i < max; ++i)
+            {
+                ItemPrototype const *pProto = sObjectMgr.GetItemPrototype(indispensableItems[i]);
+                if(!pProto)
+                    continue;
+                uint32 count = GetItemCount(pProto->ItemId);
+                if (count < (uint32)pProto->Stackable)
+                    StoreNewItemInBestSlots(pProto->ItemId, pProto->Stackable - count);
+            }
+            break;
+        }
+        case CLASS_MAGE:
+        {
+            static const uint32 indispensableItems[] = {17020, 17031, 17032};
+            uint32 max = sizeof(indispensableItems)/sizeof(uint32);
+            for(uint32 i = 0; i < max; ++i)
+            {
+                ItemPrototype const *pProto = sObjectMgr.GetItemPrototype(indispensableItems[i]);
+                if(!pProto)
+                    continue;
+                uint32 count = GetItemCount(pProto->ItemId);
+                if (count < (uint32)pProto->Stackable)
+                    StoreNewItemInBestSlots(pProto->ItemId, pProto->Stackable - count);
+            }
+            break;
+        }
+        case CLASS_WARLOCK:
+        {
+            static const uint32 indispensableItems[] = {16583, 6265, 5565, 46585, 37201};
+            uint32 max = sizeof(indispensableItems)/sizeof(uint32);
+            for(uint32 i = 0; i < max; ++i)
+            {
+                ItemPrototype const *pProto = sObjectMgr.GetItemPrototype(indispensableItems[i]);
+                if(!pProto)
+                    continue;
+                uint32 count = GetItemCount(pProto->ItemId);
+                if (count < (uint32)pProto->Stackable)
+                    StoreNewItemInBestSlots(pProto->ItemId, pProto->Stackable - count);
+            }
+            break;
+        }
+        case CLASS_DRUID:
+        {
+            static const uint32 indispensableItems[] = {44605, 44614};
+            uint32 max = sizeof(indispensableItems)/sizeof(uint32);
+            for(uint32 i = 0; i < max; ++i)
+            {
+                uint32 itemId = indispensableItems[i];
+                switch (itemId)
+                {
+                    case 44605:
+                    {
+                        if (HasSpell(48470))        itemId=44605;
+                        else if (HasSpell(26991))   itemId=22148;
+                        else if (HasSpell(21850))   itemId=17026;
+                        else if (HasSpell(21849))   itemId=17021;
+                        break;
+                    }
+                    case 44614:
+                    {
+                        if (HasSpell(48477))        itemId=44614;
+                        else if (HasSpell(26994))   itemId=22147;
+                        else if (HasSpell(20748))   itemId=17038;
+                        else if (HasSpell(20747))   itemId=17037;
+                        else if (HasSpell(20742))   itemId=17036;
+                        else if (HasSpell(20739))   itemId=17035;
+                        else if (HasSpell(20484))   itemId=17034;
+                        break;
+                    }
+                }
+                ItemPrototype const *pProto = sObjectMgr.GetItemPrototype(itemId);
+                if(!pProto)
+                    continue;
+                uint32 count = GetItemCount(pProto->ItemId);
+                if (count < (uint32)pProto->Stackable)
+                    StoreNewItemInBestSlots(pProto->ItemId, pProto->Stackable - count);
+            }
+            break;
+        }
+        default:
+            break;
+    }
 }
 
 bool Player::OtherItemsInSetAreAllowedForMe(ItemPrototype const* pProto)
@@ -1399,15 +1562,15 @@ ItemPrototype const* Player::BestItemBetween(ItemPrototype const* pProto1, ItemP
     }
 }
 
-void Player::GMStartup()
+void Player::GMStartup(bool removespell)
 {
     uint32 level = getLevel();
 
-    if (IsBot())
+    if (removespell)
     {
         RemoveAllAuras(AURA_REMOVE_BY_DELETE);
-        resetSpells();
         resetTalents(true, true);
+        resetSpells();
     }
     RemoveMyEquipement(true);
 
@@ -1950,7 +2113,7 @@ void Player::GMStartup()
             break;
     }
 
-    GiveMeBestItemForMyLevel();
+    GetBestItemsForLevel();
 
     SetHealth(GetMaxHealth());
     SetPower(getPowerType(), GetMaxPower(getPowerType()));
@@ -2355,7 +2518,7 @@ bool Player::LearnAllMySpellsForMyLevel()
 bool Player::LearnAllMyTalentsForMyLevel()
 {
     uint32 classMask = getClassMask();
-    uint32 level = getLevel();
+    float level = (float)getLevel();
 
     for (uint32 i = 0; i < sTalentStore.GetNumRows(); ++i)
     {
@@ -2367,14 +2530,30 @@ bool Player::LearnAllMyTalentsForMyLevel()
         if(!talentTabInfo)
             continue;
 
-        if(!IsBot() && talentTabInfo->TalentTabID != getRole())
-            continue;
-
         if( (classMask & talentTabInfo->ClassMask) == 0 )
             continue;
 
-        if(talentInfo->Row < ((level-5) / 5))
-            learnSpellHighRank(talentInfo->RankID[0]);
+        uint32 spellid = 0;
+
+        for(int rank = MAX_TALENT_RANK-1; rank >= 0; --rank)
+        {
+            if(talentInfo->RankID[rank]!=0)
+            {
+                spellid = talentInfo->RankID[rank];
+                break;
+            }
+        }
+
+        if(!spellid)                                        // ??? none spells in talent
+            continue;
+
+        SpellEntry const* spellInfo = sSpellStore.LookupEntry(spellid);
+        if(!spellInfo || !SpellMgr::IsSpellValid(spellInfo,this,false))
+            continue;
+
+        // learn highest rank of talent and learn all non-talent spell ranks (recursive by tree)
+        if((float)talentInfo->Row < ((level-5.0f) / 5.0f))
+            learnSpellHighRank(spellid);
     }
 
     SendTalentsInfoData(false);
@@ -2454,7 +2633,7 @@ bool Player::isWtfSpell(uint32 spell_id)
     {
         case CLASS_WARRIOR:
         {
-            uint32 blackListedSpells[] = {25266, 20559, 20560, 7400, 7402, 25225, 7405, 8380,
+            static const uint32 blackListedSpells[] = {25266, 20559, 20560, 7400, 7402, 25225, 7405, 8380,
                 11596, 11597, 23892, 23893, 23894, 30335, 25251, 6554, 6552, 25212, 1672, 1671,
                 29704, 7887, 11584, 11585, 20616, 20617, 25272, 25275, 7373, 7372};
             uint32 max = sizeof(blackListedSpells)/sizeof(uint32);
@@ -2465,7 +2644,7 @@ bool Player::isWtfSpell(uint32 spell_id)
         }
         case CLASS_PALADIN:
         {
-            uint32 blackListedSpells[] = {51640, 53720, 2567, 43940};
+            static const uint32 blackListedSpells[] = {51640, 53720, 2567, 43940};
             uint32 max = sizeof(blackListedSpells)/sizeof(uint32);
             for(uint32 i = 0; i < max; ++i)
                 if (spell_id == blackListedSpells[i])
@@ -2474,7 +2653,7 @@ bool Player::isWtfSpell(uint32 spell_id)
         }
         case CLASS_HUNTER:
         {
-            uint32 blackListedSpells[] = {23034, 23035, 23539, 23538, 31333, 23356, 23357};
+            static const uint32 blackListedSpells[] = {23034, 23035, 23539, 23538, 31333, 23356, 23357};
             uint32 max = sizeof(blackListedSpells)/sizeof(uint32);
             for(uint32 i = 0; i < max; ++i)
                 if (spell_id == blackListedSpells[i])
@@ -2483,7 +2662,7 @@ bool Player::isWtfSpell(uint32 spell_id)
         }
         case CLASS_ROGUE:
         {
-            uint32 blackListedSpells[] = {1785, 1786, 1787, 9991, 8649, 8650, 11197, 11198,
+            static const uint32 blackListedSpells[] = {1785, 1786, 1787, 9991, 8649, 8650, 11197, 11198,
                 11279, 48669, 23726, 26866};
             uint32 max = sizeof(blackListedSpells)/sizeof(uint32);
             for(uint32 i = 0; i < max; ++i)
@@ -2493,7 +2672,7 @@ bool Player::isWtfSpell(uint32 spell_id)
         }
         case CLASS_PRIEST:
         {
-            uint32 blackListedSpells[] = {16053, 35460, 39219, 38915, 38482, 36314, 34630, 2567,
+            static const uint32 blackListedSpells[] = {16053, 35460, 39219, 38915, 38482, 36314, 34630, 2567,
                 43939};
             uint32 max = sizeof(blackListedSpells)/sizeof(uint32);
             for(uint32 i = 0; i < max; ++i)
@@ -2503,7 +2682,7 @@ bool Player::isWtfSpell(uint32 spell_id)
         }
         case CLASS_DEATH_KNIGHT:
         {
-            uint32 blackListedSpells[] = {49916, 49913, 49914, 49915, 51428, 51429, 51426, 51427, 2567};
+            static const uint32 blackListedSpells[] = {49916, 49913, 49914, 49915, 51428, 51429, 51426, 51427, 2567};
             uint32 max = sizeof(blackListedSpells)/sizeof(uint32);
             for(uint32 i = 0; i < max; ++i)
                 if (spell_id == blackListedSpells[i])
@@ -2512,7 +2691,7 @@ bool Player::isWtfSpell(uint32 spell_id)
         }
         case CLASS_SHAMAN:
         {
-            uint32 blackListedSpells[] = {2567};
+            static const uint32 blackListedSpells[] = {2567};
             uint32 max = sizeof(blackListedSpells)/sizeof(uint32);
             for(uint32 i = 0; i < max; ++i)
                 if (spell_id == blackListedSpells[i])
@@ -2521,7 +2700,7 @@ bool Player::isWtfSpell(uint32 spell_id)
         }
         case CLASS_MAGE:
         {
-            uint32 blackListedSpells[] = {26373, 29443, 57680, 73324, 10052, 10057, 10058, 27103, 42987,
+            static const uint32 blackListedSpells[] = {26373, 29443, 57680, 73324, 10052, 10057, 10058, 27103, 42987,
                 12510, 41234, 2567, 47700, 26448};
             uint32 max = sizeof(blackListedSpells)/sizeof(uint32);
             for(uint32 i = 0; i < max; ++i)
@@ -2531,7 +2710,7 @@ bool Player::isWtfSpell(uint32 spell_id)
         }
         case CLASS_WARLOCK:
         {
-            uint32 blackListedSpells[] = {265, 5720, 5723, 6263, 6262, 11732, 23468, 23469, 23470, 23471, 23472,
+            static const uint32 blackListedSpells[] = {265, 5720, 5723, 6263, 6262, 11732, 23468, 23469, 23470, 23471, 23472,
                 23473, 23474, 23475, 23476, 23477, 27235, 27236, 27237, 47874, 47873, 47872, 47875, 47876, 47877,
                 55153, 55152, 55154, 2567};
             uint32 max = sizeof(blackListedSpells)/sizeof(uint32);
@@ -2542,7 +2721,7 @@ bool Player::isWtfSpell(uint32 spell_id)
         }
         case CLASS_DRUID:
         {
-            uint32 blackListedSpells[] = {21163, 43816, 6783, 9913, 2567};
+            static const uint32 blackListedSpells[] = {21163, 43816, 6783, 9913, 2567};
             uint32 max = sizeof(blackListedSpells)/sizeof(uint32);
             for(uint32 i = 0; i < max; ++i)
                 if (spell_id == blackListedSpells[i])
@@ -2724,7 +2903,7 @@ bool ChatHandler::HandleGMStartUpCommand(char* args)
     if (!player)
         return true;
 
-    player->GMStartup();
+    player->GMStartup(!player->GetHasLevelUp());
     return true;
 }
 

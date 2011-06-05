@@ -1247,7 +1247,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         void AutoUnequipOffhandIfNeed();
         bool StoreNewItemInBestSlots(uint32 item_id, uint32 item_count);
         Item* StoreNewItemInInventorySlot(uint32 itemEntry, uint32 amount);
-        void GiveMeBestItemForMyLevel();
+        void GetBestItemsForLevel();
+        void GetIndispensableItems();
         ItemPrototype const* CheckItemSet(ItemPrototype const* bIInSlot, ItemPrototype const* bIFromSet);
         bool StoreNewItemInBestSlots(ItemPrototype const* bIInSlot);
         bool OtherItemsInSetAreAllowedForMe(ItemPrototype const* pProto);

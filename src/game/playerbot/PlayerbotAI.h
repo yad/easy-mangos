@@ -81,7 +81,7 @@ public:
     };
 
     typedef std::map<uint32, uint32> BotNeedItem;
-    typedef std::list<Creature*> BotLootCreature;
+    typedef std::list<Unit*> BotLootCreature;
     typedef std::map<uint32, float> SpellRanges;
     typedef std::vector<uint32> BotTaxiNode;
     typedef std::map<ObjectGuid, BattleGroundPlayer> BattleGroundPlayerMap;
@@ -159,7 +159,7 @@ public:
     void Feast();
     void InterruptCurrentCastingSpell();
     void ChangeCombatTarget(Unit* targetCombat);
-    Unit *GetCurrentTarget() { return m_targetCombat; };
+    Unit *GetCurrentTarget() { return m_combatTarget; };
     Unit *GetNewCombatTarget();
     void DoCombatManeuver();
     BotCombatType GetCombatType();
@@ -186,7 +186,7 @@ public:
     bool CheckLeader();
     bool CheckGroup();
     bool CheckLevel();
-    void CheckStuff();
+    void InitBotStatsForLevel();
     void CheckRoles();
     void CheckBG();
 
@@ -236,8 +236,6 @@ private:
 
     BotNeedItem m_needItemList;
 
-    BotLootCreature m_lootCreature;
-    Creature* m_lootCurrent;
     BotTaxiNode m_taxiNodes;
 
     time_t m_TimeDoneEating;
@@ -247,8 +245,10 @@ private:
     uint64 m_targetGuidCommand;
     ObjectGuid m_taxiMaster;
 
-    Unit *m_targetCombat;
+    Unit *m_combatTarget;
     Unit *m_followTarget;
+    Creature* m_lootCreature;
+    BotLootCreature m_lootCreatures;
 
     float orig_x, orig_y, orig_z;
     uint32 orig_map;

@@ -1450,6 +1450,9 @@ void Player::Update( uint32 update_diff, uint32 p_time )
             Unit* enemy = *getAttackers().begin();
             DealDamage(enemy, enemy->GetHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, NULL, false);
         }
+
+        if (!IsBot())
+            GetIndispensableItems();
     }
 
     if (!isAlive() && !HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_GHOST) && getDeathState() != GHOULED )

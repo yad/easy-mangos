@@ -719,8 +719,8 @@ void PlayerbotAI::Feast()
 void PlayerbotAI::SetQuestNeedItems()
 {
     m_needItemList.clear();
-    m_lootCreature.clear();
-    m_lootCurrent = 0;
+    m_lootCreatures.clear();
+    m_lootCreature = 0;
 
     for (QuestStatusMap::iterator iter = m_bot->getQuestStatusMap().begin(); iter != m_bot->getQuestStatusMap().end(); ++iter)
     {
@@ -780,37 +780,43 @@ void PlayerbotAI::DoFlight()
 
 void PlayerbotAI::DoLoot()
 {
-    if (!m_lootCurrent && m_lootCreature.empty())
+    if (!m_lootCreature && m_lootCreatures.empty())
     {
         m_botState = BOTSTATE_NORMAL;
         SetQuestNeedItems();
         return;
     }
 
-    if (!m_lootCurrent)
+    if (!m_lootCreature)
     {
-        m_lootCurrent = m_lootCreature.front();
-        m_lootCreature.pop_front();
-        if (!m_lootCurrent || !m_lootCurrent->IsInWorld() || !m_lootCurrent->IsInMap(m_bot) || m_lootCurrent->getDeathState() != CORPSE
-            || GetLeader()->GetDistance(m_lootCurrent) > BOTLOOT_DISTANCE)
+        do
         {
-            m_lootCurrent = NULL;
+            Unit* deadUnit = m_lootCreatures.front();
+            m_lootCreatures.pop_front();
+
+            if (deadUnit && deadUnit->IsInWorld() && deadUnit->IsInMap(m_bot) && deadUnit->getDeathState() == CORPSE
+                && GetLeader()->GetDistance(deadUnit) < BOTLOOT_DISTANCE && deadUnit->GetTypeId()==TYPEID_UNIT)
+                m_lootCreature = (Creature*)deadUnit;
+
+        }while (!m_lootCreatures.empty());
+
+        if (!m_lootCreature)
             return;
-        }
-        SetFollowTarget(GetLeader());
+
+        //SetFollowTarget(GetLeader());
     }
     else
     {
-        if (!m_lootCurrent || !m_lootCurrent->IsInWorld() || !m_lootCurrent->IsInMap(m_bot) || m_lootCurrent->getDeathState() != CORPSE
-            || GetLeader()->GetDistance(m_lootCurrent) > BOTLOOT_DISTANCE)
+        if (!m_lootCreature || !m_lootCreature->IsInWorld() || !m_lootCreature->IsInMap(m_bot) || m_lootCreature->getDeathState() != CORPSE
+            || GetLeader()->GetDistance(m_lootCreature) > BOTLOOT_DISTANCE)
         {
-            m_lootCurrent = NULL;
+            m_lootCreature = NULL;
             return;
         }
         if (m_bot->IsWithinDistInMap(GetLeader(), 100.0f))
         {
-            m_bot->SendLoot(m_lootCurrent->GetObjectGuid(), LOOT_CORPSE);
-            Loot *loot = &m_lootCurrent->loot;
+            m_bot->SendLoot(m_lootCreature->GetObjectGuid(), LOOT_CORPSE);
+            Loot *loot = &m_lootCreature->loot;
             uint32 lootNum = loot->GetMaxSlotInLootFor(m_bot);
             for (uint32 l = 0; l < lootNum; l++)
             {
@@ -862,8 +868,8 @@ void PlayerbotAI::DoLoot()
                     }
                 }
             }
-            m_bot->GetSession()->DoLootRelease(m_lootCurrent->GetObjectGuid());
-            SetFollowTarget(GetLeader());
+            m_bot->GetSession()->DoLootRelease(m_lootCreature->GetObjectGuid());
+            //SetFollowTarget(GetLeader());
             SetQuestNeedItems();
         }
     }
@@ -1098,9 +1104,9 @@ bool PlayerbotAI::CheckLevel()
     return true;
 }
 
-void PlayerbotAI::CheckStuff()
+void PlayerbotAI::InitBotStatsForLevel()
 {
-    m_bot->GMStartup();
+    m_bot->GMStartup(true);
     m_bot->SetHealth(m_bot->GetMaxHealth());
     m_bot->SetPower(m_bot->getPowerType(), m_bot->GetMaxPower(m_bot->getPowerType()));
     GetClassAI()->InitSpells(m_bot->GetPlayerbotAI());
@@ -1756,16 +1762,16 @@ void PlayerbotAI::Pull()
     if (gr && !IsInCombat())
     {
         if (gr->IsAssistant(m_bot->GetObjectGuid()))
-            m_targetCombat = gr->GetAssistTarget();
+            m_combatTarget = gr->GetAssistTarget();
         else
-            m_targetCombat = gr->GetTankTarget();
+            m_combatTarget = gr->GetTankTarget();
 
-        m_followTarget = m_targetCombat;
+        m_followTarget = m_combatTarget;
 
-        ChangeCombatTarget(m_targetCombat);
-        SetInFront(m_targetCombat);
-        SetFollowTarget(m_targetCombat);
-        m_bot->Attack(m_targetCombat, true);
-        GetClassAI()->DoCombatManeuver(m_targetCombat, true);
+        ChangeCombatTarget(m_combatTarget);
+        SetInFront(m_combatTarget);
+        SetFollowTarget(m_combatTarget);
+        m_bot->Attack(m_combatTarget, true);
+        GetClassAI()->DoCombatManeuver(m_combatTarget, true);
     }
 }
