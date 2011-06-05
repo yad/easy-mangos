@@ -605,6 +605,7 @@ Player::Player (WorldSession *session): Unit(), m_mover(this), m_camera(this), m
     m_LFGState = new LFGPlayerState(this);
 
     m_chaos_mode = false;
+    m_has_level_up = true;
 }
 
 Player::~Player ()
@@ -2668,7 +2669,15 @@ void Player::GiveXP(uint32 xp, Unit* victim)
 void Player::GiveLevel(uint32 level)
 {
     if ( level == getLevel() )
+    {
+        SetHasLevelUp(true);
         return;
+    }
+
+    if (level > getLevel())
+        SetHasLevelUp(true);
+    else
+        SetHasLevelUp(false);
 
     PlayerLevelInfo info;
     sObjectMgr.GetPlayerLevelInfo(getRace(),getClass(),level,&info);

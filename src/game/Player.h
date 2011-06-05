@@ -1256,7 +1256,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         bool IsNotAllowedItem(ItemPrototype const* pProto);
         ItemPrototype const* BestItemBetween(ItemPrototype const* pProto1, ItemPrototype const* pProto2, bool DPS);
         ItemPrototype const* CompareItem(ItemPrototype const* pProto1, ItemPrototype const* pProto2, ItemModType pType);
-        void GMStartup();
+        void GMStartup(bool removespell);
         bool LearnAllMyTalentsForMyLevel();
         bool LearnAllMySpellsForMyLevel();
         void AutoStoreLoot(uint32 loot_id, LootStore const& store, bool broadcast = false, uint8 bag = NULL_BAG, uint8 slot = NULL_SLOT);
@@ -2510,6 +2510,8 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         bool GetChaosMode() { return m_chaos_mode; }
         void SetChaosMode(bool c) { m_chaos_mode = c; }
+        bool GetHasLevelUp() { return m_has_level_up; }
+        void SetHasLevelUp(bool l) { m_has_level_up = l; }
 
     protected:
 
@@ -2747,6 +2749,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         static const float m_diminishing_k[MAX_CLASSES];
 
         bool m_chaos_mode;
+        bool m_has_level_up;
 
     private:
         void _HandleDeadlyPoison(Unit* Target, WeaponAttackType attType, SpellEntry const *spellInfo);
