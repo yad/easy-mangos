@@ -391,78 +391,81 @@ void PlayerbotAI::UnMount()
     m_bot->RemoveSpellsCausingAura(SPELL_AURA_MOUNTED);
     m_bot->RemoveSpellsCausingAura(SPELL_AURA_MOD_FLIGHT_SPEED_MOUNTED);
     m_bot->RemoveSpellsCausingAura(SPELL_AURA_MOD_INCREASE_MOUNTED_SPEED);
+    m_bot->m_movementInfo.RemoveMovementFlag(MOVEFLAG_FLYING);
 }
 
 void PlayerbotAI::CheckMount()
 {
-    if (!GetLeader()->IsInWorld() || !m_bot->IsInWorld())
+    bool leaderHasMount = !GetLeader()->GetAurasByType(SPELL_AURA_MOUNTED).empty();
+    bool botHasMount = !m_bot->GetAurasByType(SPELL_AURA_MOUNTED).empty();
+    if (leaderHasMount == botHasMount)
         return;
 
-    if ((GetLeader()->IsMounted()) && (!m_bot->IsMounted()))
+    if (leaderHasMount)
     {
-        if (!GetLeader()->GetAurasByType(SPELL_AURA_MOUNTED).empty())
+        const SpellEntry *aura = GetLeader()->GetAurasByType(SPELL_AURA_MOUNTED).front()->GetSpellProto();
+        int32 speed1 = aura->EffectBasePoints[1];
+        int32 speed2 = aura->EffectBasePoints[2];
+
+        if (sWorld.getConfig(CONFIG_BOOL_ALLOW_FLYING_MOUNTS_EVERYWHERE))
         {
-            int32 speed1 = GetLeader()->GetAurasByType(SPELL_AURA_MOUNTED).front()->GetSpellProto()->EffectBasePoints[1];
-            int32 speed2 = GetLeader()->GetAurasByType(SPELL_AURA_MOUNTED).front()->GetSpellProto()->EffectBasePoints[2];
+            Item* mount225 = FindMount(225);
+            Item* mount300 = FindMount(300);
 
-            Item* pItem225 = m_bot->GetPlayerbotAI()->FindMount(225);
-            Item* pItem300 = m_bot->GetPlayerbotAI()->FindMount(300);
+            if (mount300 && (speed1 > 150 || speed2 > 150))
+                UseItem(mount300);
+            else if (mount225)
+                UseItem(mount225);
+            else if (mount300)
+                UseItem(mount300);
 
-            if (pItem300 && (speed1 > 150 || speed2 > 150))
+            if (!m_bot->GetAurasByType(SPELL_AURA_MOUNTED).empty())
             {
-                m_bot->GetPlayerbotAI()->UseItem(pItem300);
+                m_bot->m_movementInfo.AddMovementFlag(MOVEFLAG_FLYING);
                 return;
             }
-            else if (pItem225)
+        }
+
+        for (PlayerSpellMap::iterator itr = m_bot->GetSpellMap().begin(); itr != m_bot->GetSpellMap().end(); ++itr)
+        {
+            uint32 spellId = itr->first;
+            if (itr->second.state == PLAYERSPELL_REMOVED || itr->second.disabled || IsPassiveSpell(spellId))
+                continue;
+
+            const SpellEntry* pSpellInfo = sSpellStore.LookupEntry(spellId);
+            if (!pSpellInfo)
+                continue;
+
+            if (pSpellInfo->EffectApplyAuraName[0] != SPELL_AURA_MOUNTED)
+                continue;
+
+            if (pSpellInfo->EffectApplyAuraName[1] == SPELL_AURA_MOD_INCREASE_MOUNTED_SPEED
+                && pSpellInfo->EffectBasePoints[1] == speed1)
             {
-                m_bot->GetPlayerbotAI()->UseItem(pItem225);
+                    CastSpell(spellId, m_bot);
+                    return;
+            }
+            if ((pSpellInfo->EffectApplyAuraName[1] == SPELL_AURA_MOD_INCREASE_MOUNTED_SPEED)
+                && (pSpellInfo->EffectApplyAuraName[2] == SPELL_AURA_MOD_FLIGHT_SPEED_MOUNTED)
+                && (pSpellInfo->EffectBasePoints[1] == speed1)
+                && (pSpellInfo->EffectBasePoints[2] == speed2))
+            {
+                CastSpell(spellId, m_bot);
+                m_bot->m_movementInfo.AddMovementFlag(MOVEFLAG_FLYING);
                 return;
             }
-            if (pItem300)
+            if ((pSpellInfo->EffectApplyAuraName[2] == SPELL_AURA_MOD_INCREASE_MOUNTED_SPEED)
+                && (pSpellInfo->EffectApplyAuraName[1] == SPELL_AURA_MOD_FLIGHT_SPEED_MOUNTED)
+                && (pSpellInfo->EffectBasePoints[2] == speed2)
+                && (pSpellInfo->EffectBasePoints[1] == speed1))
             {
-                m_bot->GetPlayerbotAI()->UseItem(pItem300);
+                CastSpell(spellId, m_bot);
+                m_bot->m_movementInfo.AddMovementFlag(MOVEFLAG_FLYING);
                 return;
-            }
-
-            for (PlayerSpellMap::iterator itr = m_bot->GetSpellMap().begin(); itr != m_bot->GetSpellMap().end(); ++itr)
-            {
-                uint32 spellId = itr->first;
-                if (itr->second.state == PLAYERSPELL_REMOVED || itr->second.disabled || IsPassiveSpell(spellId))
-                    continue;
-
-                const SpellEntry* pSpellInfo = sSpellStore.LookupEntry(spellId);
-                if (!pSpellInfo)
-                    continue;
-
-                if (pSpellInfo->EffectApplyAuraName[0] == SPELL_AURA_MOUNTED)
-                {
-                    if (pSpellInfo->EffectApplyAuraName[1] == SPELL_AURA_MOD_INCREASE_MOUNTED_SPEED
-                        && pSpellInfo->EffectBasePoints[1] == speed1)
-                    {
-                        CastSpell(spellId, m_bot);
-                        break;
-                    }
-                    else if ((pSpellInfo->EffectApplyAuraName[1] == SPELL_AURA_MOD_INCREASE_MOUNTED_SPEED)
-                        && (pSpellInfo->EffectApplyAuraName[2] == SPELL_AURA_MOD_FLIGHT_SPEED_MOUNTED)
-                        && (pSpellInfo->EffectBasePoints[1] == speed1)
-                        && (pSpellInfo->EffectBasePoints[2] == speed2))
-                    {
-                        CastSpell(spellId, m_bot);
-                        break;
-                    }
-                    else if ((pSpellInfo->EffectApplyAuraName[2] == SPELL_AURA_MOD_INCREASE_MOUNTED_SPEED)
-                        && (pSpellInfo->EffectApplyAuraName[1] == SPELL_AURA_MOD_FLIGHT_SPEED_MOUNTED)
-                        && (pSpellInfo->EffectBasePoints[2] == speed2)
-                        && (pSpellInfo->EffectBasePoints[1] == speed1))
-                    {
-                        CastSpell(spellId, m_bot);
-                        break;
-                    }
-                }
             }
         }
     }
-    else if (!GetLeader()->IsMounted() && m_bot->IsMounted())
+    else
     {
         UnMount();
     }
