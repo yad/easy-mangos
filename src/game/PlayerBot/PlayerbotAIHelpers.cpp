@@ -1110,8 +1110,8 @@ void PlayerbotAI::InitBotStatsForLevel(uint32 level, bool forced)
     if (m_bot->CanEquipNewItem(NULL_SLOT, eDest, 38/*Recruit's Shirt*/, true)!=EQUIP_ERR_OK)
         return;
 
-    m_bot->GMStartup(true);
     m_bot->GiveLevel(level);
+    m_bot->GMStartup(true);
     m_bot->SetHealth(m_bot->GetMaxHealth());
     m_bot->SetPower(m_bot->getPowerType(), m_bot->GetMaxPower(m_bot->getPowerType()));
     GetClassAI()->InitSpells(m_bot->GetPlayerbotAI());
