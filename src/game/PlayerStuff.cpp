@@ -3107,6 +3107,13 @@ bool ChatHandler::HandleBotInvite(char* args)
 
     Player *pl = m_session->GetPlayer();
 
+    uint16 eDest;
+    if (pl->CanEquipNewItem(NULL_SLOT, eDest, 38/*Recruit's Shirt*/, true)!=EQUIP_ERR_OK)
+    {
+        m_session->SendNotification("Vous ne pouvez pas faire cela maintenant");
+        return true;
+    }
+
     uint8 _class = 0;
     switch (role)
     {
@@ -3226,6 +3233,13 @@ bool ChatHandler::HandleBotInviteArena(char* args)
         return false;
 
     Player *pl = m_session->GetPlayer();
+
+    uint16 eDest;
+    if (pl->CanEquipNewItem(NULL_SLOT, eDest, 38/*Recruit's Shirt*/, true)!=EQUIP_ERR_OK)
+    {
+        m_session->SendNotification("Vous ne pouvez pas faire cela maintenant");
+        return true;
+    }
 
     uint8 _class = 0;
     switch (role)
