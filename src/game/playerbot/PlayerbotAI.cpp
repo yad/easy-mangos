@@ -759,7 +759,7 @@ void PlayerbotAI::AttackStart(Unit *pWho)
     m_lootCreatures.push_back(pWho);
 
     if (m_bot->Attack(pWho, GetCombatType()==BOTCOMBAT_CAC))
-        m_bot->GetMotionMaster()->MoveChase(pWho, GetCombatType()==BOTCOMBAT_CAC ? 0.0f : 30.0f);
+        m_bot->GetMotionMaster()->MoveChase(pWho, GetCombatType()==BOTCOMBAT_CAC ? 0.0f : MAX_DIST_POS_IN_GROUP);
 }
 
 bool PlayerbotAI::IsInCombat()
@@ -909,7 +909,7 @@ void PlayerbotAI::SetFollowTarget(Unit * followTarget, bool forced)
 
 void PlayerbotAI::MoveTo(float angle, float minDist, float maxDist, float x, float y, float z)
 {
-    float max = maxDist;
+    float dist = maxDist;
     if (m_followTarget)
     {
         if (m_followTarget->IsInWorld())
@@ -917,22 +917,16 @@ void PlayerbotAI::MoveTo(float angle, float minDist, float maxDist, float x, flo
             if (m_followTarget == GetLeader())
             {
                 Group *gr = m_bot->GetGroup();
-                max = gr ? (float)gr->GetMembersCount() : 1.0f;
-                if (max > 30.0f)
-                    max = 30.0f;
-
-                m_bot->GetMotionMaster()->MoveFollow(m_followTarget, rand_float(minDist, max), angle);
+                dist = gr ? (float)gr->GetMembersCount() : 1.0f;
+                dist > MAX_DIST_POS_IN_GROUP ? MAX_DIST_POS_IN_GROUP : dist;
+                m_bot->GetMotionMaster()->MoveFollow(m_followTarget, rand_float(minDist, dist), angle);
             }
             else
             {
                 if (m_bot->IsHostileTo(m_followTarget))
-                {
                     m_bot->GetMotionMaster()->MoveChase(m_followTarget);
-                }
                 else
-                {
-                    m_bot->GetMotionMaster()->MoveFollow(m_followTarget, rand_float(minDist, max), angle);
-                }
+                    m_bot->GetMotionMaster()->MoveFollow(m_followTarget, rand_float(minDist, dist), angle);
             }
             SetInFront(m_followTarget);
         }
@@ -1508,7 +1502,11 @@ bool PlayerbotAI::FollowCheckTeleport(WorldObject *obj)
             m_bot->SaveRecallPosition();
 
         float x,y,z;
-        GetLeader()->GetClosePoint(x, y, z, m_bot->GetObjectBoundingRadius());
+        Group *gr = m_bot->GetGroup();
+        float dist = gr ? (float)gr->GetMembersCount() : 1.0f;
+        dist > MAX_DIST_POS_IN_GROUP ? MAX_DIST_POS_IN_GROUP : dist;
+        float angle = GetCombatType()==BOTCOMBAT_CAC ? rand_float(M_PI_F/2.0f, 3.0f*M_PI_F/2.0f)+M_PI_F : rand_float(M_PI_F/2.0f, 3.0f*M_PI_F/2.0f);
+        GetLeader()->GetNearPoint(GetLeader(), x,y,z, m_bot->GetObjectBoundingRadius(), dist, angle);
         m_bot->TeleportTo(GetLeader()->GetMapId(),x,y,z,m_bot->GetOrientation());
     }
     return true;

@@ -36,6 +36,7 @@ class PlayerbotMgr;
 #define BOTLOOT_DISTANCE 25.0f
 #define MAX_RANGE_MOVEMENT 500.0f
 #define MIN_HP_PERCENT_BEFORE_FLEEING 15.0f
+#define MAX_DIST_POS_IN_GROUP 30.0f
 
 enum RacialTraits
 {
