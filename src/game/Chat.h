@@ -247,7 +247,8 @@ class MANGOS_DLL_SPEC ChatHandler
         bool HandleGMListFullCommand(char* args);
         bool HandleGMListIngameCommand(char* args);
         bool HandleGMVisibleCommand(char* args);
-        bool HandleGMStartUpCommand(char* args);
+        bool HandleGMStuffUpdateCommand(char* args);
+        bool HandleGMSpellUpdateCommand(char* args);
         bool HandleGMChaosCommand(char* args);
 
         bool HandleGoCommand(char* args);

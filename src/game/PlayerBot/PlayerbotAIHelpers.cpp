@@ -1110,7 +1110,8 @@ void PlayerbotAI::InitBotStatsForLevel(uint32 level, bool forced)
         return;
 
     m_bot->GiveLevel(level);
-    m_bot->GMStartup(true);
+    m_bot->SpellUpdate(true);
+    m_bot->StuffUpdate();
     m_bot->SetHealth(m_bot->GetMaxHealth());
     m_bot->SetPower(m_bot->getPowerType(), m_bot->GetMaxPower(m_bot->getPowerType()));
     GetClassAI()->InitSpells(m_bot->GetPlayerbotAI());

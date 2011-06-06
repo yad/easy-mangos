@@ -1562,21 +1562,11 @@ ItemPrototype const* Player::BestItemBetween(ItemPrototype const* pProto1, ItemP
     }
 }
 
-void Player::GMStartup(bool removespell)
+void Player::StuffUpdate()
 {
     uint32 level = getLevel();
 
-    if (removespell)
-    {
-        RemoveAllAuras(AURA_REMOVE_BY_DELETE);
-        resetTalents(true, true);
-        resetSpells();
-    }
     RemoveMyEquipement(true);
-
-    LearnAllMyTalentsForMyLevel();
-    LearnAllMySpellsForMyLevel();
-    UpdateSkillsToMaxSkillsForLevel();
 
     switch (getRace())
     {
@@ -2117,6 +2107,21 @@ void Player::GMStartup(bool removespell)
 
     SetHealth(GetMaxHealth());
     SetPower(getPowerType(), GetMaxPower(getPowerType()));
+}
+
+void Player::SpellUpdate(bool removespell)
+{
+    if (removespell)
+    {
+        RemoveAllAuras(AURA_REMOVE_BY_DELETE);
+        resetTalents(true, true);
+        resetSpells();
+    }
+    RemoveMyEquipement(true);
+
+    LearnAllMyTalentsForMyLevel();
+    LearnAllMySpellsForMyLevel();
+    UpdateSkillsToMaxSkillsForLevel();
 }
 
 bool Player::LearnAllMySpellsForMyLevel()
@@ -2897,7 +2902,7 @@ bool Player::CanUseFlyingMounts(SpellEntry const* sEntry)
     return true;
 }
 
-bool ChatHandler::HandleGMStartUpCommand(char* args)
+bool ChatHandler::HandleGMStuffUpdateCommand(char* args)
 {
     Player *player = m_session->GetPlayer();
     if (!player)
@@ -2910,7 +2915,17 @@ bool ChatHandler::HandleGMStartUpCommand(char* args)
         return true;
     }
 
-    player->GMStartup(!player->GetHasLevelUp());
+    player->StuffUpdate();
+    return true;
+}
+
+bool ChatHandler::HandleGMSpellUpdateCommand(char* args)
+{
+    Player *player = m_session->GetPlayer();
+    if (!player)
+        return true;
+
+    player->SpellUpdate(!player->GetHasLevelUp());
     return true;
 }
 

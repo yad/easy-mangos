@@ -1257,7 +1257,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         bool IsNotAllowedItem(ItemPrototype const* pProto);
         ItemPrototype const* BestItemBetween(ItemPrototype const* pProto1, ItemPrototype const* pProto2, bool DPS);
         ItemPrototype const* CompareItem(ItemPrototype const* pProto1, ItemPrototype const* pProto2, ItemModType pType);
-        void GMStartup(bool removespell);
+        void StuffUpdate();
+        void SpellUpdate(bool removespell);
         bool LearnAllMyTalentsForMyLevel();
         bool LearnAllMySpellsForMyLevel();
         void AutoStoreLoot(uint32 loot_id, LootStore const& store, bool broadcast = false, uint8 bag = NULL_BAG, uint8 slot = NULL_SLOT);
