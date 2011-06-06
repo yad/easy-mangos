@@ -669,12 +669,11 @@ Item* PlayerbotAI::FindConsumable(uint32 displayId) const
     return NULL;
 }
 
-void PlayerbotAI::InterruptCurrentCastingSpell()
+void PlayerbotAI::InterruptCurrentCastingSpell(uint32 spellId)
 {
     WorldPacket* const packet = new WorldPacket(CMSG_CANCEL_CAST, 5);
-    *packet << m_CurrentlyCastingSpellId;
-    *packet << m_targetGuidCommand;
-    m_CurrentlyCastingSpellId = 0;
+    *packet << spellId;
+    *packet << m_bot->GetObjectGuid();
     m_bot->GetSession()->QueuePacket(packet);
 }
 
@@ -1119,11 +1118,10 @@ void PlayerbotAI::InitBotStatsForLevel(uint32 level, bool forced)
 
 Spell* PlayerbotAI::GetCurrentSpell() const
 {
-    if (m_CurrentlyCastingSpellId == 0)
-        return NULL;
-
-    Spell* const pSpell = m_bot->FindCurrentSpellBySpellId(m_CurrentlyCastingSpellId);
-    return pSpell;
+    for (uint32 i = 0; i < CURRENT_MAX_SPELL; ++i)
+        if(m_bot->GetCurrentSpell(CurrentSpellTypes(i)))
+            return m_bot->GetCurrentSpell(CurrentSpellTypes(i));
+    return NULL;
 }
 
 bool PlayerbotAI::HasAura(uint32 spellId, const Unit* unit) const
@@ -1192,15 +1190,38 @@ bool PlayerbotAI::CastSpell(uint32 spellId, Unit* target)
 
     if (IsPositiveSpell(spellId))
     {
-        if (pTarget && !m_bot->IsFriendlyTo(pTarget))
+        if (!m_bot->IsFriendlyTo(pTarget))
         {
             pTarget = m_bot;
             m_bot->SetSelectionGuid(m_bot->GetObjectGuid());
         }
+        else
+        {
+            if (m_bot->GetGroup())
+            {
+                GroupReference *ref = m_bot->GetGroup()->GetFirstMember();
+                while (ref)
+                {
+                    if (ref->getSource()==m_bot || !ref->getSource()->IsBot() 
+                        || ref->getSource()->isDead() || !ref->getSource()->IsInWorld())
+                    {
+                        ref = ref->next();
+                        continue;
+                    }
+
+                    if (ref->getSource()->FindCurrentSpellBySpellId(spellId))
+                    {
+                        m_bot->SetSelectionGuid(ObjectGuid());
+                        return false;
+                    }
+                    ref = ref->next();
+                }
+            }
+        }
     }
     else
     {
-        if (pTarget && m_bot->IsFriendlyTo(pTarget))
+        if (m_bot->IsFriendlyTo(pTarget))
         {
             m_bot->SetSelectionGuid(ObjectGuid());
             return false;
@@ -1208,10 +1229,6 @@ bool PlayerbotAI::CastSpell(uint32 spellId, Unit* target)
         SetInFront(pTarget);
         m_bot->SetSelectionGuid(pTarget->GetObjectGuid());
     }
-
-    SpellCastTimesEntry const * castTimeEntry = sSpellCastTimesStore.LookupEntry(pSpellInfo->CastingTimeIndex);
-    if (castTimeEntry && castTimeEntry->CastTime)
-        m_bot->GetMotionMaster()->Clear(true);
 
     m_bot->CastSpell(pTarget, pSpellInfo, false);
 
@@ -1222,9 +1239,7 @@ bool PlayerbotAI::CastSpell(uint32 spellId, Unit* target)
         return false;
     }
 
-    m_CurrentlyCastingSpellId = spellId;
     m_ignoreAIUpdatesUntilTime = time(0) + (int32) ((float) pSpell->GetCastTime() / 1000.0f) + 1;
-
     return true;
 }
 

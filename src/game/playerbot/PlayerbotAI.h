@@ -157,7 +157,7 @@ public:
 
     void EquipItem(Item& item);
     void Feast();
-    void InterruptCurrentCastingSpell();
+    void InterruptCurrentCastingSpell(uint32);
     void ChangeCombatTarget();
     Unit *GetNewCombatTarget();
     void DoCombatManeuver(Unit* forcedTarget = NULL);
@@ -238,7 +238,6 @@ private:
 
     time_t m_TimeDoneEating;
     time_t m_TimeDoneDrinking;
-    uint32 m_CurrentlyCastingSpellId;
 
     uint64 m_targetGuidCommand;
     ObjectGuid m_taxiMaster;

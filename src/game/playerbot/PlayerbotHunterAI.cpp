@@ -166,6 +166,7 @@ void PlayerbotHunterAI::DoCombatManeuver(Unit *pTarget, bool cac)
             if (FEIGN_DEATH && !m_bot->HasAura(FEIGN_DEATH) && ai->CastSpell(FEIGN_DEATH))
                 return;
         }
+        /*//[Yad] : je désactive les mouvements GetMotionMaster ne doivent plus être changé dans les AI
         else if (!m_bot->isMoving() && !m_bot->hasUnitState(UNIT_STAT_NO_FREE_MOVE) && !m_bot->hasUnitState(UNIT_STAT_CONTROLLED))
         {
             float xb, yb, zb, xt, yt, zt, xbt, ybt, angle, offset_x, offset_y;
@@ -198,7 +199,7 @@ void PlayerbotHunterAI::DoCombatManeuver(Unit *pTarget, bool cac)
             }
 
             return;
-        }
+        }*/
     }
 
     if (!m_bot->isInFront(pTarget, 50.0f, 0) && !m_bot->hasUnitState(UNIT_STAT_NO_FREE_MOVE) && !m_bot->hasUnitState(UNIT_STAT_CONTROLLED))

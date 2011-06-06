@@ -68,10 +68,6 @@ PlayerbotAI::PlayerbotAI(PlayerbotMgr* const mgr, Player* const bot) : m_mgr(mgr
     m_TimeDoneEating = 0;
     m_TimeDoneDrinking = 0;
 
-    m_CurrentlyCastingSpellId = 0;
-
-    m_targetGuidCommand = 0;
-
     m_taxiMaster = ObjectGuid();
 
     m_classAI = 0;
@@ -210,19 +206,10 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
         case SMSG_SPELL_FAILURE:
         {
             WorldPacket p(packet);
-            uint8 castCount;
-            uint32 spellId;
-
             ObjectGuid casterGuid = p.readPackGUID();
             if (casterGuid != m_bot->GetObjectGuid())
                 return;
-
-            p >> castCount >> spellId;
-            if (m_CurrentlyCastingSpellId == spellId)
-            {
-                m_ignoreAIUpdatesUntilTime = time(0);
-                m_CurrentlyCastingSpellId = 0;
-            }
+            m_ignoreAIUpdatesUntilTime = time(0);
             return;
         }
 
@@ -484,7 +471,7 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
             return;
         }
 
-        case SMSG_SPELL_GO:
+        /*case SMSG_SPELL_GO:
         {
             WorldPacket p(packet);
             ObjectGuid castItemGuid = p.readPackGUID();
@@ -499,26 +486,9 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
                 p >> msTime;
                 uint8 numHit;
                 p >> numHit;
-
-                if (m_CurrentlyCastingSpellId == spellId)
-                {
-                    Spell* const pSpell = m_bot->FindCurrentSpellBySpellId(spellId);
-                    if (!pSpell)
-                        return;
-
-                    if (pSpell->IsChannelActive() || pSpell->IsAutoRepeat())
-                        m_ignoreAIUpdatesUntilTime = time(0) + (GetSpellDuration(pSpell->m_spellInfo) / 1000) + 1;
-                    else if (pSpell->IsAutoRepeat())
-                        m_ignoreAIUpdatesUntilTime = time(0) + 6;
-                    else
-                    {
-                        m_ignoreAIUpdatesUntilTime = time(0) + 1;
-                        m_CurrentlyCastingSpellId = 0;
-                    }
-                }
             }
             return;
-        }
+        }*/
 
         case SMSG_RESURRECT_REQUEST:
         {
@@ -708,7 +678,7 @@ void PlayerbotAI::DoCombatManeuver(Unit* forcedTarget)
     if (!m_bot->getVictim())
     {
         m_bot->AttackStop();
-        m_bot->CombatStop();
+        m_bot->CombatStop(true);
         m_bot->SetSelectionGuid(ObjectGuid());
         SetFollowTarget(GetLeader(), true);
         return;
@@ -1168,9 +1138,9 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
     {
         Spell* const pSpell = GetCurrentSpell();
         if (pSpell && !(pSpell->IsChannelActive() || pSpell->IsAutoRepeat()))
-            InterruptCurrentCastingSpell();
+            InterruptCurrentCastingSpell(pSpell->m_spellInfo->Id);
 
-        m_bot->GetIndispensableItems();
+		m_bot->GetIndispensableItems();
 
         /*
         sLog.outString("%s => %s", m_bot->GetName(), m_followTarget ? m_followTarget->GetName() : "NULL");
@@ -1180,22 +1150,22 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
         sLog.outString("===============================================");
         */
 
-        //Never remove it otherwise bots are glued
-        if (!m_followTarget
-            || (!pSpell && m_bot->GetMotionMaster()->GetCurrentMovementGeneratorType()==IDLE_MOTION_TYPE)
-            || !m_bot->IsWithinDistInMap(GetLeader(), 100.0f))
-            SetFollowTarget(GetLeader(), true);
+			//Never remove it otherwise bots are glued
+		if (!m_followTarget
+			|| (!GetCurrentSpell() && m_bot->GetMotionMaster()->GetCurrentMovementGeneratorType()==IDLE_MOTION_TYPE)
+			|| !m_bot->IsWithinDistInMap(GetLeader(), 100.0f))
+			SetFollowTarget(GetLeader(), true);
 
         if (!IsInCombat())
         {
             Spell* const pSpell = GetCurrentSpell();
             if (pSpell && pSpell->IsAutoRepeat())
-                InterruptCurrentCastingSpell();
+                InterruptCurrentCastingSpell(pSpell->m_spellInfo->Id);
 
-            if (m_bot->getVictim())
+            if (m_bot->getVictim() || m_bot->GetMotionMaster()->GetCurrentMovementGeneratorType()==CHASE_MOTION_TYPE)
             {
                 m_bot->AttackStop();
-                m_bot->CombatStop();
+                m_bot->CombatStop(true);
                 m_bot->SetSelectionGuid(ObjectGuid());
                 SetFollowTarget(GetLeader(), true);
             }
@@ -1464,7 +1434,7 @@ bool PlayerbotAI::FollowCheckTeleport(WorldObject *obj)
     if (!m_bot->IsWithinDistInMap(obj, 100, true) && GetLeader()->isAlive() && !GetLeader()->IsTaxiFlying())
     {
         m_bot->AttackStop();
-        m_bot->CombatStop();
+        m_bot->CombatStop(true);
         m_bot->SetSelectionGuid(ObjectGuid());
 
         if (m_bot == GetLeader())
