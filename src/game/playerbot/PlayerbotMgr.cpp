@@ -139,7 +139,7 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
                     {
                         bot = itr->getSource();
                         if (!bot->IsFriendlyTo(thingToAttack) && bot->IsWithinLOSInMap(thingToAttack))
-                            bot->GetPlayerbotAI()->ChangeCombatTarget(thingToAttack);
+                            bot->GetPlayerbotAI()->AttackStart(thingToAttack);
                     }
                     return;
                 }

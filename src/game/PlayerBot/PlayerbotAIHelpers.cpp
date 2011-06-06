@@ -1126,18 +1126,6 @@ Spell* PlayerbotAI::GetCurrentSpell() const
     return pSpell;
 }
 
-bool PlayerbotAI::CastSpell(uint32 spellId, Unit* target)
-{
-    if (spellId <= 0)
-        return false;
-
-    ObjectGuid oldSel = m_bot->GetSelectionGuid();
-    m_bot->SetSelectionGuid(target->GetObjectGuid());
-    bool rv = CastSpell(spellId);
-    m_bot->SetSelectionGuid(oldSel);
-    return rv;
-}
-
 bool PlayerbotAI::HasAura(uint32 spellId, const Unit* unit) const
 {
     if (spellId <= 0)
@@ -1159,20 +1147,28 @@ bool PlayerbotAI::CastAura(uint32 spellId, Unit* target)
     return CastSpell(spellId, target);
 }
 
-bool PlayerbotAI::CastSpell(uint32 spellId)
+bool PlayerbotAI::CastSpell(uint32 spellId, Unit* target)
 {
+    Unit* pTarget = target;
+
     if (spellId <= 0)
+    {
+        m_bot->SetSelectionGuid(ObjectGuid());
         return false;
+    }
 
     if (m_bot->HasSpellCooldown(spellId))
+    {
+        m_bot->SetSelectionGuid(ObjectGuid());
         return false;
+    }
 
     const SpellEntry* const pSpellInfo = sSpellStore.LookupEntry(spellId);
     if (!pSpellInfo)
+    {
+        m_bot->SetSelectionGuid(ObjectGuid());
         return false;
-
-    ObjectGuid targetGUID = m_bot->GetSelectionGuid();
-    Unit* pTarget = ObjectAccessor::GetUnit(*m_bot, targetGUID);
+    }
 
     if (!pTarget)
         pTarget = m_bot;
@@ -1182,34 +1178,49 @@ bool PlayerbotAI::CastSpell(uint32 spellId)
     {
         float dist = m_bot->GetCombatDistance(pTarget);
         if (dist > it->second + 1.25)
+        {
+            m_bot->SetSelectionGuid(ObjectGuid());
             return false;
+        }
     }
 
     if (!m_bot->IsWithinLOSInMap(pTarget))
+    {
+        m_bot->SetSelectionGuid(ObjectGuid());
         return false;
+    }
 
     if (IsPositiveSpell(spellId))
     {
         if (pTarget && !m_bot->IsFriendlyTo(pTarget))
+        {
             pTarget = m_bot;
+            m_bot->SetSelectionGuid(m_bot->GetObjectGuid());
+        }
     }
     else
     {
         if (pTarget && m_bot->IsFriendlyTo(pTarget))
+        {
+            m_bot->SetSelectionGuid(ObjectGuid());
             return false;
-
+        }
         SetInFront(pTarget);
+        m_bot->SetSelectionGuid(pTarget->GetObjectGuid());
     }
 
-    /*SpellCastTimesEntry const * castTimeEntry = sSpellCastTimesStore.LookupEntry(pSpellInfo->CastingTimeIndex);
+    SpellCastTimesEntry const * castTimeEntry = sSpellCastTimesStore.LookupEntry(pSpellInfo->CastingTimeIndex);
     if (castTimeEntry && castTimeEntry->CastTime)
-        m_bot->GetMotionMaster()->Clear(true);*/
+        m_bot->GetMotionMaster()->Clear(true);
 
     m_bot->CastSpell(pTarget, pSpellInfo, false);
 
     Spell* const pSpell = m_bot->FindCurrentSpellBySpellId(spellId);
     if (!pSpell)
+    {
+        m_bot->SetSelectionGuid(ObjectGuid());
         return false;
+    }
 
     m_CurrentlyCastingSpellId = spellId;
     m_ignoreAIUpdatesUntilTime = time(0) + (int32) ((float) pSpell->GetCastTime() / 1000.0f) + 1;
@@ -1767,16 +1778,8 @@ void PlayerbotAI::Pull()
     if (gr && !IsInCombat())
     {
         if (gr->IsAssistant(m_bot->GetObjectGuid()))
-            m_combatTarget = gr->GetAssistTarget();
+            AttackStart(gr->GetAssistTarget());
         else
-            m_combatTarget = gr->GetTankTarget();
-
-        m_followTarget = m_combatTarget;
-
-        ChangeCombatTarget(m_combatTarget);
-        SetInFront(m_combatTarget);
-        SetFollowTarget(m_combatTarget);
-        m_bot->Attack(m_combatTarget, true);
-        GetClassAI()->DoCombatManeuver(m_combatTarget, true);
+            AttackStart(gr->GetTankTarget());
     }
 }

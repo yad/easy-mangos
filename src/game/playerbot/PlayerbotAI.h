@@ -141,8 +141,7 @@ public:
     Item* FindConsumable(uint32 displayId) const;
 
     bool CastAura(uint32 spellId, Unit* target);
-    bool CastSpell(uint32 spellId);
-    bool CastSpell(uint32 spellId, Unit* target);
+    bool CastSpell(uint32 spellId, Unit* target = NULL);
     bool CastPetAura(uint32 spellId, Unit* target);
     bool CastPetSpell(uint32 spellId, Unit* target = NULL);
     bool Buff(uint32 spellId, Unit* target, void (*beforeCast)(Player *) = NULL);
@@ -158,10 +157,9 @@ public:
     void EquipItem(Item& item);
     void Feast();
     void InterruptCurrentCastingSpell();
-    void ChangeCombatTarget(Unit* targetCombat);
-    Unit *GetCurrentTarget() { return m_combatTarget; };
+    void ChangeCombatTarget();
     Unit *GetNewCombatTarget();
-    void DoCombatManeuver();
+    void DoCombatManeuver(Unit* forcedTarget = NULL);
     BotCombatType GetCombatType();
     void MoveTo(float angle, float minDist = 1.0f, float maxDist = 3.0f, float x = 0.0f, float y = 0.0f, float z = 0.0f);
     void SetIgnoreUpdateTime(uint8 t = 0) { m_ignoreAIUpdatesUntilTime = time(0) + t; };
@@ -216,7 +214,7 @@ public:
     void Pull();
 
     void MoveInLineOfSight(Unit *);               //Usefull call in mangos update position system
-    void AttackStart(Unit *) {};                  //Useless but we can rewrite code to use it
+    void AttackStart(Unit *);                     //Always attack new target with this
     void EnterEvadeMode() {};                     //Implemented later
     void AttackedBy(Unit*) {};                    //Not used for now
     bool IsVisible(Unit *) const {return true;};  //Fake but need to be implemented later
@@ -244,7 +242,6 @@ private:
     uint64 m_targetGuidCommand;
     ObjectGuid m_taxiMaster;
 
-    Unit *m_combatTarget;
     Unit *m_followTarget;
     Creature* m_lootCreature;
     BotLootCreature m_lootCreatures;

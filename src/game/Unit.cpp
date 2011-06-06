@@ -378,7 +378,7 @@ void Unit::Update( uint32 update_diff, uint32 p_time )
             setAttackTimer(BASE_ATTACK, (update_diff >= base_att ? 0 : base_att - update_diff) );
         else
         {
-            if(GetTypeId() == TYPEID_PLAYER)
+            if(GetTypeId() == TYPEID_PLAYER && !((Player*)this)->IsBot())
             {
                 setAttackTimer(BASE_ATTACK, 0);
                 if(((Player*)this)->CanDualWield() && haveOffhandWeapon())
