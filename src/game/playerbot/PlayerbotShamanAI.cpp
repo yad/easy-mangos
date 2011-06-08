@@ -109,21 +109,19 @@ void PlayerbotShamanAI::HealTarget(Unit *target, uint8 hp)
     // end HealTarget
 }
 
-void PlayerbotShamanAI::DoCombatManeuver(Unit *pTarget, bool cac)
+bool PlayerbotShamanAI::DoCombatManeuver(Unit *pTarget, bool cac)
 {
     PlayerbotAI *ai = GetAI();
     if (!ai)
-        return;
+        return false;
 
     Player * m_bot = GetPlayerBot();
     if (!m_bot)
-        return;
+        return false;
 
     Player* m_master = ai->GetLeader();
     if (!m_master)
-        return;
-
-    //ai->SetMovementTarget(PlayerbotAI::MOVEMENT_FOLLOW, m_master);   // dont want to melee mob <----changed
+        return false;
 
     Group *m_group = m_bot->GetGroup();
 
@@ -162,8 +160,6 @@ void PlayerbotShamanAI::DoCombatManeuver(Unit *pTarget, bool cac)
     }
 
     // Damage Spells
-    ai->SetInFront(pTarget);
-
     switch (SpellSequence)
     {
         case SPELL_ENHANCEMENT:

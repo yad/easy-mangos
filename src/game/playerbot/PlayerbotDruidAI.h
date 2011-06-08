@@ -45,7 +45,6 @@ enum DruidSpells
     CYCLONE_1                       = 33786,
     DASH_1                          = 1850,
     DEMORALIZING_ROAR_1             = 99,
-    DIRE_BEAR_FORM_1                = 9634,
     ENRAGE_1                        = 5229,
     ENTANGLING_ROOTS_1              = 339,
     FAERIE_FIRE_1                   = 770,
@@ -116,7 +115,7 @@ public:
     virtual ~PlayerbotDruidAI();
 
     // all combat actions go here
-    void DoCombatManeuver(Unit*, bool);
+    bool DoCombatManeuver(Unit*, bool);
 
     // all non combat actions go here, ex buffs, heals, rezzes
     void DoNonCombatActions();
@@ -135,7 +134,6 @@ private:
     // druid cat/bear/dire bear/moonkin/tree of life forms
     uint32 CAT_FORM,
            BEAR_FORM,
-           DIRE_BEAR_FORM,
            MOONKIN_FORM,
            TREE_OF_LIFE,
            TRAVEL_FORM;

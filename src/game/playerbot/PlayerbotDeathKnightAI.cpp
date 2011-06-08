@@ -90,26 +90,25 @@ void PlayerbotDeathKnightAI::InitSpells(PlayerbotAI* const ai)
 
 PlayerbotDeathKnightAI::~PlayerbotDeathKnightAI() {}
 
-void PlayerbotDeathKnightAI::DoCombatManeuver(Unit *pTarget, bool cac)
+bool PlayerbotDeathKnightAI::DoCombatManeuver(Unit *pTarget, bool cac)
 {
     PlayerbotAI *ai = GetAI();
     if (!ai)
-        return;
+        return false;
 
     Player * m_bot = GetPlayerBot();
     if (!m_bot)
-        return;
+        return false;
 
     Player* m_master = ai->GetLeader();
     if (!m_master)
-        return;
+        return false;
 
     //ai->SetMovementTarget( PlayerbotAI::MOVEMENT_FOLLOW, m_master ); // dont want to melee mob
 
     // DK Attacks: Unholy, Frost & Blood
 
     // damage spells
-    ai->SetInFront(pTarget);  //<---
     Unit* pVictim = pTarget->getVictim();
     Pet *pet = m_bot->GetPet();
     float dist = m_bot->GetDistance(pTarget);

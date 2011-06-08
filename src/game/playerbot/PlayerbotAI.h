@@ -33,10 +33,13 @@ class Item;
 class PlayerbotClassAI;
 class PlayerbotMgr;
 
-#define BOTLOOT_DISTANCE 25.0f
-#define MAX_RANGE_MOVEMENT 500.0f
 #define MIN_HP_PERCENT_BEFORE_FLEEING 15.0f
-#define MAX_DIST_POS_IN_GROUP 30.0f
+#define MAX_BOTLOOT_DISTANCE          25.0f
+#define MAX_DIST_POS_IN_GROUP         30.0f
+#define MAX_DIST_COMBAT_TARGET        50.0f
+#define MAX_DIST_COMBAT_RANGED_TARGET 20.0f
+#define MAX_DIST_COMBAT_CAC_TARGET    50.0f
+#define MAX_RANGE_MOVEMENT            500.0f
 
 enum RacialTraits
 {
@@ -158,9 +161,8 @@ public:
     void EquipItem(Item& item);
     void Feast();
     void InterruptCurrentCastingSpell(uint32);
-    void ChangeCombatTarget();
     Unit *GetNewCombatTarget();
-    void DoCombatManeuver(Unit* forcedTarget = NULL);
+    void DoCombatManeuver(Unit* = NULL);
     BotCombatType GetCombatType();
     void MoveTo(float angle, float minDist = 1.0f, float maxDist = 3.0f, float x = 0.0f, float y = 0.0f, float z = 0.0f);
     void SetIgnoreUpdateTime(uint8 t = 0) { m_ignoreAIUpdatesUntilTime = time(0) + t; };
@@ -200,7 +202,10 @@ public:
 
     void CheckMount();
     void UnMount();
-    Player* FindNewGroupLeader();
+    Player* FindGroupRandomRealPlayer();
+    Player* FindGroupRandomPlayer(Classes _class);
+    Player* FindGroupMainTank();
+    bool MasterIsMainTank() { return m_bot!=GetLeader() && GetLeader()==FindGroupMainTank(); };
 
     bool SetInFront(const Unit* obj);
 

@@ -46,7 +46,6 @@ void PlayerbotHunterAI::InitSpells(PlayerbotAI* const ai)
     NETHER_SHOCK                  = 0;
 
     // RANGED COMBAT
-    AUTO_SHOT                     = ai->initSpell(AUTO_SHOT_1);
     HUNTERS_MARK                  = ai->initSpell(HUNTERS_MARK_1);
     ARCANE_SHOT                   = ai->initSpell(ARCANE_SHOT_1);
     CONCUSSIVE_SHOT               = ai->initSpell(CONCUSSIVE_SHOT_1);
@@ -117,19 +116,19 @@ bool PlayerbotHunterAI::HasPet(Player* bot)
         return false;  //hunter either has no pet or stabled
 } // end HasPet
 
-void PlayerbotHunterAI::DoCombatManeuver(Unit *pTarget, bool cac)
+bool PlayerbotHunterAI::DoCombatManeuver(Unit *pTarget, bool cac)
 {
     PlayerbotAI *ai = GetAI();
     if (!ai)
-        return;
+        return false;
 
     Player * m_bot = GetPlayerBot();
     if (!m_bot)
-        return;
+        return false;
 
     Player* m_master = ai->GetLeader();
     if (!m_master)
-        return;
+        return false;
 
     // Hunter
     Unit* pVictim = pTarget->getVictim();
@@ -141,18 +140,18 @@ void PlayerbotHunterAI::DoCombatManeuver(Unit *pTarget, bool cac)
         && (PET_MEND > 0 && !pet->getDeathState() != ALIVE && pVictim != m_bot && !pet->HasAura(PET_MEND, EFFECT_INDEX_0) && ai->GetManaPercent() >= 13 && ai->CastSpell(PET_MEND, m_bot)))
     {
 
-        return;
+        return true;
     }
     else if ((pet)
              && (INTIMIDATION > 0 && pVictim == pet && !pet->HasAura(INTIMIDATION, EFFECT_INDEX_0) && ai->CastSpell(INTIMIDATION, m_bot)))
 
-        return;
+        return true;
 
     // racial traits
     if (m_bot->getRace() == RACE_ORC && !m_bot->HasAura(BLOOD_FURY, EFFECT_INDEX_0) && ai->CastSpell(BLOOD_FURY, m_bot))
-        return;
+        return true;
     else if (m_bot->getRace() == RACE_TROLL && !m_bot->HasAura(BERSERKING, EFFECT_INDEX_0) && ai->CastSpell(BERSERKING, m_bot))
-        return;
+        return true;
 
     if (m_bot->IsWithinDist(pTarget, ATTACK_DISTANCE))
         m_rangedCombat = false;
@@ -164,7 +163,7 @@ void PlayerbotHunterAI::DoCombatManeuver(Unit *pTarget, bool cac)
         if (pTarget->getVictim() == m_bot)
         {
             if (FEIGN_DEATH && !m_bot->HasAura(FEIGN_DEATH) && ai->CastSpell(FEIGN_DEATH))
-                return;
+                return true;
         }
         /*//[Yad] : je désactive les mouvements GetMotionMaster ne doivent plus être changé dans les AI
         else if (!m_bot->isMoving() && !m_bot->hasUnitState(UNIT_STAT_NO_FREE_MOVE) && !m_bot->hasUnitState(UNIT_STAT_CONTROLLED))
@@ -202,27 +201,17 @@ void PlayerbotHunterAI::DoCombatManeuver(Unit *pTarget, bool cac)
         }*/
     }
 
-    if (!m_bot->isInFront(pTarget, 50.0f, 0) && !m_bot->hasUnitState(UNIT_STAT_NO_FREE_MOVE) && !m_bot->hasUnitState(UNIT_STAT_CONTROLLED))
-        ai->SetInFront(pTarget);
-
     if (!m_bot->HasAura(ASPECT_OF_THE_VIPER) && ai->GetManaPercent() < 50 && ai->CastSpell(ASPECT_OF_THE_VIPER, m_bot))
-        return;
+        return true;
     else if (!m_bot->HasAura(ASPECT_OF_THE_DRAGONHAWK) && ai->GetManaPercent() >= 80 && ai->CastSpell(ASPECT_OF_THE_DRAGONHAWK, m_bot))
-        return;
-
-    // activate auto shot
-    if (!m_bot->FindCurrentSpellBySpellId(AUTO_SHOT))
-        ai->CastSpell(AUTO_SHOT, pTarget);
-    else if (m_bot->FindCurrentSpellBySpellId(AUTO_SHOT))
-        m_bot->InterruptNonMeleeSpells(true, AUTO_SHOT);
+        return true;
 
     // damage spells
-
     if (!pTarget->HasAura(HUNTERS_MARK) && ai->CastSpell(HUNTERS_MARK, pTarget))
-        return;
+        return true;
 
     if (m_bot->HasAura(ASPECT_OF_THE_VIPER) && ai->CastSpell(RAPID_FIRE))
-        return;
+        return true;
 
     static const uint32 RangedSpell[] = {KILL_SHOT, EXPLOSIVE_SHOT, SERPENT_STING, BLACK_ARROW, ARCANE_SHOT, AIMED_SHOT, STEADY_SHOT};
     static const uint32 MeleeSpell[] = {MONGOOSE_BITE, RAPTOR_STRIKE, IMMOLATION_TRAP, EXPLOSIVE_TRAP};
@@ -256,10 +245,10 @@ void PlayerbotHunterAI::DoCombatManeuver(Unit *pTarget, bool cac)
 
     // Spells with Area of Effect
     if (m_rangedCombat && numberTargets >= 3 && ai->CastSpell(MULTI_SHOT, pTarget))
-        return;
+        return true;
 
     if (numberTargets >= 5 && ai->CastSpell(VOLLEY, pTarget))
-        return;
+        return true;
 
     // Casting spell cycle
     if (m_rangedCombat)
@@ -269,14 +258,14 @@ void PlayerbotHunterAI::DoCombatManeuver(Unit *pTarget, bool cac)
             if (RangedSpellEnabled[i] == 'F')
             {
                 if (m_bot->HasAura(ASPECT_OF_THE_DRAGONHAWK) && !pTarget->HasAuraFromUnit(RangedSpell[i], m_bot) && ai->CastSpell(RangedSpell[i], pTarget))
-                    return;
+                    return true;
                 else
                     continue;
             }
             else if (RangedSpellEnabled[i] == '1')
             {
                 if (!pTarget->HasAuraFromUnit(RangedSpell[i], m_bot) && ai->CastSpell(RangedSpell[i], pTarget))
-                    return;
+                    return true;
             }
         }
     }
@@ -285,7 +274,7 @@ void PlayerbotHunterAI::DoCombatManeuver(Unit *pTarget, bool cac)
         for (uint32 i = 0; i < eltMelee; ++i)
         {
             if (!pTarget->HasAuraFromUnit(MeleeSpell[i], m_bot) && ai->CastSpell(MeleeSpell[i], pTarget))
-                return;
+                return true;
         }
     }
 

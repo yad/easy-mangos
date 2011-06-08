@@ -113,24 +113,23 @@ bool PlayerbotPaladinAI::HealTarget(Unit *target)
     return false;
 } // end HealTarget
 
-void PlayerbotPaladinAI::DoCombatManeuver(Unit *pTarget, bool cac)
+bool PlayerbotPaladinAI::DoCombatManeuver(Unit *pTarget, bool cac)
 {
     Unit* pVictim = pTarget->getVictim();
 
     PlayerbotAI *ai = GetAI();
     if (!ai)
-        return;
+        return false;
 
     Player * m_bot = GetPlayerBot();
     if (!m_bot)
-        return;
+        return false;
 
     Player* m_master = ai->GetLeader();
     if (!m_master)
-        return;
+        return false;
 
     // damage spells
-    ai->SetInFront(pTarget);
     Group *m_group = m_bot->GetGroup();
     float dist = m_bot->GetDistance(pTarget);
 
@@ -155,7 +154,7 @@ void PlayerbotPaladinAI::DoCombatManeuver(Unit *pTarget, bool cac)
             uint32 memberHP = m_groupMember->GetHealth() * 100 / m_groupMember->GetMaxHealth();
             if (memberHP < 40 && ai->GetManaPercent() >= 40)  // do not heal bots without plenty of mana for master & self
                 if (HealTarget(m_groupMember))
-                    return;
+                    return true;
         }
     }
 
@@ -167,26 +166,26 @@ void PlayerbotPaladinAI::DoCombatManeuver(Unit *pTarget, bool cac)
     case CLASS_WARLOCK:
     case CLASS_PRIEST:
         if (!m_bot->HasAura(SHADOW_RESISTANCE_AURA) && ai->CastSpell(SHADOW_RESISTANCE_AURA))
-            return;
+            return true;
         break;
     case CLASS_MAGE:
         if (pTarget->GetTypeId() == TYPEID_PLAYER)
         {
             if (((Player*)pTarget)->getRole() == MageFire && !m_bot->HasAura(FIRE_RESISTANCE_AURA) && ai->CastSpell(FIRE_RESISTANCE_AURA))
-                return;
+                return true;
             else if (((Player*)pTarget)->getRole() == MageFrost && !m_bot->HasAura(FROST_RESISTANCE_AURA) && ai->CastSpell(FROST_RESISTANCE_AURA))
-                return;
+                return true;
         }
         else if (!m_bot->HasAura(FIRE_RESISTANCE_AURA) && ai->CastSpell(FIRE_RESISTANCE_AURA))
-            return;
+            return true;
         break;
     case CLASS_HUNTER:
         if (!m_bot->HasAura(RETRIBUTION_AURA) && ai->CastSpell(RETRIBUTION_AURA))
-            return;
+            return true;
         break;
     default:
         if (!m_bot->HasAura(DEVOTION_AURA) && ai->CastSpell(DEVOTION_AURA))
-            return;
+            return true;
     }
 
     if (ai->GetHealthPercent() <= 40 || m_master->GetHealth() <= m_master->GetMaxHealth() * 0.4)
@@ -202,20 +201,20 @@ void PlayerbotPaladinAI::DoCombatManeuver(Unit *pTarget, bool cac)
                 if(m_bot->GetGroup())
                 {
                     if (!pTarget->HasAura(JUDGEMENT_OF_LIGHT) && (ai->GetManaPercent() > 30 || pTarget->HasAura(JUDGEMENT_OF_WISDOM)) && ai->CastSpell(JUDGEMENT_OF_LIGHT, pTarget))
-                        return;
+                        return true;
                     else if (!pTarget->HasAura(JUDGEMENT_OF_WISDOM) && ai->CastSpell(JUDGEMENT_OF_WISDOM, pTarget))
-                        return;
+                        return true;
                     else if (!pTarget->HasAura(JUDGEMENT_OF_JUSTICE) && ai->CastSpell(JUDGEMENT_OF_JUSTICE, pTarget))
-                        return;
+                        return true;
                     else if (ai->CastSpell(JUDGEMENT_OF_LIGHT, pTarget))
-                        return;
+                        return true;
                 }
                 else
                 {
                     if (!pTarget->HasAura(JUDGEMENT_OF_LIGHT) && ai->GetManaPercent() > 30 && ai->CastSpell(JUDGEMENT_OF_LIGHT, pTarget))
-                        return;
+                        return true;
                     else if (!pTarget->HasAura(JUDGEMENT_OF_WISDOM) && ai->GetManaPercent() <= 30 && ai->CastSpell (JUDGEMENT_OF_WISDOM, pTarget))
-                        return;
+                        return true;
                 }
 
                 CombatCounter++;

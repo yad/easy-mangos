@@ -105,16 +105,16 @@ bool PlayerbotPriestAI::HealTarget(Unit* target)
         return false;
 } // end HealTarget
 
-void PlayerbotPriestAI::DoCombatManeuver(Unit *pTarget, bool cac)
+bool PlayerbotPriestAI::DoCombatManeuver(Unit *pTarget, bool cac)
 {
-    Unit* pVictim = pTarget->getVictim();
+    //Unit* pVictim = pTarget->getVictim();
     PlayerbotAI* ai = GetAI();
     if (!ai)
-        return;
+        return false;
 
     Player* m_master = ai->GetLeader();
     if (!m_master)
-        return;
+        return false;
 
     Player *m_bot = GetPlayerBot();
     Group *m_group = m_bot->GetGroup();
@@ -135,9 +135,9 @@ void PlayerbotPriestAI::DoCombatManeuver(Unit *pTarget, bool cac)
             {
                 // Cast binding heal if target and caster have low health
                 if (m_bot != tank && m_bot->GetHealthPercent() < 60 && ai->CastSpell(BINDING_HEAL, tank))
-                    return;
+                    return true;
                 else if (HealTarget(tank))
-                    return;
+                    return true;
             }
         }
 
@@ -157,10 +157,10 @@ void PlayerbotPriestAI::DoCombatManeuver(Unit *pTarget, bool cac)
                 {
                     membersWithVeryLessHp++;
                     if (membersWithVeryLessHp > 2 && ai->CastSpell(CIRCLE_OF_HEALING, g_member))
-                        return;
+                        return true;
                 }
                 else if (membersWithLessHp > 2 && ai->CastSpell(PRAYER_OF_HEALING, g_member))
-                    return;
+                    return true;
             }
 
         }while (ref = (ref) ? ref->next() : NULL);
@@ -178,9 +178,9 @@ void PlayerbotPriestAI::DoCombatManeuver(Unit *pTarget, bool cac)
             {
                 // Cast binding heal if target and caster have low health
                 if (m_bot != g_member && m_bot->GetHealthPercent() < 60 && ai->CastSpell(BINDING_HEAL, g_member))
-                    return;
+                    return true;
                 else if (HealTarget(g_member))
-                    return;
+                    return true;
             }
 
         }while (ref = (ref) ? ref->next() : NULL);
@@ -188,7 +188,6 @@ void PlayerbotPriestAI::DoCombatManeuver(Unit *pTarget, bool cac)
 
     case PriestDiscipline:
     case PriestShadow:
-        ai->SetInFront(pTarget);
         static const uint32 SpellShadow[] = {SHADOW_WORD_PAIN, DEVOURING_PLAGUE, VAMPIRIC_TOUCH, MIND_BLAST};
         static const uint32 elt = sizeof(SpellShadow)/sizeof(uint32);
         char *SpellFirstTarget = "11110";
@@ -210,7 +209,7 @@ void PlayerbotPriestAI::DoCombatManeuver(Unit *pTarget, bool cac)
                 {
                     numberTargets++;
                     if ((*itr)->GetHealthPercent() <= 35 && ai->CastSpell(SHADOW_WORD_DEATH, (*itr)))
-                        return;
+                        return true;
                 }
                 if ((*itr)->IsWithinDist(m_bot, 5.0f))
                     numberTargetsWithin5f++;
@@ -224,21 +223,21 @@ void PlayerbotPriestAI::DoCombatManeuver(Unit *pTarget, bool cac)
             if (m_bot->HasAura(SHADOWFORM))
                 m_bot->RemoveAurasDueToSpell(SHADOWFORM);
             if (ai->CastSpell(HOLY_NOVA))
-                return;
+                return true;
         }
 
         if (!m_bot->HasAura(SHADOWFORM) && ai->SelfBuff(SHADOWFORM))
-            return;
+            return true;
 
         if (numberTargets >= 5 && !pTarget->HasAuraFromUnit(MIND_SEAR, m_bot) && ai->CastSpell(MIND_SEAR, pTarget))
-            return;
+            return true;
 
         // Casting spell cycle
         for (uint32 i = 0; i < elt; ++i)
         {
             // Cycle for main target
             if (SpellFirstTarget[i] == '1' && !pTarget->HasAuraFromUnit(SpellShadow[i], m_bot) && ai->CastSpell(SpellShadow[i], pTarget))
-                return;
+                return true;
 
             // Cycle for others targets
             if (SpellAllTargets[i] == '1' && numberTargets > 1)
@@ -253,7 +252,7 @@ void PlayerbotPriestAI::DoCombatManeuver(Unit *pTarget, bool cac)
 
                     for (Unit::AttackerSet::const_iterator itr = g_member->getAttackers().begin(); itr != g_member->getAttackers().end(); itr++)
                          if (!(*itr)->HasAuraFromUnit(SpellShadow[i], m_bot) && ai->CastSpell(SpellShadow[i], (*itr)))
-                             return;
+                             return true;
 
                 }while (ref = (ref) ? ref->next() : NULL);
             }
@@ -261,7 +260,7 @@ void PlayerbotPriestAI::DoCombatManeuver(Unit *pTarget, bool cac)
 
         // If all targets are affected by damage over time, cast mind flay on main target
         if (!pTarget->HasAuraFromUnit(MIND_FLAY, m_bot) && ai->CastSpell(MIND_FLAY, pTarget))
-            return;
+            return true;
 
         break;
     }

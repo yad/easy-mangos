@@ -75,48 +75,30 @@ void PlayerbotRogueAI::InitSpells(PlayerbotAI* const ai)
 
 PlayerbotRogueAI::~PlayerbotRogueAI() {}
 
-void PlayerbotRogueAI::DoCombatManeuver(Unit *pTarget, bool cac)
+bool PlayerbotRogueAI::DoCombatManeuver(Unit *pTarget, bool cac)
 {
     if (!pTarget)
-        return;
+        return false;
 
     PlayerbotAI *ai = GetAI();
     if (!ai)
-        return;
+        return false;
 
     Player * m_bot = GetPlayerBot();
     if (!m_bot)
-        return;
+        return false;
 
     Player* m_master = ai->GetLeader();
     if (!m_master)
-        return;
+        return false;
 
     //TODO implement STEALTH
 
-    ai->SetInFront(pTarget);
     Unit* pVictim = pTarget->getVictim();
     float fTargetDist = m_bot->GetDistance(pTarget);
 
-    // TODO: make this work better...
-    /*if (pVictim)
-       {
-        if( pVictim!=m_bot && !m_bot->hasUnitState(UNIT_STAT_FOLLOW) && !pTarget->isInBackInMap(m_bot,10) ) {
-
-            m_bot->GetMotionMaster()->Clear( true );
-            m_bot->GetMotionMaster()->MoveFollow( pTarget, 1, 2*M_PI );
-        }
-        else if( pVictim==m_bot && m_bot->hasUnitState(UNIT_STAT_FOLLOW) )
-        {
-
-            m_bot->GetMotionMaster()->Clear( true );
-            m_bot->GetMotionMaster()->MoveChase( pTarget );
-        }
-       }*/
-
     //Rouge like behaviour. ^^
 /*    if (VANISH > 0 && m_master->isDead()) { //Causes the server to crash :( removed for now.
-        m_bot->AttackStop();
         m_bot->RemoveAllAttackers();
         ai->CastSpell(VANISH);
    //        m_bot->RemoveAllSpellCooldown();
@@ -127,7 +109,7 @@ void PlayerbotRogueAI::DoCombatManeuver(Unit *pTarget, bool cac)
     if (pVictim == m_bot && CLOAK_OF_SHADOWS > 0 && pVictim->HasAura(SPELL_AURA_PERIODIC_DAMAGE) && !m_bot->HasAura(CLOAK_OF_SHADOWS, EFFECT_INDEX_0) && ai->CastSpell(CLOAK_OF_SHADOWS))
     {
 
-        return;
+        return true;
     }
     else if (m_bot->HasAura(STEALTH, EFFECT_INDEX_0))
     SpellSequence = RogueSpeStealth;
@@ -140,7 +122,7 @@ void PlayerbotRogueAI::DoCombatManeuver(Unit *pTarget, bool cac)
 
     // we fight in melee, target is not in range, skip the next part!
     if (fTargetDist > ATTACK_DISTANCE)
-        return;
+        return false;
 
 
     switch (SpellSequence)

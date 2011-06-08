@@ -336,23 +336,125 @@ Item* PlayerbotAI::FindMount(uint32 matchingRidingSkill) const
     return partialMatch;
 }
 
-Player* PlayerbotAI::FindNewGroupLeader()
+Player* PlayerbotAI::FindGroupRandomRealPlayer()
 {
-    Player* pl = NULL;
-    if (m_bot->GetGroup())
+    if (!m_bot->GetGroup())
+        return NULL;
+
+    uint32 realPlayers = 0;
+    GroupReference *ref = NULL;
+
+    ref = m_bot->GetGroup()->GetFirstMember();
+    while (ref)
     {
-        GroupReference *ref = m_bot->GetGroup()->GetFirstMember();
-        while (ref)
-        {
-            if (!ref->getSource()->IsBot())
-            {
-                pl = ref->getSource();
-                break;
-            }
-            ref = ref->next();
-        }
+        if (ref->getSource()->IsInWorld() && !ref->getSource()->IsBot()
+            && ref->getSource()->isAlive()
+            && m_bot->IsWithinDistInMap(ref->getSource(), MAX_DIST_POS_IN_GROUP))
+            realPlayers++;
+        ref = ref->next();
     }
-    return pl;
+
+    if (realPlayers==0)
+        return NULL;
+
+    uint32 cpt = 0;
+    uint32 offset = urand(0, realPlayers-1);
+    ref = m_bot->GetGroup()->GetFirstMember();
+    while (ref)
+    {
+        if (ref->getSource()->IsInWorld() && !ref->getSource()->IsBot()
+            && ref->getSource()->isAlive()
+            && m_bot->IsWithinDistInMap(ref->getSource(), MAX_DIST_POS_IN_GROUP))
+        {
+            if (cpt==offset)
+                return ref->getSource();
+            cpt++;
+        }
+        ref = ref->next();
+    }
+    return NULL;
+}
+
+Player* PlayerbotAI::FindGroupRandomPlayer(Classes _class)
+{
+    if (!m_bot->GetGroup())
+        return NULL;
+
+    uint32 classPlayers = 0;
+    GroupReference *ref = NULL;
+
+    ref = m_bot->GetGroup()->GetFirstMember();
+    while (ref)
+    {
+        if (ref->getSource()->IsInWorld() && ref->getSource()->getClass()==_class
+            && ref->getSource()->isAlive() && m_bot->IsWithinDistInMap(ref->getSource(), MAX_DIST_POS_IN_GROUP))
+            classPlayers++;
+        ref = ref->next();
+    }
+
+    if (classPlayers==0)
+        return NULL;
+
+    uint32 cpt = 0;
+    uint32 offset = urand(0, classPlayers-1);
+    ref = m_bot->GetGroup()->GetFirstMember();
+    while (ref)
+    {
+        if (ref->getSource()->IsInWorld() && ref->getSource()->getClass()==_class
+            && ref->getSource()->isAlive() && m_bot->IsWithinDistInMap(ref->getSource(), MAX_DIST_POS_IN_GROUP))
+        {
+            if (cpt==offset)
+                return ref->getSource();
+            cpt++;
+        }
+        ref = ref->next();
+    }
+    return NULL;
+}
+
+Player* PlayerbotAI::FindGroupMainTank()
+{
+    if (!m_bot->GetGroup())
+        return NULL;
+
+    Player* mainTank = NULL;
+
+    GroupReference *ref = m_bot->GetGroup()->GetFirstMember();
+    while (ref)
+    {
+        if (!ref->getSource()->IsInWorld() || !ref->getSource()->isAlive()
+            || !m_bot->IsWithinDistInMap(ref->getSource(), MAX_DIST_POS_IN_GROUP))
+        {
+            ref = ref->next();
+            continue;
+        }
+
+        switch(ref->getSource()->getRole())
+        {
+            case WarriorProtection:
+                return ref->getSource();
+            case DruidFeralCombat:
+                if (ref->getSource()->HasAura(5487, EFFECT_INDEX_0)) //TODO fixit
+                    mainTank = ref->getSource();
+                break;
+            case PaladinProtection:
+                if (!mainTank)
+                    mainTank = ref->getSource();
+                else if(mainTank->getRole() != DruidFeralCombat)
+                    mainTank = ref->getSource();
+                break;
+            case DeathKnightFrost:
+                if (!mainTank)
+                    mainTank = ref->getSource();
+                else if(mainTank->getRole() != DruidFeralCombat && mainTank->getRole() != PaladinProtection)
+                    mainTank = ref->getSource();
+                break;
+            default:
+                break;
+        }
+        ref = ref->next();
+    }
+    return mainTank;
 }
 
 void PlayerbotAI::CheckBG()
@@ -794,20 +896,18 @@ void PlayerbotAI::DoLoot()
             m_lootCreatures.pop_front();
 
             if (deadUnit && deadUnit->IsInWorld() && deadUnit->IsInMap(m_bot) && deadUnit->getDeathState() == CORPSE
-                && GetLeader()->GetDistance(deadUnit) < BOTLOOT_DISTANCE && deadUnit->GetTypeId()==TYPEID_UNIT)
+                && GetLeader()->GetDistance(deadUnit) < MAX_BOTLOOT_DISTANCE && deadUnit->GetTypeId()==TYPEID_UNIT)
                 m_lootCreature = (Creature*)deadUnit;
 
         }while (!m_lootCreatures.empty());
 
         if (!m_lootCreature)
             return;
-
-        //SetFollowTarget(GetLeader());
     }
     else
     {
         if (!m_lootCreature || !m_lootCreature->IsInWorld() || !m_lootCreature->IsInMap(m_bot) || m_lootCreature->getDeathState() != CORPSE
-            || GetLeader()->GetDistance(m_lootCreature) > BOTLOOT_DISTANCE)
+            || GetLeader()->GetDistance(m_lootCreature) > MAX_BOTLOOT_DISTANCE)
         {
             m_lootCreature = NULL;
             return;
@@ -868,7 +968,6 @@ void PlayerbotAI::DoLoot()
                 }
             }
             m_bot->GetSession()->DoLootRelease(m_lootCreature->GetObjectGuid());
-            //SetFollowTarget(GetLeader());
             SetQuestNeedItems();
         }
     }
@@ -1069,8 +1168,16 @@ bool PlayerbotAI::CheckLeader()
 {
     if (!GetLeader() || (!GetLeader()->IsInWorld() && !GetLeader()->IsBeingTeleported()))
     {
-        SetLeader(m_bot);
-        ReinitAI();
+        Player* newLeader = FindGroupRandomRealPlayer();
+        if (newLeader)
+        {
+            SetLeader(newLeader);
+        }
+        else
+        {
+            SetLeader(m_bot);
+            ReinitAI();
+        }
         return false;
     }
     return true;
@@ -1203,7 +1310,7 @@ bool PlayerbotAI::CastSpell(uint32 spellId, Unit* target)
                 GroupReference *ref = m_bot->GetGroup()->GetFirstMember();
                 while (ref)
                 {
-                    if (ref->getSource()==m_bot || !ref->getSource()->IsBot() 
+                    if (ref->getSource()==m_bot || !ref->getSource()->IsBot()
                         || ref->getSource()->isDead() || !ref->getSource()->IsInWorld())
                     {
                         ref = ref->next();
@@ -1794,8 +1901,8 @@ void PlayerbotAI::Pull()
     if (gr && !IsInCombat())
     {
         if (gr->IsAssistant(m_bot->GetObjectGuid()))
-            AttackStart(gr->GetAssistTarget());
+            DoCombatManeuver(gr->GetAssistTarget());
         else
-            AttackStart(gr->GetTankTarget());
+            DoCombatManeuver(gr->GetTankTarget());
     }
 }

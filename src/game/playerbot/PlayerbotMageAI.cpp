@@ -95,7 +95,7 @@ void PlayerbotMageAI::InitSpells(PlayerbotAI* const ai)
 
 PlayerbotMageAI::~PlayerbotMageAI() {}
 
-void PlayerbotMageAI::DoCombatManeuver(Unit *pTarget, bool cac)
+bool PlayerbotMageAI::DoCombatManeuver(Unit *pTarget, bool cac)
 {
     PlayerbotAI* ai = GetAI();
     Player* m_bot = GetPlayerBot();
@@ -118,7 +118,7 @@ void PlayerbotMageAI::DoCombatManeuver(Unit *pTarget, bool cac)
                 if (ai->CastSpell(spellId, pTarget))
                 {
                     LastSpellFire = (i+LastSpellFire)%elt;
-                    break;
+                    return true;
                 }
             }
             break;
@@ -137,7 +137,7 @@ void PlayerbotMageAI::DoCombatManeuver(Unit *pTarget, bool cac)
                 if (ai->CastSpell(spellId, pTarget))
                 {
                     LastSpellArcane = (i+LastSpellArcane)%elt;
-                    break;
+                    return true;
                 }
             }
             break;
@@ -156,7 +156,7 @@ void PlayerbotMageAI::DoCombatManeuver(Unit *pTarget, bool cac)
                 if (ai->CastSpell(spellId, pTarget))
                 {
                     LastSpellFrost = (i+LastSpellFrost)%elt;
-                    break;
+                    return true;
                 }
             }
             break;
@@ -164,7 +164,8 @@ void PlayerbotMageAI::DoCombatManeuver(Unit *pTarget, bool cac)
     }
 
     if (BuffPlayer())
-        return;
+        return true;
+    return false;
 }
 
 void PlayerbotMageAI::DoNonCombatActions()

@@ -39,7 +39,7 @@ public:
     virtual ~PlayerbotClassAI();
 
     // all combat actions go here
-    virtual void DoCombatManeuver(Unit*, bool);
+    virtual bool DoCombatManeuver(Unit*, bool);
     virtual void DoFastBuffOnOneself();
 
     // all non combat actions go here, ex buffs, heals, rezzes

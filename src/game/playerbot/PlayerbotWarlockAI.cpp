@@ -252,7 +252,7 @@ void PlayerbotWarlockAI::InitSpells(PlayerbotAI* const ai)
 
 PlayerbotWarlockAI::~PlayerbotWarlockAI() {}
 
-void PlayerbotWarlockAI::DoCombatManeuver(Unit *pTarget, bool cac)
+bool PlayerbotWarlockAI::DoCombatManeuver(Unit *pTarget, bool cac)
 {
     PlayerbotAI* ai = GetAI();
     Player* m_bot = GetPlayerBot();
@@ -273,7 +273,7 @@ void PlayerbotWarlockAI::DoCombatManeuver(Unit *pTarget, bool cac)
                 if (ai->CastSpell(spellId, pTarget))
                 {
                     LastSpellDestruction = (i+LastSpellDestruction)%elt;
-                    break;
+                    return true;
                 }
             }
             break;
@@ -296,7 +296,7 @@ void PlayerbotWarlockAI::DoCombatManeuver(Unit *pTarget, bool cac)
                 if (ai->CastSpell(spellId, pTarget))
                 {
                     LastSpellCurses = (i+LastSpellCurses)%elt;
-                    break;
+                    return true;
                 }
             }
             break;
@@ -314,12 +314,13 @@ void PlayerbotWarlockAI::DoCombatManeuver(Unit *pTarget, bool cac)
                 if (ai->CastSpell(spellId, pTarget))
                 {
                     LastSpellSummoning = (i+LastSpellSummoning)%elt;
-                    break;
+                    return true;
                 }
             }
             break;
         }
     }
+    return false;
 }
 
 void PlayerbotWarlockAI::DoNonCombatActions()

@@ -3122,13 +3122,6 @@ bool ChatHandler::HandleBotInvite(char* args)
 
     Player *pl = m_session->GetPlayer();
 
-    uint16 eDest;
-    if (pl->CanEquipNewItem(NULL_SLOT, eDest, 38/*Recruit's Shirt*/, true)!=EQUIP_ERR_OK)
-    {
-        m_session->SendNotification("Vous ne pouvez pas faire cela maintenant");
-        return true;
-    }
-
     uint8 _class = 0;
     switch (role)
     {
@@ -3199,6 +3192,10 @@ bool ChatHandler::HandleBotInvite(char* args)
         Player* chr = itr->second;
 
         if(!chr || !chr->IsBot() || chr->GetGroup() || pl->GetTeam() != chr->GetTeam())
+            continue;
+
+        uint16 eDest;
+        if (chr->CanEquipNewItem(NULL_SLOT, eDest, 38/*Recruit's Shirt*/, true)!=EQUIP_ERR_OK)
             continue;
 
         PlayerInfo const* info = sObjectMgr.GetPlayerInfo(chr->getRace(), _class);
@@ -3249,13 +3246,6 @@ bool ChatHandler::HandleBotInviteArena(char* args)
 
     Player *pl = m_session->GetPlayer();
 
-    uint16 eDest;
-    if (pl->CanEquipNewItem(NULL_SLOT, eDest, 38/*Recruit's Shirt*/, true)!=EQUIP_ERR_OK)
-    {
-        m_session->SendNotification("Vous ne pouvez pas faire cela maintenant");
-        return true;
-    }
-
     uint8 _class = 0;
     switch (role)
     {
@@ -3326,6 +3316,10 @@ bool ChatHandler::HandleBotInviteArena(char* args)
         Player* chr = itr->second;
 
         if(!chr || !chr->IsBot() || chr->GetGroup() || pl->GetTeam() != chr->GetTeam())
+            continue;
+
+        uint16 eDest;
+        if (chr->CanEquipNewItem(NULL_SLOT, eDest, 38/*Recruit's Shirt*/, true)!=EQUIP_ERR_OK)
             continue;
 
         PlayerInfo const* info = sObjectMgr.GetPlayerInfo(chr->getRace(), _class);

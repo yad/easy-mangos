@@ -105,7 +105,7 @@ void PlayerbotWarriorAI::InitSpells(PlayerbotAI* const ai)
 
 PlayerbotWarriorAI::~PlayerbotWarriorAI() {}
 
-void PlayerbotWarriorAI::DoCombatManeuver(Unit *pTarget, bool cac)
+bool PlayerbotWarriorAI::DoCombatManeuver(Unit *pTarget, bool cac)
 {
     PlayerbotAI* ai = GetAI();
     Player* m_bot = GetPlayerBot();
@@ -124,7 +124,7 @@ void PlayerbotWarriorAI::DoCombatManeuver(Unit *pTarget, bool cac)
                 if (ai->CastSpell(SpellArms[(i+LastSpellArms)%elt], pTarget))
                 {
                     LastSpellArms = (i+LastSpellArms)%elt;
-                    break;
+                    return true;
                 }
             }
             break;
@@ -140,7 +140,7 @@ void PlayerbotWarriorAI::DoCombatManeuver(Unit *pTarget, bool cac)
                 if (ai->CastSpell(SpellProtection[(i+LastSpellProtection)%elt], pTarget))
                 {
                     LastSpellProtection = (i+LastSpellProtection)%elt;
-                    break;
+                    return true;
                 }
             }
             break;
@@ -156,13 +156,13 @@ void PlayerbotWarriorAI::DoCombatManeuver(Unit *pTarget, bool cac)
                 if (ai->CastSpell(SpellFury[(i+LastSpellFury)%elt], pTarget))
                 {
                     LastSpellFury = (i+LastSpellFury)%elt;
-                    break;
+                    return true;
                 }
             }
             break;
         }
     }
-
+    return false;
 }
 
 void PlayerbotWarriorAI::DoNonCombatActions()
