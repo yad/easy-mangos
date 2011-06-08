@@ -373,77 +373,6 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
             return;
         }
 
-        /*case SMSG_TRADE_STATUS:
-        {
-            if (m_bot->GetTrader() == NULL)
-                break;
-
-            WorldPacket p(packet);
-            uint32 status;
-            p >> status;
-            p.resize(4);
-
-            if (status == TRADE_STATUS_TRADE_ACCEPT)
-                m_bot->GetSession()->HandleAcceptTradeOpcode(p);
-
-            else if (status == TRADE_STATUS_BEGIN_TRADE)
-            {
-                m_bot->GetSession()->HandleBeginTradeOpcode(p);
-                for (uint8 slot = INVENTORY_SLOT_ITEM_START; slot < INVENTORY_SLOT_ITEM_END; slot++)
-                {
-                    const Item* const pItem = m_bot->GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
-                    if (pItem && pItem->CanBeTraded())
-                    {
-                        const ItemPrototype* const pItemProto = pItem->GetProto();
-
-                        std::string itemName = pItemProto->Name1;
-                        ItemLocalization(itemName, pItemProto->ItemId);
-
-
-                            << ":0:0:0:0:0:0:0" << "|h[" << itemName << "]|h|r";
-                        if (pItem->GetCount() > 1)
-
-                    }
-                }
-
-                for (uint8 bag = INVENTORY_SLOT_BAG_START; bag < INVENTORY_SLOT_BAG_END; ++bag)
-                {
-                    const Bag* const pBag = (Bag*) m_bot->GetItemByPos(INVENTORY_SLOT_BAG_0, bag);
-                    if (pBag)
-                        for (uint8 slot = 0; slot < pBag->GetBagSize(); ++slot)
-                        {
-                            const Item* const pItem = m_bot->GetItemByPos(bag, slot);
-                            if (pItem && pItem->CanBeTraded())
-                            {
-                                const ItemPrototype* const pItemProto = pItem->GetProto();
-
-                                std::string itemName = pItemProto->Name1;
-                                ItemLocalization(itemName, pItemProto->ItemId);
-                                    << ":0:0:0:0:0:0:0" << "|h[" << itemName
-                                    << "]|h|r";
-                                if (pItem->GetCount() > 1)
-
-                            }
-                        }
-                }
-
-                uint32 copper = m_bot->GetMoney();
-                uint32 gold = uint32(copper / 10000);
-                copper -= (gold * 10000);
-                uint32 silver = uint32(copper / 100);
-                copper -= (silver * 100);
-
-                whisper << "Je possède actuellement |cff00ff00" << gold
-                        << "|r|cfffffc00g|r|cff00ff00" << silver
-                        << "|r|cffcdcdcds|r|cff00ff00" << copper
-                        << "|r|cffffd333c|r" << " et je peux échanger les objets suivants :";
-
-                ChatHandler ch(m_bot->GetTrader());
-                ch.SendSysMessage(out.str().c_str());
-            }
-            return;
-        }*/
-
         case SMSG_SPELL_START:
         {
             if (GetLeader()==m_bot)
@@ -455,13 +384,27 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
             if(casterGuid == GetLeader()->GetObjectGuid())
             {
                 Player* mainTank = FindGroupMainTank();
+                Unit* pTarget = ObjectAccessor::GetUnit(*m_bot, GetLeader()->GetSelectionGuid());
+                if (!pTarget)
+                    return;
+
                 if (mainTank==m_bot)
                 {
                     /*const Spell* spell = GetCurrentSpell();
                     if (!spell || IsPositiveSpell(spell->m_spellInfo))
                         return;*/
-                    Unit* pTarget = ObjectAccessor::GetUnit(*m_bot, GetLeader()->GetSelectionGuid());
                     DoCombatManeuver(pTarget);
+                }
+                else
+                {
+                    float x, y, z;
+                    pTarget->GetNearPoint(m_bot, x,y,z, m_bot->GetObjectBoundingRadius(), MAX_DIST_COMBAT_RANGED_TARGET, 0);
+                    uint32 t = uint32(m_bot->GetDistance(x,y,z)/m_bot->GetSpeed(MOVE_RUN));
+
+                    m_bot->GetMotionMaster()->MovementExpired();
+
+                    m_bot->MonsterMoveWithSpeed(x,y,z, t*IN_MILLISECONDS);
+                    m_ignoreAIUpdatesUntilTime = time(0) + t;
                 }
             }
             return;
@@ -724,11 +667,14 @@ void PlayerbotAI::DoCombatManeuver(Unit* forcedTarget)
     if (!m_bot->getVictim())
         return;
 
-    if (m_bot->GetHealthPercent() < MIN_HP_PERCENT_BEFORE_FLEEING)
+    if (m_bot->GetHealthPercent() < MIN_HP_PERCENT_BEFORE_FLEEING && !m_bot->getAttackers().empty())
     {
         float x, y, z;
-        m_bot->GetNearPoint(m_bot->getVictim(), x,y,z, m_bot->getVictim()->GetObjectBoundingRadius(), MAX_DIST_COMBAT_RANGED_TARGET, 0);
+        m_bot->GetNearPoint(*m_bot->getAttackers().begin(), x,y,z, (*m_bot->getAttackers().begin())->GetObjectBoundingRadius(), MAX_DIST_COMBAT_RANGED_TARGET, 0);
         uint32 t = uint32(m_bot->GetDistance(x,y,z)/m_bot->GetSpeed(MOVE_RUN));
+
+        m_bot->CombatStop(true);
+
         m_bot->MonsterMoveWithSpeed(x,y,z, t*IN_MILLISECONDS);
         m_ignoreAIUpdatesUntilTime = time(0) + t;
         //TODO ajouter consommables de soin !
@@ -1109,8 +1055,8 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
     m_ignoreAIUpdatesUntilTime = currentTime + 1;
 
     //Usefull comment to test bots !
-    if (!m_bot->GetGroup())
-        return;
+    /*if (!m_bot->GetGroup())
+        return;*/
 
     //ALWAYS RESPECT THIS ORDER !!!!
     if (!CheckLeader() || !CheckTeleport())
