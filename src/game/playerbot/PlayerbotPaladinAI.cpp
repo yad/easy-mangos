@@ -354,6 +354,7 @@ bool PlayerbotPaladinAI::DoCombatManeuver(Unit *pTarget, bool cac)
 
     if (DIVINE_SACRIFICE > 0 && ai->GetHealthPercent() > 50 && pVictim != m_bot && !m_bot->HasAura(DIVINE_SACRIFICE, EFFECT_INDEX_0))
         ai->CastSpell(DIVINE_SACRIFICE, m_bot);
+    return false;
 }
 
 void PlayerbotPaladinAI::DoNonCombatActions()

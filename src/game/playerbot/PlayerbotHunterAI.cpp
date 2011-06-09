@@ -277,7 +277,7 @@ bool PlayerbotHunterAI::DoCombatManeuver(Unit *pTarget, bool cac)
                 return true;
         }
     }
-
+    return false;
 } // end DoCombatManeuver
 
 void PlayerbotHunterAI::DoNonCombatActions()

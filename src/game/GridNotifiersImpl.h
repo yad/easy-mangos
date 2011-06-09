@@ -38,9 +38,20 @@ inline void MaNGOS::VisibleNotifier::Visit(GridRefManager<T> &m)
     }
 }
 
+template<>
 inline void MaNGOS::ObjectUpdater::Visit(CreatureMapType &m)
 {
     for(CreatureMapType::iterator iter = m.begin(); iter != m.end(); ++iter)
+    {
+        WorldObject::UpdateHelper helper(iter->getSource());
+        helper.Update(i_timeDiff);
+    }
+}
+
+template<>
+inline void MaNGOS::ObjectUpdater::Visit(PlayerMapType &m)
+{
+    for(PlayerMapType::iterator iter = m.begin(); iter != m.end(); ++iter)
     {
         WorldObject::UpdateHelper helper(iter->getSource());
         helper.Update(i_timeDiff);
@@ -61,13 +72,13 @@ inline void PlayerPlayerRelocationWorker(Player* pl1, Player* pl2)
 {
     if (!pl1->hasUnitState(UNIT_STAT_LOST_CONTROL))
     {
-        if (pl1->GetPlayerbotAI() && pl1->GetPlayerbotAI()->IsVisible(pl2) && !pl1->GetPlayerbotAI()->IsInEvadeMode())
+        if (pl1->GetPlayerbotAI())
             pl1->GetPlayerbotAI()->MoveInLineOfSight(pl2);
     }
 
     if (!pl2->hasUnitState(UNIT_STAT_LOST_CONTROL))
     {
-        if (pl2->GetPlayerbotAI() && pl2->GetPlayerbotAI()->IsVisible(pl1) && !pl2->GetPlayerbotAI()->IsInEvadeMode())
+        if (pl2->GetPlayerbotAI())
             pl2->GetPlayerbotAI()->MoveInLineOfSight(pl1);
     }
 }

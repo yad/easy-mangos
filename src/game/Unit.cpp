@@ -8902,6 +8902,14 @@ void Unit::UpdateSpeed(UnitMoveType mtype, bool forced, float ratio)
                     return;
                 }
             }
+            if (GetTypeId() == TYPEID_PLAYER && ((Player*)this)->GetPlayerbotAI())
+            {
+                if(Player* leader = ((Player*)this)->GetPlayerbotAI()->GetLeader())
+                {
+                    SetSpeedRate(mtype, leader->GetSpeedRate(mtype), forced);
+                    return;
+                }
+            }
             break;
         default:
             break;

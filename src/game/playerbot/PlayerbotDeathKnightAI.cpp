@@ -478,6 +478,7 @@ bool PlayerbotDeathKnightAI::DoCombatManeuver(Unit *pTarget, bool cac)
                 SpellSequence = SPELL_DK_UNHOLY;
             }
     }
+    return false;
 } // end DoCombatManeuver
 
 void PlayerbotDeathKnightAI::DoNonCombatActions()

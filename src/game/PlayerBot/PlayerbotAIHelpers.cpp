@@ -820,7 +820,7 @@ void PlayerbotAI::Feast()
 void PlayerbotAI::SetQuestNeedItems()
 {
     m_needItemList.clear();
-    m_lootCreatures.clear();
+    m_victimList.clear();
     m_lootCreature = 0;
 
     for (QuestStatusMap::iterator iter = m_bot->getQuestStatusMap().begin(); iter != m_bot->getQuestStatusMap().end(); ++iter)
@@ -881,7 +881,7 @@ void PlayerbotAI::DoFlight()
 
 void PlayerbotAI::DoLoot()
 {
-    if (!m_lootCreature && m_lootCreatures.empty())
+    if (!m_lootCreature && m_victimList.empty())
     {
         m_botState = BOTSTATE_NORMAL;
         SetQuestNeedItems();
@@ -892,14 +892,14 @@ void PlayerbotAI::DoLoot()
     {
         do
         {
-            Unit* deadUnit = m_lootCreatures.front();
-            m_lootCreatures.pop_front();
+            Unit* deadUnit = m_victimList.front();
+            m_victimList.pop_front();
 
             if (deadUnit && deadUnit->IsInWorld() && deadUnit->IsInMap(m_bot) && deadUnit->getDeathState() == CORPSE
                 && GetLeader()->GetDistance(deadUnit) < MAX_BOTLOOT_DISTANCE && deadUnit->GetTypeId()==TYPEID_UNIT)
                 m_lootCreature = (Creature*)deadUnit;
 
-        }while (!m_lootCreatures.empty());
+        }while (!m_victimList.empty());
 
         if (!m_lootCreature)
             return;
@@ -1115,7 +1115,7 @@ bool PlayerbotAI::CheckTeleport()
 
     if (m_bot->IsBeingTeleported())
     {
-        m_bot->GetMotionMaster()->Clear(true);
+        //m_bot->GetMotionMaster()->Clear(true);
         return false;
     }
 
@@ -1124,20 +1124,20 @@ bool PlayerbotAI::CheckTeleport()
     {
         if (!GetLeader()->GetMap() || !GetLeader()->GetTerrain())
         {
-            m_bot->GetMotionMaster()->Clear(true);
+            //m_bot->GetMotionMaster()->Clear(true);
             return false;
         }
 
         if (!m_bot->IsInMap(GetLeader()))
         {
-            m_bot->GetMotionMaster()->Clear(true);
-            this->SetFollowTarget(GetLeader(), true);
+            //m_bot->GetMotionMaster()->Clear(true);
+            //SetFollowTarget(GetLeader(), true);
             return false;
         }
 
         if (GetLeader()->IsBeingTeleported())
         {
-            m_bot->GetMotionMaster()->Clear(true);
+            //m_bot->GetMotionMaster()->Clear(true);
             return false;
         }
     }
@@ -1149,13 +1149,13 @@ bool PlayerbotAI::CheckTeleport()
         {
             if (!ref->getSource()->GetMap() || !ref->getSource()->GetTerrain())
             {
-                m_bot->GetMotionMaster()->Clear(true);
+                //m_bot->GetMotionMaster()->Clear(true);
                 return false;
             }
 
             if (ref->getSource()->IsBeingTeleported())
             {
-                m_bot->GetMotionMaster()->Clear(true);
+                //m_bot->GetMotionMaster()->Clear(true);
                 return false;
             }
             ref = ref->next();

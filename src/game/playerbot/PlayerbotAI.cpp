@@ -179,7 +179,7 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
         }
         case SMSG_DUEL_COMPLETE:
         {
-            m_bot->GetMotionMaster()->Clear(true);
+            m_bot->GetMotionMaster()->Clear();
             return;
         }
         case SMSG_DUEL_OUTOFBOUNDS:
@@ -297,7 +297,7 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
                 }
 
                 m_bot->GetSession()->HandleGroupAcceptOpcode(p);
-                m_bot->GetMotionMaster()->Clear(true);
+                m_bot->GetMotionMaster()->Clear();
                 if (!inviter->IsBot())
                 {
                     m_bot->SetDungeonDifficulty(inviter->GetDungeonDifficulty());
@@ -383,29 +383,18 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
             ObjectGuid casterGuid = p.readPackGUID();
             if(casterGuid == GetLeader()->GetObjectGuid())
             {
+                /*const Spell* spell = GetCurrentSpell();
+                if (!spell || IsPositiveSpell(spell->m_spellInfo))
+                    return;*/
                 Player* mainTank = FindGroupMainTank();
                 Unit* pTarget = ObjectAccessor::GetUnit(*m_bot, GetLeader()->GetSelectionGuid());
-                if (!pTarget)
+                if (!pTarget || !mainTank)
                     return;
 
                 if (mainTank==m_bot)
-                {
-                    /*const Spell* spell = GetCurrentSpell();
-                    if (!spell || IsPositiveSpell(spell->m_spellInfo))
-                        return;*/
-                    DoCombatManeuver(pTarget);
-                }
+                    m_bot->GetMotionMaster()->MoveFollow(pTarget, 0.0f, 0.0f);
                 else
-                {
-                    float x, y, z;
-                    pTarget->GetNearPoint(m_bot, x,y,z, m_bot->GetObjectBoundingRadius(), MAX_DIST_COMBAT_RANGED_TARGET, 0);
-                    uint32 t = uint32(m_bot->GetDistance(x,y,z)/m_bot->GetSpeed(MOVE_RUN));
-
-                    m_bot->GetMotionMaster()->MovementExpired();
-
-                    m_bot->MonsterMoveWithSpeed(x,y,z, t*IN_MILLISECONDS);
-                    m_ignoreAIUpdatesUntilTime = time(0) + t;
-                }
+                    m_bot->GetMotionMaster()->MoveFollow(pTarget, GetDist(), m_bot->GetAngle(pTarget)+rand_float(-0.25f, 0.25f));
             }
             return;
         }
@@ -494,7 +483,7 @@ Unit* PlayerbotAI::GetNewCombatTarget()
     {
         SetState(BOTSTATE_COMBAT);
         SetQuestNeedItems();
-        m_lootCreatures.clear();
+        m_victimList.clear();
         m_lootCreature = 0;
         if (m_bot->HasAura(25990))
             m_bot->RemoveAurasDueToSpell(25990);
@@ -512,10 +501,6 @@ Unit* PlayerbotAI::GetNewCombatTarget()
             for(Unit::AttackerSet::const_iterator itr = m_bot->getAttackers().begin(); itr != m_bot->getAttackers().end(); ++itr)
             {
                 if (!m_bot->IsWithinDistInMap((*itr)->GetOwner() ? (*itr)->GetOwner() : (*itr), MAX_DIST_COMBAT_TARGET))
-                    continue;
-
-                if (GetCombatType()==BOTCOMBAT_RANGED
-                    && m_bot->IsWithinDistInMap((*itr)->GetOwner() ? (*itr)->GetOwner() : (*itr), ATTACK_DISTANCE))
                     continue;
 
                 if ((*itr)->GetTypeId()==TYPEID_PLAYER)
@@ -544,10 +529,6 @@ Unit* PlayerbotAI::GetNewCombatTarget()
                         if (!m_bot->IsWithinDistInMap((*itr)->GetOwner() ? (*itr)->GetOwner() : (*itr), MAX_DIST_COMBAT_TARGET))
                             continue;
 
-                        if (GetCombatType()==BOTCOMBAT_RANGED
-                            && m_bot->IsWithinDistInMap((*itr)->GetOwner() ? (*itr)->GetOwner() : (*itr), ATTACK_DISTANCE))
-                            continue;
-
                         if ((*itr)->GetTypeId()==TYPEID_PLAYER)
                             return (*itr);
 
@@ -570,10 +551,6 @@ Unit* PlayerbotAI::GetNewCombatTarget()
             for(Unit::AttackerSet::const_iterator itr = m_bot->GetPet()->getAttackers().begin(); itr != m_bot->GetPet()->getAttackers().end(); ++itr)
             {
                 if (!m_bot->IsWithinDistInMap((*itr)->GetOwner() ? (*itr)->GetOwner() : (*itr), MAX_DIST_COMBAT_TARGET))
-                    continue;
-
-                if (GetCombatType()==BOTCOMBAT_RANGED
-                    && m_bot->IsWithinDistInMap((*itr)->GetOwner() ? (*itr)->GetOwner() : (*itr), ATTACK_DISTANCE))
                     continue;
 
                 if ((*itr)->GetTypeId()==TYPEID_PLAYER)
@@ -600,10 +577,6 @@ Unit* PlayerbotAI::GetNewCombatTarget()
                     for(Unit::AttackerSet::const_iterator itr = ref->getSource()->GetPet()->getAttackers().begin(); itr != ref->getSource()->GetPet()->getAttackers().end(); ++itr)
                     {
                         if (!m_bot->IsWithinDistInMap((*itr)->GetOwner() ? (*itr)->GetOwner() : (*itr), MAX_DIST_COMBAT_TARGET))
-                            continue;
-
-                        if (GetCombatType()==BOTCOMBAT_RANGED
-                            && m_bot->IsWithinDistInMap((*itr)->GetOwner() ? (*itr)->GetOwner() : (*itr), ATTACK_DISTANCE))
                             continue;
 
                         if ((*itr)->GetTypeId()==TYPEID_PLAYER)
@@ -640,7 +613,10 @@ void PlayerbotAI::DoCombatManeuver(Unit* forcedTarget)
             if (!combatTarget || !combatTarget->IsInWorld()
                 || !combatTarget->isAlive() || !m_bot->IsInMap(combatTarget)
                 || !((Player*)combatTarget)->GetBattleGround())
-                AttackStart(GetNewCombatTarget());
+			{
+				combatTarget = GetNewCombatTarget();
+                AttackStart(combatTarget);
+			}
         }
         else
         {
@@ -648,12 +624,14 @@ void PlayerbotAI::DoCombatManeuver(Unit* forcedTarget)
                 || !combatTarget->isAlive()
                 || !m_bot->IsWithinDistInMap(combatTarget, MAX_DIST_COMBAT_TARGET)
                 || !m_bot->IsHostileTo(combatTarget))
-                AttackStart(GetNewCombatTarget());
+			{
+				combatTarget = GetNewCombatTarget();
+                AttackStart(combatTarget);
+			}
         }
     }
     else if (forcedTarget->IsInWorld()
         && forcedTarget->isAlive()
-        && m_bot->IsWithinDistInMap(forcedTarget, MAX_DIST_COMBAT_TARGET)
         && m_bot->IsHostileTo(forcedTarget))
     {
         if (m_bot->getVictim())
@@ -661,64 +639,47 @@ void PlayerbotAI::DoCombatManeuver(Unit* forcedTarget)
             m_bot->CombatStop(true);
             m_bot->SetSelectionGuid(ObjectGuid());
         }
+		combatTarget = forcedTarget;
         AttackStart(forcedTarget);
     }
 
-    if (!m_bot->getVictim())
+    if (!combatTarget)
         return;
 
-    if (m_bot->GetHealthPercent() < MIN_HP_PERCENT_BEFORE_FLEEING && !m_bot->getAttackers().empty())
-    {
-        float x, y, z;
-        m_bot->GetNearPoint(*m_bot->getAttackers().begin(), x,y,z, (*m_bot->getAttackers().begin())->GetObjectBoundingRadius(), MAX_DIST_COMBAT_RANGED_TARGET, 0);
-        uint32 t = uint32(m_bot->GetDistance(x,y,z)/m_bot->GetSpeed(MOVE_RUN));
+    if (m_bot->GetMotionMaster()->GetCurrentMovementGeneratorType()!=FOLLOW_MOTION_TYPE)
+        AttackStart(combatTarget);
 
-        m_bot->CombatStop(true);
-
-        m_bot->MonsterMoveWithSpeed(x,y,z, t*IN_MILLISECONDS);
-        m_ignoreAIUpdatesUntilTime = time(0) + t;
-        //TODO ajouter consommables de soin !
-        return;
-    }
-
-    if (m_bot->GetMotionMaster()->GetCurrentMovementGeneratorType()!=CHASE_MOTION_TYPE)
-        AttackStart(m_bot->getVictim());
-
-    SetInFront(m_bot->getVictim());
+    SetInFront(combatTarget);
 
     if (GetCombatType()==BOTCOMBAT_CAC)
     {
-        if (m_bot->IsWithinDistInMap(m_bot->getVictim(), ATTACK_DISTANCE))
+        if (m_bot->IsWithinDistInMap(combatTarget, ATTACK_DISTANCE))
         {
-            if (!GetClassAI()->DoCombatManeuver(m_bot->getVictim(), true))
+            if (!m_bot->getVictim())
+                m_bot->Attack(combatTarget, true);
+            if (!GetClassAI()->DoCombatManeuver(combatTarget, true))
             {
                 if (m_bot->isAttackReady())
                 {
-                    m_bot->AttackerStateUpdate(m_bot->getVictim());
+                    m_bot->AttackerStateUpdate(combatTarget);
                     m_bot->resetAttackTimer();
                 }
             }
         }
         else
         {
+			/*m_bot->AttackStop();
+			//m_bot->RemoveAllAttackers();
+			m_bot->SendAttackSwingCancelAttack();     // melee and ranged forced attack cancel
+			//m_bot->ClearInCombat();*/
             GetClassAI()->DoFastBuffOnOneself();
         }
     }
     else
     {
-        if (m_bot->IsWithinDistInMap(m_bot->getVictim(), ATTACK_DISTANCE))
-        {
-            float x, y, z;
-            m_bot->GetNearPoint(m_bot->getVictim(), x,y,z, m_bot->getVictim()->GetObjectBoundingRadius(), MAX_DIST_COMBAT_RANGED_TARGET, 0);
-            uint32 t = uint32(m_bot->GetDistance(x,y,z)/m_bot->GetSpeed(MOVE_RUN));
-
-            m_bot->CombatStop(true);
-
-            m_bot->MonsterMoveWithSpeed(x,y,z, t*IN_MILLISECONDS);
-            m_ignoreAIUpdatesUntilTime = time(0) + t;
-            return;
-        }
-        if (!GetClassAI()->DoCombatManeuver(m_bot->getVictim(), m_bot->IsWithinDistInMap(m_bot->getVictim(), ATTACK_DISTANCE)))
+        if (!m_bot->getVictim())
+            m_bot->Attack(combatTarget, false);
+        if (!GetClassAI()->DoCombatManeuver(combatTarget, m_bot->IsWithinDistInMap(combatTarget, ATTACK_DISTANCE)))
         {
             if (m_bot->isAttackReady(RANGED_ATTACK))
             {
@@ -726,9 +687,9 @@ void PlayerbotAI::DoCombatManeuver(Unit* forcedTarget)
                 if (item)
                 {
                     if (m_bot->HasSpell(3018))
-                        CastSpell(3018, m_bot->getVictim());
+                        CastSpell(3018, combatTarget);
                     if (m_bot->HasSpell(5019))
-                        CastSpell(5019, m_bot->getVictim());
+                        CastSpell(5019, combatTarget);
                     m_bot->InterruptSpell(CURRENT_AUTOREPEAT_SPELL);
                     m_bot->resetAttackTimer(RANGED_ATTACK);
                 }
@@ -744,10 +705,12 @@ void PlayerbotAI::AttackStart(Unit *pWho)
 
     GetClassAI()->ReinitCycles();
     m_bot->SetSelectionGuid(pWho->GetObjectGuid());
-    m_lootCreatures.push_back(pWho);
+    m_victimList.push_back(pWho);
 
-    if (m_bot->Attack(pWho, GetCombatType()==BOTCOMBAT_CAC))
-        m_bot->GetMotionMaster()->MoveChase(pWho, GetCombatType()==BOTCOMBAT_CAC ? 0.0f : MAX_DIST_COMBAT_RANGED_TARGET);
+    if (GetCombatType()==BOTCOMBAT_CAC)
+        m_bot->GetMotionMaster()->MoveFollow(pWho, 1.0f, 3.0f*M_PI_F/2.0f);
+    else
+        m_bot->GetMotionMaster()->MoveFollow(pWho, MAX_DIST_COMBAT_RANGED_TARGET, 3.0f*M_PI_F/2.0f);
 }
 
 bool PlayerbotAI::IsInCombat()
@@ -798,7 +761,7 @@ void PlayerbotAI::SetFollowTarget(Unit * followTarget, bool forced)
 {
     if (!followTarget)
     {
-        m_bot->GetMotionMaster()->Clear(true);
+        m_bot->GetMotionMaster()->Clear();
         return;
     }
 
@@ -923,12 +886,7 @@ void PlayerbotAI::MoveTo(float angle, float minDist, float maxDist, float x, flo
                 m_bot->GetMotionMaster()->MoveFollow(m_followTarget, rand_float(minDist, dist), angle);
             }
             else
-            {
-                if (m_bot->IsHostileTo(m_followTarget))
-                    m_bot->GetMotionMaster()->MoveChase(m_followTarget);
-                else
-                    m_bot->GetMotionMaster()->MoveFollow(m_followTarget, rand_float(minDist, dist), angle);
-            }
+                m_bot->GetMotionMaster()->MoveFollow(m_followTarget, rand_float(minDist, dist), angle);
             SetInFront(m_followTarget);
         }
     }
@@ -938,10 +896,7 @@ void PlayerbotAI::MoveTo(float angle, float minDist, float maxDist, float x, flo
 
 void PlayerbotAI::MoveInLineOfSight(Unit *u)
 {
-    if (m_bot->getVictim())
-        return;
-
-    if (!m_bot->GetCharmInfo() || !m_bot->GetCharmInfo()->HasReactState(REACT_AGGRESSIVE))
+    /*if (m_bot->getVictim())
         return;
 
     if (u->isTargetableForAttack() && m_bot->IsHostileTo( u ))
@@ -950,7 +905,7 @@ void PlayerbotAI::MoveInLineOfSight(Unit *u)
         {
             AttackStart(u);
         }
-    }
+    }*/
 }
 
 bool PlayerbotAI::FindPOI()
@@ -1055,8 +1010,8 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
     m_ignoreAIUpdatesUntilTime = currentTime + 1;
 
     //Usefull comment to test bots !
-    /*if (!m_bot->GetGroup())
-        return;*/
+    if (!m_bot->GetGroup())
+        return;
 
     //ALWAYS RESPECT THIS ORDER !!!!
     if (!CheckLeader() || !CheckTeleport())
@@ -1082,7 +1037,7 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
     {
         if (m_botState != BOTSTATE_DEAD && m_botState != BOTSTATE_DEADRELEASED)
         {
-            m_lootCreatures.clear();
+            m_victimList.clear();
             m_lootCreature = 0;
             m_bot->SetSelectionGuid(ObjectGuid());
             SetState(BOTSTATE_DEAD);
@@ -1181,13 +1136,6 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
                 || m_bot->GetMotionMaster()->GetCurrentMovementGeneratorType()!=FOLLOW_MOTION_TYPE)
                 SetFollowTarget(GetLeader(), true);
 
-            if (m_bot->getVictim())
-            {
-                m_bot->CombatStop(true);
-                m_bot->SetSelectionGuid(ObjectGuid());
-                SetFollowTarget(GetLeader(), true);
-            }
-
             if (GetLeader()!=m_bot)
             {
                 if (m_bot->getClass()==CLASS_DEATH_KNIGHT
@@ -1211,23 +1159,35 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
                 }
             }
 
-            if (m_botState == BOTSTATE_COMBAT)
+            switch (m_botState)
             {
-                SetState(BOTSTATE_LOOTING);
-                SetIgnoreUpdateTime();
-            }
-            else if (m_botState == BOTSTATE_LOOTING)
-            {
-                CastAura(25990, m_bot); // Regen hp + mana : Spell Aura Gruccu Food
-                DoLoot();
-            }
-            else
-            {
-                CheckRoles();
-                if (GetLeader()->getLevel() != m_bot->getLevel())
-                    InitBotStatsForLevel(GetLeader()->getLevel());
-                GetClassAI()->DoNonCombatActions();
-                CheckMount();
+                case BOTSTATE_COMBAT:
+                {
+                    SetState(BOTSTATE_LOOTING);
+                    SetIgnoreUpdateTime();
+                    break;
+                }
+                case BOTSTATE_LOOTING:
+                {
+                    CastAura(25990, m_bot); // Regen hp + mana : Spell Aura Gruccu Food
+                    if (m_bot->getVictim())
+                    {
+                        m_bot->CombatStop(true);
+                        m_bot->SetSelectionGuid(ObjectGuid());
+                    }
+                    SetFollowTarget(GetLeader(), true);
+                    DoLoot();
+                    break;
+                }
+                default:
+                {
+                    CheckRoles();
+                    if (GetLeader()->getLevel() != m_bot->getLevel())
+                        InitBotStatsForLevel(GetLeader()->getLevel());
+                    GetClassAI()->DoNonCombatActions();
+                    CheckMount();
+                    break;
+                }
             }
         }
         else

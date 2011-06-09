@@ -120,10 +120,12 @@ namespace MaNGOS
         uint32 i_timeDiff;
         explicit ObjectUpdater(const uint32 &diff) : i_timeDiff(diff) {}
         template<class T> void Visit(GridRefManager<T> &m);
-        void Visit(PlayerMapType &) {}
+        #ifdef WIN32
+        template<> inline void Visit<Player>(PlayerMapType &);
+        template<> inline void Visit<Creature>(CreatureMapType &);
+        #endif
         void Visit(CorpseMapType &) {}
         void Visit(CameraMapType &) {}
-        void Visit(CreatureMapType &);
     };
 
     struct MANGOS_DLL_DECL PlayerRelocationNotifier

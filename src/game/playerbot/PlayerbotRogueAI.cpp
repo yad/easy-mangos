@@ -235,7 +235,7 @@ bool PlayerbotRogueAI::DoCombatManeuver(Unit *pTarget, bool cac)
             }
             break;
     }
-
+    return false;
 }
 
 // end DoCombatManeuver

@@ -37,8 +37,8 @@ class PlayerbotMgr;
 #define MAX_BOTLOOT_DISTANCE          25.0f
 #define MAX_DIST_POS_IN_GROUP         30.0f
 #define MAX_DIST_COMBAT_TARGET        50.0f
-#define MAX_DIST_COMBAT_RANGED_TARGET 20.0f
-#define MAX_DIST_COMBAT_CAC_TARGET    50.0f
+#define MAX_DIST_COMBAT_RANGED_TARGET 25.0f
+#define MAX_DIST_COMBAT_CAC_TARGET    20.0f
 #define MAX_RANGE_MOVEMENT            500.0f
 
 enum RacialTraits
@@ -85,7 +85,7 @@ public:
     };
 
     typedef std::map<uint32, uint32> BotNeedItem;
-    typedef std::list<Unit*> BotLootCreature;
+    typedef std::list<Unit*> BotVictimList;
     typedef std::map<uint32, float> SpellRanges;
     typedef std::vector<uint32> BotTaxiNode;
     typedef std::map<ObjectGuid, BattleGroundPlayer> BattleGroundPlayerMap;
@@ -164,6 +164,7 @@ public:
     Unit *GetNewCombatTarget();
     void DoCombatManeuver(Unit* = NULL);
     BotCombatType GetCombatType();
+    float GetDist() { return GetCombatType()==BOTCOMBAT_CAC ? MAX_DIST_COMBAT_CAC_TARGET : MAX_DIST_COMBAT_RANGED_TARGET; };
     void MoveTo(float angle, float minDist = 1.0f, float maxDist = 3.0f, float x = 0.0f, float y = 0.0f, float z = 0.0f);
     void SetIgnoreUpdateTime(uint8 t = 0) { m_ignoreAIUpdatesUntilTime = time(0) + t; };
     void SetEnterBGTime(uint8 t = 0) { m_enterBg = time(0) + t; };
@@ -249,7 +250,7 @@ private:
 
     Unit *m_followTarget;
     Creature* m_lootCreature;
-    BotLootCreature m_lootCreatures;
+    BotVictimList m_victimList;
 
     float orig_x, orig_y, orig_z;
     uint32 orig_map;

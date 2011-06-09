@@ -84,9 +84,9 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner)
         && owner.hasUnitState(UNIT_STAT_FOLLOW))
         forceDest = true;
 
-    // allow bots following their master to cheat while generating paths
+    // allow bots following their leader to cheat while generating paths
     if(owner.GetTypeId() == TYPEID_PLAYER && ((Player*)&owner)->IsBot()
-        /*&& owner.hasUnitState(UNIT_STAT_FOLLOW)*/)
+        && owner.hasUnitState(UNIT_STAT_FOLLOW))
         forceDest = true;
 
     bool newPathCalculated = true;
@@ -134,8 +134,18 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner)
         SplineFlags flags = SPLINEFLAG_NONE;
         if (owner.GetTypeId() == TYPEID_UNIT)
             flags = ((Creature*)&owner)->GetSplineFlags();
-        else if (((Player*)&owner)->IsBot() && ((Player*)&owner)->IsFlying())
-            flags = SPLINEFLAG_FLYING;
+        else if (((Player*)&owner)->IsBot())
+        {
+            if (((Player*)&owner)->IsFlying())
+            {
+                flags = SPLINEFLAG_FLYING;
+            }
+            else if (owner.getVictim())
+            {
+                flags = SPLINEFLAG_WALKMODE;
+                traveltime = uint32(dist / (owner.GetSpeed(MOVE_WALK)));
+            }
+        }
         else
             flags = SPLINEFLAG_WALKMODE;
         owner.SendMonsterMoveByPath(pointPath, 1, endIndex, flags, traveltime);

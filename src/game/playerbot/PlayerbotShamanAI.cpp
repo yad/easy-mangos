@@ -456,6 +456,7 @@ bool PlayerbotShamanAI::DoCombatManeuver(Unit *pTarget, bool cac)
                 SpellSequence = SPELL_ENHANCEMENT;
             }
     }
+    return false;
 } // end DoCombatManeuver
 
 void PlayerbotShamanAI::DoNonCombatActions()
