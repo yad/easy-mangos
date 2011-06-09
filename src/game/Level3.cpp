@@ -5554,6 +5554,13 @@ bool ChatHandler::HandleResetLevelCommand(char* args)
 
     target->_ApplyAllLevelScaleItemMods(true);
 
+    if (target->GetTypeId() == TYPEID_PLAYER)
+    {
+        Player *pl = (Player*)target;
+        if (!pl->IsBot() && sWorld.getConfig(CONFIG_BOOL_LEARN_SPELLS_AT_LEVEL_UP))
+            pl->LearnAllMySpellsForMyLevel();
+    }
+
     // reset level for pet
     if (Pet* pet = target->GetPet())
         pet->SynchronizeLevelWithOwner();
