@@ -613,10 +613,10 @@ void PlayerbotAI::DoCombatManeuver(Unit* forcedTarget)
             if (!combatTarget || !combatTarget->IsInWorld()
                 || !combatTarget->isAlive() || !m_bot->IsInMap(combatTarget)
                 || !((Player*)combatTarget)->GetBattleGround())
-			{
-				combatTarget = GetNewCombatTarget();
+            {
+                combatTarget = GetNewCombatTarget();
                 AttackStart(combatTarget);
-			}
+            }
         }
         else
         {
@@ -624,10 +624,10 @@ void PlayerbotAI::DoCombatManeuver(Unit* forcedTarget)
                 || !combatTarget->isAlive()
                 || !m_bot->IsWithinDistInMap(combatTarget, MAX_DIST_COMBAT_TARGET)
                 || !m_bot->IsHostileTo(combatTarget))
-			{
-				combatTarget = GetNewCombatTarget();
+            {
+                combatTarget = GetNewCombatTarget();
                 AttackStart(combatTarget);
-			}
+            }
         }
     }
     else if (forcedTarget->IsInWorld()
@@ -639,7 +639,7 @@ void PlayerbotAI::DoCombatManeuver(Unit* forcedTarget)
             m_bot->CombatStop(true);
             m_bot->SetSelectionGuid(ObjectGuid());
         }
-		combatTarget = forcedTarget;
+        combatTarget = forcedTarget;
         AttackStart(forcedTarget);
     }
 
@@ -668,10 +668,10 @@ void PlayerbotAI::DoCombatManeuver(Unit* forcedTarget)
         }
         else
         {
-			/*m_bot->AttackStop();
-			//m_bot->RemoveAllAttackers();
-			m_bot->SendAttackSwingCancelAttack();     // melee and ranged forced attack cancel
-			//m_bot->ClearInCombat();*/
+            /*m_bot->AttackStop();
+            //m_bot->RemoveAllAttackers();
+            m_bot->SendAttackSwingCancelAttack();     // melee and ranged forced attack cancel
+            //m_bot->ClearInCombat();*/
             GetClassAI()->DoFastBuffOnOneself();
         }
     }
@@ -1010,8 +1010,8 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
     m_ignoreAIUpdatesUntilTime = currentTime + 1;
 
     //Usefull comment to test bots !
-    if (!m_bot->GetGroup())
-        return;
+    /*if (!m_bot->GetGroup())
+        return;*/
 
     //ALWAYS RESPECT THIS ORDER !!!!
     if (!CheckLeader() || !CheckTeleport())
