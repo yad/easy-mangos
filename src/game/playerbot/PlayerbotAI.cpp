@@ -883,10 +883,10 @@ void PlayerbotAI::MoveTo(float angle, float minDist, float maxDist, float x, flo
                 Group *gr = m_bot->GetGroup();
                 dist = gr ? (float)gr->GetMembersCount() : 1.0f;
                 dist > MAX_DIST_POS_IN_GROUP ? MAX_DIST_POS_IN_GROUP : dist;
-                m_bot->GetMotionMaster()->SetDestination(m_followTarget, rand_float(minDist, dist), angle);
+                m_bot->GetMotionMaster()->MoveFollow(m_followTarget, rand_float(minDist, dist), angle);
             }
             else
-                m_bot->GetMotionMaster()->SetDestination(m_followTarget, rand_float(minDist, dist), angle);
+                m_bot->GetMotionMaster()->MoveFollow(m_followTarget, rand_float(minDist, dist), angle);
             SetInFront(m_followTarget);
         }
     }
