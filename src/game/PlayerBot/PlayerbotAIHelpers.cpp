@@ -1131,7 +1131,7 @@ bool PlayerbotAI::CheckTeleport()
         if (!m_bot->IsInMap(GetLeader()))
         {
             //m_bot->GetMotionMaster()->Clear(true);
-            //SetFollowTarget(GetLeader(), true);
+            SetFollowTarget(GetLeader(), true);
             return false;
         }
 
