@@ -392,9 +392,9 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
                     return;
 
                 if (mainTank==m_bot)
-                    m_bot->GetMotionMaster()->MoveFollow(pTarget, 0.0f, 0.0f);
+                    m_bot->GetMotionMaster()->SetDestination(pTarget);
                 else
-                    m_bot->GetMotionMaster()->MoveFollow(pTarget, GetDist(), m_bot->GetAngle(pTarget)+rand_float(-0.25f, 0.25f));
+                    m_bot->GetMotionMaster()->SetDestination(pTarget, GetDist(), m_bot->GetAngle(pTarget)+rand_float(-0.25f, 0.25f));
             }
             return;
         }
@@ -708,9 +708,9 @@ void PlayerbotAI::AttackStart(Unit *pWho)
     m_victimList.push_back(pWho);
 
     if (GetCombatType()==BOTCOMBAT_CAC)
-        m_bot->GetMotionMaster()->MoveFollow(pWho, 1.0f, 3.0f*M_PI_F/2.0f);
+        m_bot->GetMotionMaster()->SetDestination(pWho);
     else
-        m_bot->GetMotionMaster()->MoveFollow(pWho, MAX_DIST_COMBAT_RANGED_TARGET, 3.0f*M_PI_F/2.0f);
+        m_bot->GetMotionMaster()->SetDestination(pWho, MAX_DIST_COMBAT_RANGED_TARGET, 3.0f*M_PI_F/2.0f);
 }
 
 bool PlayerbotAI::IsInCombat()
@@ -883,10 +883,10 @@ void PlayerbotAI::MoveTo(float angle, float minDist, float maxDist, float x, flo
                 Group *gr = m_bot->GetGroup();
                 dist = gr ? (float)gr->GetMembersCount() : 1.0f;
                 dist > MAX_DIST_POS_IN_GROUP ? MAX_DIST_POS_IN_GROUP : dist;
-                m_bot->GetMotionMaster()->MoveFollow(m_followTarget, rand_float(minDist, dist), angle);
+                m_bot->GetMotionMaster()->SetDestination(m_followTarget, rand_float(minDist, dist), angle);
             }
             else
-                m_bot->GetMotionMaster()->MoveFollow(m_followTarget, rand_float(minDist, dist), angle);
+                m_bot->GetMotionMaster()->SetDestination(m_followTarget, rand_float(minDist, dist), angle);
             SetInFront(m_followTarget);
         }
     }

@@ -122,6 +122,10 @@ class MANGOS_DLL_SPEC FollowMovementGenerator : public TargetedMovementGenerator
         void Interrupt(T &);
         void Reset(T &);
 
+        Unit* GetTargetDestination() const { return i_target.getTarget(); }
+        void SetXYZDestination(float x, float y, float z) { sLog.outString("NOT IMPLEMENTED YET SetDestination(float x, float y, float z)");}
+        void SetTargetDestination(Unit &target, float offset = 0.0f, float angle = 0.0f) { i_target.link(&target, this); i_offset=offset; i_angle=angle; }
+
         static void _clearUnitStateMove(T &u) { u.clearUnitState(UNIT_STAT_FOLLOW_MOVE); }
         static void _addUnitStateMove(T &u)  { u.addUnitState(UNIT_STAT_FOLLOW_MOVE); }
         bool _lostTarget(T &) const { return false; }
