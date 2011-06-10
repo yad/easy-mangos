@@ -123,7 +123,31 @@ class MANGOS_DLL_SPEC FollowMovementGenerator : public TargetedMovementGenerator
         void Reset(T &);
 
         Unit* GetTargetDestination() const { return i_target.getTarget(); }
-        void SetXYZDestination(float x, float y, float z) { sLog.outString("NOT IMPLEMENTED YET SetDestination(float x, float y, float z)");}
+        void SetXYZDestination(float x, float y, float z) 
+        {
+            //if (i_target->GetTypeId() == TYPEID_PLAYER)
+
+            Unit *unitToMove = i_target.getTarget();
+            
+            if (unitToMove->GetTypeId() == TYPEID_PLAYER)
+            {
+                Traveller<Player> traveller(*(Player*)unitToMove);
+                i_destinationHolder.SetDestination(traveller, x, y, z);
+            }
+            /*
+            else
+            {
+                Traveller<Creature> traveller((Creature*)unitToMove);
+                i_destinationHolder.SetDestination(traveller, x, y, z);
+            }
+            */
+
+            /*else
+                CreatureTraveller traveller(i_target);*/
+            
+            //sLog.outString("NOT IMPLEMENTED YET SetDestination(float x, float y, float z)");
+        }
+
         void SetTargetDestination(Unit &target, float offset = 0.0f, float angle = 0.0f) { i_target.link(&target, this); i_offset=offset; i_angle=angle; }
 
         static void _clearUnitStateMove(T &u) { u.clearUnitState(UNIT_STAT_FOLLOW_MOVE); }
