@@ -2117,7 +2117,6 @@ void Player::SpellUpdate(bool removespell)
         resetTalents(true, true);
         resetSpells();
     }
-    RemoveMyEquipement(true);
 
     LearnAllMyTalentsForMyLevel();
     LearnAllMySpellsForMyLevel();
