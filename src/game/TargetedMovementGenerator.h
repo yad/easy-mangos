@@ -128,9 +128,10 @@ class MANGOS_DLL_SPEC FollowMovementGenerator : public TargetedMovementGenerator
         void Interrupt(T &);
         void Reset(T &);
 
-        Unit* GetTargetDestination() const { return i_target.getTarget(); }
+        Unit* GetDestinationTarget() const { return i_target.getTarget(); }
         void SetDestinationXYZ(Player&, float, float, float);
         void SetDestinationTarget(Player &, Unit &, float = 0.0f, float = 0.0f);
+        bool HasArrived() { return i_destinationHolder.HasArrived(); };
 
         static void _clearUnitStateMove(T &u) { u.clearUnitState(UNIT_STAT_FOLLOW_MOVE); }
         static void _addUnitStateMove(T &u)  { u.addUnitState(UNIT_STAT_FOLLOW_MOVE); }
