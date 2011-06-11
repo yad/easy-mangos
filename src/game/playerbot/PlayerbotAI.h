@@ -33,12 +33,14 @@ class Item;
 class PlayerbotClassAI;
 class PlayerbotMgr;
 
-#define MIN_HP_PERCENT_BEFORE_FLEEING 15.0f
-#define MAX_BOTLOOT_DISTANCE          25.0f
-#define MAX_DIST_POS_IN_GROUP         30.0f
-#define MAX_DIST_COMBAT_TARGET        50.0f
-#define MAX_DIST_COMBAT_RANGED_TARGET 25.0f
-#define MAX_DIST_COMBAT_CAC_TARGET    20.0f
+#define MIN_HP_PERCENT_BEFORE_FLEEING  15.0f
+#define MAX_BOTLOOT_DISTANCE           25.0f
+#define MAX_DIST_POS_IN_GROUP          30.0f
+#define MAX_DIST_COMBAT_TARGET        100.0f
+#define MAX_DIST_BETWEEN_BOT_LEADER   MAX_DIST_COMBAT_TARGET + 50.0f
+#define MAX_DIST_COMBAT_RANGED_TARGET  25.0f
+#define MIN_DIST_COMBAT_CAC_TARGET      2.0f
+#define MAX_DIST_COMBAT_CAC_TARGET     20.0f
 #define MAX_RANGE_MOVEMENT            500.0f
 
 enum RacialTraits
@@ -161,11 +163,9 @@ public:
     void EquipItem(Item& item);
     void Feast();
     void InterruptCurrentCastingSpell(uint32);
-    Unit *GetNewCombatTarget();
+    Unit *GetNewCombatTarget(bool = false);
     void DoCombatManeuver(Unit* = NULL);
     BotCombatType GetCombatType();
-    float GetDist() { return GetCombatType()==BOTCOMBAT_CAC ? MAX_DIST_COMBAT_CAC_TARGET : MAX_DIST_COMBAT_RANGED_TARGET; };
-    void MoveTo(float angle, float minDist = 1.0f, float maxDist = 3.0f, float x = 0.0f, float y = 0.0f, float z = 0.0f);
     void SetIgnoreUpdateTime(uint8 t = 0) { m_ignoreAIUpdatesUntilTime = time(0) + t; };
     void SetEnterBGTime(uint8 t = 0) { m_enterBg = time(0) + t; };
 
@@ -198,7 +198,7 @@ public:
     void TurnInQuests(WorldObject *questgiver);
 
     bool IsInCombat();
-    bool FindPOI();
+    Unit* FindPOI();
     Unit* FindEnemy();
 
     void CheckMount();
@@ -216,16 +216,19 @@ public:
     uint8 GetFreeBagSpace() const;
 
     void SetFollowTarget(Unit *followTarget, bool forced = false);
-    Unit* GetFollowTarget() { return m_followTarget; }
+    float GetDist() { return GetCombatType()==BOTCOMBAT_CAC ? MAX_DIST_COMBAT_CAC_TARGET : MAX_DIST_COMBAT_RANGED_TARGET; };
+    void MoveTo(Unit*, float = 0.0f, float = 1.0f, float = 3.0f);
+    void MoveTo(float, float, float);
+    bool HasArrived();
 
     void Pull();
 
-    void MoveInLineOfSight(Unit *);               //Usefull call in mangos update position system
+    void MoveInLineOfSight(Unit *);               //Not used
     void AttackStart(Unit *);                     //Always attack new target with this
-    void EnterEvadeMode() {};                     //Implemented later
-    void AttackedBy(Unit*) {};                    //Not used for now
-    bool IsVisible(Unit *) const {return true;};  //Fake but need to be implemented later
-    bool IsInEvadeMode() const {return false;};   //Fake but need to be implemented later
+    void EnterEvadeMode() {};                     //Not implemented
+    void AttackedBy(Unit*) {};                    //Not used
+    bool IsVisible(Unit *) const {return true;};  //Not used
+    bool IsInEvadeMode() const {return false;};   //Not used
 
 private:
     PlayerbotMgr* const m_mgr;
@@ -248,9 +251,10 @@ private:
     uint64 m_targetGuidCommand;
     ObjectGuid m_taxiMaster;
 
-    Unit *m_followTarget;
     Creature* m_lootCreature;
     BotVictimList m_victimList;
+
+    Unit* m_latestVictim;
 
     float orig_x, orig_y, orig_z;
     uint32 orig_map;

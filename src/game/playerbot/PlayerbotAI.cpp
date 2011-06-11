@@ -69,6 +69,7 @@ PlayerbotAI::PlayerbotAI(PlayerbotMgr* const mgr, Player* const bot) : m_mgr(mgr
     m_TimeDoneDrinking = 0;
 
     m_taxiMaster = ObjectGuid();
+    m_latestVictim = NULL;
 
     m_classAI = 0;
     m_role = 0;
@@ -78,7 +79,6 @@ PlayerbotAI::PlayerbotAI(PlayerbotMgr* const mgr, Player* const bot) : m_mgr(mgr
     m_leaveBg = 0;
 
     m_botState = BOTSTATE_NORMAL;
-    m_followTarget = m_bot;
 
     SetQuestNeedItems();
 
@@ -128,7 +128,6 @@ PlayerbotAI::~PlayerbotAI()
 void PlayerbotAI::ReinitAI()
 {
     m_botState = BOTSTATE_NORMAL;
-    m_followTarget = m_bot;
 
     if (m_bot->m_movementInfo.HasMovementFlag(MOVEFLAG_FLYING))
         m_bot->m_movementInfo.RemoveMovementFlag(MOVEFLAG_FLYING);
@@ -392,9 +391,9 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
                     return;
 
                 if (mainTank==m_bot)
-                    m_bot->GetMotionMaster()->SetDestinationTarget(pTarget);
+                    MoveTo(pTarget);
                 else
-                    m_bot->GetMotionMaster()->SetDestinationTarget(pTarget, GetDist(), m_bot->GetAngle(pTarget)+rand_float(-0.25f, 0.25f));
+                    MoveTo(pTarget, m_bot->GetAngle(pTarget)+rand_float(-0.25f, 0.25f), GetDist(), 0.0f);
             }
             return;
         }
@@ -474,7 +473,7 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
     }
 }
 
-Unit* PlayerbotAI::GetNewCombatTarget()
+Unit* PlayerbotAI::GetNewCombatTarget(bool no_dist_check)
 {
     Unit* newCombatTarget = NULL;
 
@@ -500,7 +499,7 @@ Unit* PlayerbotAI::GetNewCombatTarget()
         {
             for(Unit::AttackerSet::const_iterator itr = m_bot->getAttackers().begin(); itr != m_bot->getAttackers().end(); ++itr)
             {
-                if (!m_bot->IsWithinDistInMap((*itr)->GetOwner() ? (*itr)->GetOwner() : (*itr), MAX_DIST_COMBAT_TARGET))
+                if (!no_dist_check && !m_bot->IsWithinDistInMap((*itr)->GetOwner() ? (*itr)->GetOwner() : (*itr), MAX_DIST_COMBAT_TARGET))
                     continue;
 
                 if ((*itr)->GetTypeId()==TYPEID_PLAYER)
@@ -526,7 +525,7 @@ Unit* PlayerbotAI::GetNewCombatTarget()
                 {
                     for(Unit::AttackerSet::const_iterator itr = ref->getSource()->getAttackers().begin(); itr != ref->getSource()->getAttackers().end(); ++itr)
                     {
-                        if (!m_bot->IsWithinDistInMap((*itr)->GetOwner() ? (*itr)->GetOwner() : (*itr), MAX_DIST_COMBAT_TARGET))
+                        if (!no_dist_check && !m_bot->IsWithinDistInMap((*itr)->GetOwner() ? (*itr)->GetOwner() : (*itr), MAX_DIST_COMBAT_TARGET))
                             continue;
 
                         if ((*itr)->GetTypeId()==TYPEID_PLAYER)
@@ -550,7 +549,7 @@ Unit* PlayerbotAI::GetNewCombatTarget()
         {
             for(Unit::AttackerSet::const_iterator itr = m_bot->GetPet()->getAttackers().begin(); itr != m_bot->GetPet()->getAttackers().end(); ++itr)
             {
-                if (!m_bot->IsWithinDistInMap((*itr)->GetOwner() ? (*itr)->GetOwner() : (*itr), MAX_DIST_COMBAT_TARGET))
+                if (!no_dist_check && !m_bot->IsWithinDistInMap((*itr)->GetOwner() ? (*itr)->GetOwner() : (*itr), MAX_DIST_COMBAT_TARGET))
                     continue;
 
                 if ((*itr)->GetTypeId()==TYPEID_PLAYER)
@@ -576,7 +575,7 @@ Unit* PlayerbotAI::GetNewCombatTarget()
                 {
                     for(Unit::AttackerSet::const_iterator itr = ref->getSource()->GetPet()->getAttackers().begin(); itr != ref->getSource()->GetPet()->getAttackers().end(); ++itr)
                     {
-                        if (!m_bot->IsWithinDistInMap((*itr)->GetOwner() ? (*itr)->GetOwner() : (*itr), MAX_DIST_COMBAT_TARGET))
+                        if (!no_dist_check && !m_bot->IsWithinDistInMap((*itr)->GetOwner() ? (*itr)->GetOwner() : (*itr), MAX_DIST_COMBAT_TARGET))
                             continue;
 
                         if ((*itr)->GetTypeId()==TYPEID_PLAYER)
@@ -642,21 +641,37 @@ void PlayerbotAI::DoCombatManeuver(Unit* forcedTarget)
         combatTarget = forcedTarget;
         AttackStart(forcedTarget);
     }
+    else
+    {
+        m_latestVictim = NULL;
+    }
 
     if (!combatTarget)
-        return;
+        combatTarget = GetNewCombatTarget(true);
 
-    if (m_bot->GetMotionMaster()->GetCurrentMovementGeneratorType()!=FOLLOW_MOTION_TYPE)
-        AttackStart(combatTarget);
+    if (!combatTarget)
+    {
+        m_bot->CombatStop(true);
+        SetFollowTarget(GetLeader(), true);
+        return;
+    }
 
     SetInFront(combatTarget);
 
     if (GetCombatType()==BOTCOMBAT_CAC)
     {
-        if (m_bot->IsWithinDistInMap(combatTarget, ATTACK_DISTANCE))
+        if (m_bot->IsWithinDistInMap(combatTarget, MIN_DIST_COMBAT_CAC_TARGET))
         {
+            //Last Attack() has failed so :
             if (!m_bot->getVictim())
-                m_bot->Attack(combatTarget, true);
+            {
+                //If new succeeded you can remove old reference
+                if (m_bot->Attack(combatTarget, true))
+                    m_latestVictim = NULL;
+                else
+                    MoveTo(combatTarget);
+                //If new has fail too, move to near target !
+            }
             if (!GetClassAI()->DoCombatManeuver(combatTarget, true))
             {
                 if (m_bot->isAttackReady())
@@ -668,30 +683,43 @@ void PlayerbotAI::DoCombatManeuver(Unit* forcedTarget)
         }
         else
         {
-            /*m_bot->AttackStop();
-            //m_bot->RemoveAllAttackers();
-            m_bot->SendAttackSwingCancelAttack();     // melee and ranged forced attack cancel
-            //m_bot->ClearInCombat();*/
+            m_latestVictim = m_bot->getVictim() ? m_bot->getVictim() : combatTarget;
+            m_bot->AttackStop();
+            m_bot->SendAttackSwingCancelAttack();
+            m_bot->ClearInCombat();
+            MoveTo(m_latestVictim);
             GetClassAI()->DoFastBuffOnOneself();
         }
     }
     else
     {
-        if (!m_bot->getVictim())
-            m_bot->Attack(combatTarget, false);
-        if (!GetClassAI()->DoCombatManeuver(combatTarget, m_bot->IsWithinDistInMap(combatTarget, ATTACK_DISTANCE)))
+        if (m_bot->IsWithinDistInMap(combatTarget, ATTACK_DISTANCE))
         {
-            if (m_bot->isAttackReady(RANGED_ATTACK))
+            m_bot->AttackStop();
+            m_bot->SendAttackSwingCancelAttack();
+            m_bot->ClearInCombat();
+            float x, y, z;
+            m_bot->GetClosePoint(x, y, z, combatTarget->GetObjectBoundingRadius(), MAX_DIST_COMBAT_RANGED_TARGET, m_bot->GetOrientation(), combatTarget);
+            MoveTo(x, y, z);
+        }
+        else
+        {
+            if (!m_bot->getVictim())
+                m_bot->Attack(combatTarget, false);
+            if (!GetClassAI()->DoCombatManeuver(combatTarget, m_bot->IsWithinDistInMap(combatTarget, ATTACK_DISTANCE)))
             {
-                Item* item = m_bot->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_RANGED);
-                if (item)
+                if (m_bot->isAttackReady(RANGED_ATTACK))
                 {
-                    if (m_bot->HasSpell(3018))
-                        CastSpell(3018, combatTarget);
-                    if (m_bot->HasSpell(5019))
-                        CastSpell(5019, combatTarget);
-                    m_bot->InterruptSpell(CURRENT_AUTOREPEAT_SPELL);
-                    m_bot->resetAttackTimer(RANGED_ATTACK);
+                    Item* item = m_bot->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_RANGED);
+                    if (item)
+                    {
+                        if (m_bot->HasSpell(3018))
+                            CastSpell(3018, combatTarget);
+                        if (m_bot->HasSpell(5019))
+                            CastSpell(5019, combatTarget);
+                        m_bot->InterruptSpell(CURRENT_AUTOREPEAT_SPELL);
+                        m_bot->resetAttackTimer(RANGED_ATTACK);
+                    }
                 }
             }
         }
@@ -708,9 +736,9 @@ void PlayerbotAI::AttackStart(Unit *pWho)
     m_victimList.push_back(pWho);
 
     if (GetCombatType()==BOTCOMBAT_CAC)
-        m_bot->GetMotionMaster()->SetDestinationTarget(pWho);
+        MoveTo(pWho);
     else
-        m_bot->GetMotionMaster()->SetDestinationTarget(pWho, MAX_DIST_COMBAT_RANGED_TARGET, 3.0f*M_PI_F/2.0f);
+        MoveTo(pWho, 3.0f*M_PI_F/2.0f, MAX_DIST_COMBAT_RANGED_TARGET, 0.0f);
 }
 
 bool PlayerbotAI::IsInCombat()
@@ -765,10 +793,10 @@ void PlayerbotAI::SetFollowTarget(Unit * followTarget, bool forced)
         return;
     }
 
-    if (!forced && m_followTarget==followTarget)
+    if (!forced && m_bot->GetMotionMaster()->GetDestinationTarget()==followTarget)
         return;
 
-    if (m_followTarget==followTarget)
+    if (m_bot->GetMotionMaster()->GetDestinationTarget()==followTarget)
     {
         Player* grpFollowTarget = FindGroupRandomRealPlayer();
         if (grpFollowTarget)
@@ -784,74 +812,65 @@ void PlayerbotAI::SetFollowTarget(Unit * followTarget, bool forced)
             return;
     }
 
-    m_followTarget = followTarget;
-
     if (m_bot == GetLeader())
     {
         if (!m_bot->GetBattleGround())
         {
-            if (GetCombatType()==BOTCOMBAT_CAC)
-                MoveTo(rand_float(M_PI_F/2.0f, 3.0f*M_PI_F/2.0f)+M_PI_F); //CAC
-            else
-                MoveTo(rand_float(M_PI_F/2.0f, 3.0f*M_PI_F/2.0f)); //RANGED
+            MoveTo(followTarget);
         }
         else
         {
-            if (m_bot->IsWithinDistInMap(m_followTarget, orig_x, orig_y, orig_z, 3.0f))
-            {
-                SetInFront(m_followTarget);
-            }
+            if (m_bot->IsWithinDistInMap(followTarget, orig_x, orig_y, orig_z, MIN_DIST_COMBAT_CAC_TARGET))
+                SetInFront(followTarget);
             else
-            {
-                MoveTo(rand_float(0, M_PI_F));
-            }
+                MoveTo(followTarget);
         }
     }
     else
     {
         if (!m_bot->GetBattleGround())
         {
-            if (m_bot->IsWithinDistInMap(m_followTarget, 100.0f))
+            if (m_bot->IsWithinDistInMap(followTarget, MAX_DIST_BETWEEN_BOT_LEADER))
             {
-                if (m_followTarget == GetLeader())
+                if (followTarget == GetLeader())
                 {
                     if (GetCombatType()==BOTCOMBAT_CAC)
-                        MoveTo(rand_float(M_PI_F/2.0f, 3.0f*M_PI_F/2.0f)+M_PI_F); //CAC
+                        MoveTo(followTarget, rand_float(M_PI_F/2.0f, 3.0f*M_PI_F/2.0f)+M_PI_F); //CAC
                     else
-                        MoveTo(rand_float(M_PI_F/2.0f, 3.0f*M_PI_F/2.0f)); //RANGED
-                    SetInFront(m_followTarget);
+                        MoveTo(followTarget, rand_float(M_PI_F/2.0f, 3.0f*M_PI_F/2.0f)); //RANGED
+                    SetInFront(followTarget);
                 }
                 else
                 {
                     if (GetCombatType()==BOTCOMBAT_CAC)
                     {
-                        MoveTo(rand_float(M_PI_F/2.0f, 3.0f*M_PI_F/2.0f)+M_PI_F); //CAC
+                        MoveTo(followTarget, rand_float(M_PI_F/2.0f, 3.0f*M_PI_F/2.0f)+M_PI_F); //CAC
                     }
                     else
                     {
                         Spell* sp = GetCurrentSpell();
                         if (!sp)
                         {
-                            MoveTo(rand_float(M_PI_F/2.0f, 3.0f*M_PI_F/2.0f)); //RANGED
+                            MoveTo(followTarget, rand_float(M_PI_F/2.0f, 3.0f*M_PI_F/2.0f)); //RANGED
                         }
                         else if (sp->IsRangedSpell())
                         {
                             SpellRangeEntry const *TempRange = GetSpellRangeStore()->LookupEntry(sp->m_spellInfo->rangeIndex);
                             if (!TempRange)
                             {
-                                MoveTo(rand_float(M_PI_F/2.0f, 3.0f*M_PI_F/2.0f)); //RANGED
+                                MoveTo(followTarget, rand_float(M_PI_F/2.0f, 3.0f*M_PI_F/2.0f)); //RANGED
                             }
                             else
                             {
-                                if (!m_bot->IsInRange(m_followTarget,TempRange->minRange,TempRange->maxRange))
+                                if (!m_bot->IsInRange(followTarget,TempRange->minRange,TempRange->maxRange))
                                 {
-                                    MoveTo(rand_float(M_PI_F/2.0f, 3.0f*M_PI_F/2.0f)+M_PI_F, TempRange->maxRange); //RANGED
+                                    MoveTo(followTarget, rand_float(M_PI_F/2.0f, 3.0f*M_PI_F/2.0f)+M_PI_F, TempRange->maxRange); //RANGED
                                 }
                             }
                         }
                         else
                         {
-                            MoveTo(rand_float(M_PI_F/2.0f, 3.0f*M_PI_F/2.0f)); //RANGED
+                            MoveTo(followTarget, rand_float(M_PI_F/2.0f, 3.0f*M_PI_F/2.0f)); //RANGED
                         }
                     }
                 }
@@ -859,37 +878,41 @@ void PlayerbotAI::SetFollowTarget(Unit * followTarget, bool forced)
         }
         else
         {
-            if (m_bot->IsWithinDistInMap(m_followTarget, 3.0f))
-            {
-                SetInFront(m_followTarget);
-            }
+            if (m_bot->IsWithinDistInMap(followTarget, MIN_DIST_COMBAT_CAC_TARGET))
+                SetInFront(followTarget);
             else if (m_bot->IsInMap(GetLeader()))
-            {
-                MoveTo(rand_float(0, M_PI_F));
-            }
+                MoveTo(followTarget, rand_float(0, M_PI_F));
         }
     }
 }
 
-void PlayerbotAI::MoveTo(float angle, float minDist, float maxDist, float x, float y, float z)
+void PlayerbotAI::MoveTo(Unit* target, float angle, float minDist, float maxDist)
 {
+    if (!target || !target->IsInWorld())
+        return;
+
     float dist = maxDist;
-    if (m_followTarget)
+
+    if (target==GetLeader())
     {
-        if (m_followTarget->IsInWorld())
-        {
-            if (m_followTarget == GetLeader())
-            {
-                Group *gr = m_bot->GetGroup();
-                dist = gr ? (float)gr->GetMembersCount() : 1.0f;
-                dist > MAX_DIST_POS_IN_GROUP ? MAX_DIST_POS_IN_GROUP : dist;
-            }
-            m_bot->GetMotionMaster()->SetDestinationTarget(m_followTarget, rand_float(minDist, dist), angle);
-            SetInFront(m_followTarget);
-        }
-    }
-    else
-        m_bot->GetMotionMaster()->SetDestinationXYZ(x, y, z);
+        Group *gr = m_bot->GetGroup();
+        dist = gr ? (float)gr->GetMembersCount() : 1.0f;
+        dist > MAX_DIST_POS_IN_GROUP ? MAX_DIST_POS_IN_GROUP : dist;
+     }
+     sLog.outString("%u, %s", target->GetTypeId(), target->GetName());
+     m_bot->GetMotionMaster()->SetDestinationTarget(target, dist == 0.0f ? minDist : rand_float(minDist, dist), angle);
+     SetInFront(target);
+}
+
+void PlayerbotAI::MoveTo(float x, float y, float z)
+{
+    m_bot->UpdateGroundPositionZ(x,y,z);
+    m_bot->GetMotionMaster()->SetDestinationXYZ(x, y, z);
+}
+
+bool PlayerbotAI::HasArrived()
+{
+    return m_bot->GetMotionMaster()->HasArrived();
 }
 
 void PlayerbotAI::MoveInLineOfSight(Unit *u)
@@ -906,38 +929,24 @@ void PlayerbotAI::MoveInLineOfSight(Unit *u)
     }*/
 }
 
-bool PlayerbotAI::FindPOI()
+Unit* PlayerbotAI::FindPOI()
 {
-    Unit* target = m_bot->SelectRandomFriendlyTargetBetween(0, 10.0f, MAX_RANGE_MOVEMENT);
-
-    if (!m_followTarget)
+    Unit* destTarget = m_bot->GetMotionMaster()->GetDestinationTarget();
+    if (!destTarget)
     {
+        Unit* target = m_bot->SelectRandomFriendlyTargetBetween(0, 10.0f, MAX_RANGE_MOVEMENT);
         if (target)
-        {
-            m_followTarget = target;
-            return true;
-        }
-        return false;
+            return target;
+        return NULL;
     }
-
-    if (m_bot->IsWithinDistInMap(m_followTarget, 5.0f))
+    else if (m_bot->IsWithinDistInMap(destTarget, 5.0f))
     {
-        if (target)
-        {
-            if (target != m_followTarget)
-            {
-                m_followTarget = target;
-                return true;
-            }
-            return false;
-        }
-        else
-        {
-            m_followTarget = NULL;
-            return false;
-        }
+        Unit* target = m_bot->SelectRandomFriendlyTargetBetween(0, 10.0f, MAX_RANGE_MOVEMENT);
+        if (target && target != destTarget)
+            return target;
+        return NULL;
     }
-    return true;
+    return destTarget;
 }
 
 Unit* PlayerbotAI::FindEnemy()
@@ -1024,6 +1033,13 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
     {
         if (!CheckGroup())
             return;
+    }
+
+    if (!m_bot->GetMotionMaster()->GetDestinationTarget()
+        || m_bot->GetMotionMaster()->GetCurrentMovementGeneratorType()!=FOLLOW_MOTION_TYPE)
+    {
+        m_bot->GetMotionMaster()->MoveFollow(GetLeader(), 0.0f, 0.0f);
+        SetFollowTarget(GetLeader(), true);
     }
 
     if (m_bot->GetTrader())
@@ -1115,7 +1131,8 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
     }
     else
     {
-        Spell* const pSpell = GetCurrentSpell();
+        Spell* pSpell = NULL;
+        pSpell = GetCurrentSpell();
         if (pSpell && !(pSpell->IsChannelActive() || pSpell->IsAutoRepeat()))
             InterruptCurrentCastingSpell(pSpell->m_spellInfo->Id);
 
@@ -1124,15 +1141,13 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
         /*sLog.outString("%s => %s", m_bot->GetName(), m_followTarget ? m_followTarget->GetName() : "NULL");
         sLog.outString("%s !> %s", m_bot->GetName(), m_bot->getVictim() ? m_bot->getVictim()->GetName() : "NULL");
         sLog.outString("Movement : %u", m_bot->GetMotionMaster()->GetCurrentMovementGeneratorType());
-        sLog.outString("(100)=%u", m_bot->IsWithinDistInMap(GetLeader(), 100.0f) ? 1 : 0);
+        sLog.outString("(100)=%u", m_bot->IsWithinDistInMap(GetLeader(), MAX_DIST_BETWEEN_BOT_LEADER) ? 1 : 0);
         sLog.outString("===============================================");*/
-
-        if (m_bot->GetMotionMaster()->GetCurrentMovementGeneratorType()!=FOLLOW_MOTION_TYPE)
-            m_bot->GetMotionMaster()->MoveFollow(GetLeader(), 0.0f, 0.0f);
 
         if (!IsInCombat())
         {
-            if (!m_followTarget || !m_bot->IsWithinDistInMap(GetLeader(), 100.0f))
+            if (!m_bot->IsWithinDistInMap(GetLeader(), MAX_DIST_BETWEEN_BOT_LEADER) ||
+                m_bot->GetMotionMaster()->GetDestinationTarget()!=GetLeader())
                 SetFollowTarget(GetLeader(), true);
 
             if (GetLeader()!=m_bot)
@@ -1147,14 +1162,18 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
             }
             else
             {
-                if (FindPOI())
+                if (HasArrived())
                 {
-                    m_ignoreAIUpdatesUntilTime = time(0) + urand(5, 10);
-                    MoveTo(rand_float(0, M_PI_F), 1.0f, 3.0f, orig_x, orig_y, orig_z);
-                }
-                else
-                {
-                    MoveTo(0.0f, 1.0f, 3.0f, orig_x, orig_y, orig_z);
+                    Unit* destTarget = FindPOI();
+                    if (destTarget)
+                    {
+                        m_ignoreAIUpdatesUntilTime = time(0) + urand(5, 10);
+                        MoveTo(destTarget, rand_float(0, M_PI_F));
+                    }
+                    else
+                    {
+                        MoveTo(orig_x, orig_y, orig_z);
+                    }
                 }
             }
 
@@ -1169,17 +1188,16 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
                 case BOTSTATE_LOOTING:
                 {
                     CastAura(25990, m_bot); // Regen hp + mana : Spell Aura Gruccu Food
-                    if (m_bot->getVictim())
-                    {
-                        m_bot->CombatStop(true);
-                        m_bot->SetSelectionGuid(ObjectGuid());
-                    }
-                    SetFollowTarget(GetLeader(), true);
                     DoLoot();
                     break;
                 }
                 default:
                 {
+                    if (m_bot->isInCombat())
+                    {
+                        m_bot->CombatStop(true);
+                        m_bot->SetSelectionGuid(ObjectGuid());
+                    }
                     CheckRoles();
                     if (GetLeader()->getLevel() != m_bot->getLevel())
                         InitBotStatsForLevel(GetLeader()->getLevel());
@@ -1192,8 +1210,10 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
         else
         {
             UnMount();
+            pSpell = GetCurrentSpell();
             if (!pSpell || !pSpell->IsChannelActive())
-                DoCombatManeuver();
+                if (HasArrived())
+                    DoCombatManeuver(m_latestVictim);
         }
     }
 }
@@ -1401,7 +1421,7 @@ bool PlayerbotAI::FollowCheckTeleport(WorldObject *obj)
     if (m_bot->GetMap() && m_bot->GetMap()->IsBattleGroundOrArena())
         return true;
 
-    if (!m_bot->IsWithinDistInMap(obj, 100, true) && GetLeader()->isAlive() && !GetLeader()->IsTaxiFlying())
+    if (!m_bot->IsWithinDistInMap(obj, MAX_DIST_BETWEEN_BOT_LEADER, true) && GetLeader()->isAlive() && !GetLeader()->IsTaxiFlying())
     {
         m_bot->CombatStop(true);
         m_bot->SetSelectionGuid(ObjectGuid());

@@ -912,7 +912,7 @@ void PlayerbotAI::DoLoot()
             m_lootCreature = NULL;
             return;
         }
-        if (m_bot->IsWithinDistInMap(GetLeader(), 100.0f))
+        if (m_bot->IsWithinDistInMap(GetLeader(), MAX_DIST_BETWEEN_BOT_LEADER))
         {
             m_bot->SendLoot(m_lootCreature->GetObjectGuid(), LOOT_CORPSE);
             Loot *loot = &m_lootCreature->loot;
