@@ -166,7 +166,7 @@ bool PlayerbotHunterAI::DoCombatManeuver(Unit *pTarget, bool cac)
                 return true;
         }
         /*//[Yad] : je désactive les mouvements GetMotionMaster ne doivent plus être changé dans les AI
-        else if (!m_bot->isMoving() && !m_bot->hasUnitState(UNIT_STAT_NO_FREE_MOVE) && !m_bot->hasUnitState(UNIT_STAT_CONTROLLED))
+        else if (ai->HasArrived() && !m_bot->hasUnitState(UNIT_STAT_NO_FREE_MOVE) && !m_bot->hasUnitState(UNIT_STAT_CONTROLLED))
         {
             float xb, yb, zb, xt, yt, zt, xbt, ybt, angle, offset_x, offset_y;
             m_bot->GetPosition(xb,yb,zb);
@@ -183,7 +183,8 @@ bool PlayerbotHunterAI::DoCombatManeuver(Unit *pTarget, bool cac)
             if (map->GetHeight(xbt, ybt, zb + 2.0f, true) > (zb - 10.0f) && map->GetHeight(xbt, ybt, zb + 2.0f, true) < (zb + 5.0f) && pTarget->IsWithinLOS(xbt, ybt, map->GetHeight(xbt, ybt, zb + 2.0f, true)))
             {
                 m_bot->AttackStop();
-                m_bot->GetMotionMaster()->MovePoint(m_master->GetMapId(), xbt, ybt, map->GetHeight(xbt, ybt, zb + 2.0f, true));
+                ai->MoveTo(xbt, ybt, map->GetHeight(xbt, ybt, zb + 2.0f, true));
+                //m_bot->GetMotionMaster()->MovePoint(m_master->GetMapId(), xbt, ybt, map->GetHeight(xbt, ybt, zb + 2.0f, true));
             }
             else
             {
@@ -193,11 +194,12 @@ bool PlayerbotHunterAI::DoCombatManeuver(Unit *pTarget, bool cac)
                 if (map->GetHeight(xbt, ybt, zb + 2.0f, true) > (zb - 10.0f) && map->GetHeight(xbt, ybt, zb + 2.0f, true) < (zb + 5.0f) && pTarget->IsWithinLOS(xbt, ybt, map->GetHeight(xbt, ybt, zb + 2.0f, true)))
                 {
                     m_bot->AttackStop();
-                    m_bot->GetMotionMaster()->MovePoint(m_master->GetMapId(), xbt, ybt, map->GetHeight(xbt, ybt, zb + 2.0f, true));
+                    ai->MoveTo(xbt, ybt, map->GetHeight(xbt, ybt, zb + 2.0f, true));
+                    //m_bot->GetMotionMaster()->MovePoint(m_master->GetMapId(), xbt, ybt, map->GetHeight(xbt, ybt, zb + 2.0f, true));
                 }
             }
 
-            return;
+            return true;
         }*/
     }
 

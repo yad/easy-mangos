@@ -5925,11 +5925,7 @@ bool ChatHandler::HandleQuestCompleteCommand(char* args)
 {
     Player* player = getSelectedPlayer();
     if (!player)
-    {
-        SendSysMessage(LANG_NO_CHAR_SELECTED);
-        SetSentErrorMessage(true);
-        return false;
-    }
+        player = m_session->GetPlayer();
 
     std::string cmd = args;
     if(cmd == "set")
