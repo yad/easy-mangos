@@ -647,7 +647,10 @@ void PlayerbotAI::DoCombatManeuver(Unit* forcedTarget)
     }
 
     if (!combatTarget)
+    {
         combatTarget = GetNewCombatTarget(true);
+        AttackStart(combatTarget);
+    }
 
     if (!combatTarget)
     {
