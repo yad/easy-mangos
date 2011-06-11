@@ -116,9 +116,10 @@ class MANGOS_DLL_SPEC MotionMaster : private std::stack<MovementGenerator *>
         void UpdateFinalDistanceToTarget(float fDistance);
 
         bool GetDestination(float &x, float &y, float &z);
-        Unit* GetDestination();
+        Unit* GetDestinationTarget();
         void SetDestinationXYZ(float x, float y, float z);
         void SetDestinationTarget(Unit* target, float offset = 0.0f, float angle = 0.0f);
+        bool HasArrived();
     private:
         void Mutate(MovementGenerator *m);                  // use Move* functions instead
 
