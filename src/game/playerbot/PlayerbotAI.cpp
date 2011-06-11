@@ -392,9 +392,9 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
                     return;
 
                 if (mainTank==m_bot)
-                    m_bot->GetMotionMaster()->SetDestination(pTarget);
+                    m_bot->GetMotionMaster()->SetDestinationTarget(pTarget);
                 else
-                    m_bot->GetMotionMaster()->SetDestination(pTarget, GetDist(), m_bot->GetAngle(pTarget)+rand_float(-0.25f, 0.25f));
+                    m_bot->GetMotionMaster()->SetDestinationTarget(pTarget, GetDist(), m_bot->GetAngle(pTarget)+rand_float(-0.25f, 0.25f));
             }
             return;
         }
@@ -708,9 +708,9 @@ void PlayerbotAI::AttackStart(Unit *pWho)
     m_victimList.push_back(pWho);
 
     if (GetCombatType()==BOTCOMBAT_CAC)
-        m_bot->GetMotionMaster()->SetDestination(pWho);
+        m_bot->GetMotionMaster()->SetDestinationTarget(pWho);
     else
-        m_bot->GetMotionMaster()->SetDestination(pWho, MAX_DIST_COMBAT_RANGED_TARGET, 3.0f*M_PI_F/2.0f);
+        m_bot->GetMotionMaster()->SetDestinationTarget(pWho, MAX_DIST_COMBAT_RANGED_TARGET, 3.0f*M_PI_F/2.0f);
 }
 
 bool PlayerbotAI::IsInCombat()
@@ -883,15 +883,13 @@ void PlayerbotAI::MoveTo(float angle, float minDist, float maxDist, float x, flo
                 Group *gr = m_bot->GetGroup();
                 dist = gr ? (float)gr->GetMembersCount() : 1.0f;
                 dist > MAX_DIST_POS_IN_GROUP ? MAX_DIST_POS_IN_GROUP : dist;
-                m_bot->GetMotionMaster()->MoveFollow(m_followTarget, rand_float(minDist, dist), angle);
             }
-            else
-                m_bot->GetMotionMaster()->MoveFollow(m_followTarget, rand_float(minDist, dist), angle);
+            m_bot->GetMotionMaster()->SetDestinationTarget(m_followTarget, rand_float(minDist, dist), angle);
             SetInFront(m_followTarget);
         }
     }
     else
-        m_bot->GetMotionMaster()->MovePoint(0, x, y, z);
+        m_bot->GetMotionMaster()->SetDestinationXYZ(x, y, z);
 }
 
 void PlayerbotAI::MoveInLineOfSight(Unit *u)
@@ -1129,11 +1127,12 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
         sLog.outString("(100)=%u", m_bot->IsWithinDistInMap(GetLeader(), 100.0f) ? 1 : 0);
         sLog.outString("===============================================");*/
 
+        if (m_bot->GetMotionMaster()->GetCurrentMovementGeneratorType()!=FOLLOW_MOTION_TYPE)
+            m_bot->GetMotionMaster()->MoveFollow(GetLeader(), 0.0f, 0.0f);
+
         if (!IsInCombat())
         {
-            if (!m_followTarget
-                || !m_bot->IsWithinDistInMap(GetLeader(), 100.0f)
-                || m_bot->GetMotionMaster()->GetCurrentMovementGeneratorType()!=FOLLOW_MOTION_TYPE)
+            if (!m_followTarget || !m_bot->IsWithinDistInMap(GetLeader(), 100.0f))
                 SetFollowTarget(GetLeader(), true);
 
             if (GetLeader()!=m_bot)

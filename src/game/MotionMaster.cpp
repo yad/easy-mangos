@@ -476,28 +476,37 @@ Unit* MotionMaster::GetDestination()
     return mgen->GetTargetDestination();
 }
 
-void MotionMaster::SetDestination(float x, float y, float z)
+void MotionMaster::SetDestinationXYZ(float x, float y, float z)
 {
     if (empty())
+        return;
+
+    if (m_owner->GetTypeId()!=TYPEID_PLAYER)
         return;
 
     if (top()->GetMovementGeneratorType()!=FOLLOW_MOTION_TYPE)
         return;
 
+    Player* p_owner = (Player*)m_owner;
     FollowMovementGenerator<Player> *mgen = static_cast<FollowMovementGenerator<Player>*>(top());
-    mgen->SetXYZDestination(x, y, z);
+    mgen->SetDestinationXYZ(*p_owner, x, y, z);
 }
 
-void MotionMaster::SetDestination(Unit* target, float offset, float angle)
+void MotionMaster::SetDestinationTarget(Unit* target, float offset, float angle)
 {
     if (empty())
+        return;
+
+
+    if (m_owner->GetTypeId()!=TYPEID_PLAYER)
         return;
 
     if (top()->GetMovementGeneratorType()!=FOLLOW_MOTION_TYPE)
         return;
 
+    Player* p_owner = (Player*)m_owner;
     FollowMovementGenerator<Player> *mgen = static_cast<FollowMovementGenerator<Player>*>(top());
-    mgen->SetTargetDestination(*target, offset, angle);
+    mgen->SetDestinationTarget(*p_owner, *target, offset, angle);
 }
 
 void MotionMaster::UpdateFinalDistanceToTarget(float fDistance)

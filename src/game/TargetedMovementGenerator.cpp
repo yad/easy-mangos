@@ -36,124 +36,199 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner)
     if (owner.hasUnitState(UNIT_STAT_NOT_MOVE))
         return;
 
-    float x, y, z;
-
-    // prevent redundant micro-movement for pets, other followers.
-    if (i_offset && i_target->IsWithinDistInMap(&owner,2*i_offset))
+    if (owner.GetTypeId() == TYPEID_PLAYER && ((Player*)&owner)->IsBot())
     {
-        if (i_destinationHolder.HasDestination())
-            return;
+        Unit* bot = (Unit*)&owner;
+        float x, y, z;
 
-        owner.GetPosition(x, y, z);
-    }
-    else if (!i_offset)
-    {
-        // to nearest contact position
-        i_target->GetContactPoint( &owner, x, y, z );
-    }
-    else
-    {
-        // to at i_offset distance from target and i_angle from target facing
-        i_target->GetClosePoint(x, y, z, owner.GetObjectBoundingRadius(), i_offset, i_angle, &owner);
-    }
-
-    /*
-        We MUST not check the distance difference and avoid setting the new location for smaller distances.
-        By that we risk having far too many GetContactPoint() calls freezing the whole system.
-        In TargetedMovementGenerator<T>::Update() we check the distance to the target and at
-        some range we calculate a new position. The calculation takes some processor cycles due to vmaps.
-        If the distance to the target it too large to ignore,
-        but the distance to the new contact point is short enough to be ignored,
-        we will calculate a new contact point each update loop, but will never move to it.
-        The system will freeze.
-        ralf
-
-        //We don't update Mob Movement, if the difference between New destination and last destination is < BothObjectSize
-        float  bothObjectSize = i_target->GetObjectBoundingRadius() + owner.GetObjectBoundingRadius() + CONTACT_DISTANCE;
-        if( i_destinationHolder.HasDestination() && i_destinationHolder.GetDestinationDiff(x,y,z) < bothObjectSize )
-            return;
-    */
-
-    //ACE_High_Res_Timer timer = ACE_High_Res_Timer();
-    //ACE_hrtime_t elapsed;
-    //timer.start();
-
-    bool forceDest = false;
-    // allow pets following their master to cheat while generating paths
-    if(owner.GetTypeId() == TYPEID_UNIT && ((Creature*)&owner)->IsPet()
-        && owner.hasUnitState(UNIT_STAT_FOLLOW))
-        forceDest = true;
-
-    // allow bots following their leader to cheat while generating paths
-    if(owner.GetTypeId() == TYPEID_PLAYER && ((Player*)&owner)->IsBot()
-        && owner.hasUnitState(UNIT_STAT_FOLLOW))
-        forceDest = true;
-
-    bool newPathCalculated = true;
-    if(!i_path)
-        i_path = new PathInfo(&owner, x, y, z, false, forceDest);
-    else
-        newPathCalculated = i_path->Update(x, y, z, false, forceDest);
-
-    //timer.stop();
-    //timer.elapsed_microseconds(elapsed);
-    //sLog.outDebug("Path found in %llu microseconds", elapsed);
-
-    // nothing we can do here ...
-    if(i_path->getPathType() & PATHFIND_NOPATH)
-        return;
-
-    PointPath pointPath = i_path->getFullPath();
-
-    if (i_destinationHolder.HasArrived() && m_pathPointsSent)
-        --m_pathPointsSent;
-
-    Traveller<T> traveller(owner);
-    i_path->getNextPosition(x, y, z);
-    i_destinationHolder.SetDestination(traveller, x, y, z, false);
-
-    // send the path if:
-    //    we have brand new path
-    //    we have visited almost all of the previously sent points
-    //    movespeed has changed
-    //    the owner is stopped (caused by some movement effects)
-    if (newPathCalculated || m_pathPointsSent < 2 || i_recalculateTravel || owner.IsStopped())
-    {
-        // send 10 nodes, or send all nodes if there are less than 10 left
-        m_pathPointsSent = std::min<uint32>(10, pointPath.size() - 1);
-        uint32 endIndex = m_pathPointsSent + 1;
-
-        // dist to next node + world-unit length of the path
-        x -= owner.GetPositionX();
-        y -= owner.GetPositionY();
-        z -= owner.GetPositionZ();
-        float dist = sqrt(x*x + y*y + z*z) + pointPath.GetTotalLength(1, endIndex);
-
-        // calculate travel time, set spline, then send path
-        uint32 traveltime = uint32(dist / (traveller.Speed()*0.001f));
-        SplineFlags flags = SPLINEFLAG_NONE;
-        if (owner.GetTypeId() == TYPEID_UNIT)
-            flags = ((Creature*)&owner)->GetSplineFlags();
-        else if (((Player*)&owner)->IsBot())
+        if (i_target.getTarget()==bot)
         {
-            if (((Player*)&owner)->IsFlying())
+            // prevent redundant micro-movement for bots, other followers.
+            if (i_offset && bot->IsWithinDistInMap(bot, i_x, i_y, i_z, 2*i_offset))
             {
-                flags = SPLINEFLAG_FLYING;
+                if (i_destinationHolder.HasDestination())
+                    return;
+
+                owner.GetPosition(x, y, z);
             }
-            else if (owner.getVictim())
+            else
             {
-                flags = SPLINEFLAG_WALKMODE;
-                traveltime = uint32(dist / (owner.GetSpeed(MOVE_WALK)));
+                //dist = owner.GetObjectBoundingRadius() + sWorld.getConfig(CONFIG_FLOAT_RATE_TARGET_POS_RECALCULATION_RANGE);
+                x = i_x; y = i_y; z = i_z;
             }
         }
         else
-            flags = SPLINEFLAG_WALKMODE;
-        owner.SendMonsterMoveByPath(pointPath, 1, endIndex, flags, traveltime);
-    }
+        {
+            // prevent redundant micro-movement for bots, other followers.
+            if (i_offset && i_target->IsWithinDistInMap(&owner,2*i_offset))
+            {
+                if (i_destinationHolder.HasDestination())
+                    return;
 
-    D::_addUnitStateMove(owner);
-    if (owner.GetTypeId() == TYPEID_UNIT && ((Creature*)&owner)->CanFly())
-        ((Creature&)owner).AddSplineFlag(SPLINEFLAG_FLYING);
+                owner.GetPosition(x, y, z);
+            }
+            else if (!i_offset)
+            {
+                // to nearest contact position
+                i_target->GetContactPoint( &owner, x, y, z );
+            }
+            else
+            {
+                // to at i_offset distance from target and i_angle from target facing
+                i_target->GetClosePoint(x, y, z, owner.GetObjectBoundingRadius(), i_offset, i_angle, &owner);
+            }
+        }
+
+        bool forceDest = false;
+        // allow bots following their leader to cheat while generating paths (bypass mmaps)
+        /*if(owner.GetTypeId() == TYPEID_PLAYER && ((Player*)&owner)->IsBot()
+            && owner.hasUnitState(UNIT_STAT_FOLLOW))
+            forceDest = true;*/
+
+        bool newPathCalculated = true;
+        if(!i_path)
+            i_path = new PathInfo(&owner, x, y, z, false, forceDest);
+        else
+            newPathCalculated = i_path->Update(x, y, z, false, forceDest);
+
+        // nothing we can do here ...
+        if(i_path->getPathType() & PATHFIND_NOPATH)
+            return;
+
+        PointPath pointPath = i_path->getFullPath();
+
+        if (i_destinationHolder.HasArrived() && m_pathPointsSent)
+            --m_pathPointsSent;
+
+        Traveller<T> traveller(owner);
+        i_path->getNextPosition(x, y, z);
+        i_destinationHolder.SetDestination(traveller, x, y, z, false);
+
+        // send the path if:
+        //    we have brand new path
+        //    we have visited almost all of the previously sent points
+        //    movespeed has changed
+        //    the owner is stopped (caused by some movement effects)
+        if (newPathCalculated || m_pathPointsSent < 2 || i_recalculateTravel || owner.IsStopped())
+        {
+            // send 10 nodes, or send all nodes if there are less than 10 left
+            m_pathPointsSent = std::min<uint32>(10, pointPath.size() - 1);
+            uint32 endIndex = m_pathPointsSent + 1;
+
+            // dist to next node + world-unit length of the path
+            x -= owner.GetPositionX();
+            y -= owner.GetPositionY();
+            z -= owner.GetPositionZ();
+            float dist = sqrt(x*x + y*y + z*z) + pointPath.GetTotalLength(1, endIndex);
+
+            // calculate travel time, set spline, then send path
+            uint32 traveltime = uint32(dist / (traveller.Speed()*0.001f));
+            SplineFlags flags = ((Player*)&owner)->IsFlying() ? SPLINEFLAG_FLYING : SPLINEFLAG_WALKMODE;
+            owner.SendMonsterMoveByPath(pointPath, 1, endIndex, flags, traveltime);
+        }
+
+        D::_addUnitStateMove(owner);
+    }
+    else
+    {
+        float x, y, z;
+
+        // prevent redundant micro-movement for pets, other followers.
+        if (i_offset && i_target->IsWithinDistInMap(&owner,2*i_offset))
+        {
+            if (i_destinationHolder.HasDestination())
+                return;
+
+            owner.GetPosition(x, y, z);
+        }
+        else if (!i_offset)
+        {
+            // to nearest contact position
+            i_target->GetContactPoint( &owner, x, y, z );
+        }
+        else
+        {
+            // to at i_offset distance from target and i_angle from target facing
+            i_target->GetClosePoint(x, y, z, owner.GetObjectBoundingRadius(), i_offset, i_angle, &owner);
+        }
+
+        /*
+            We MUST not check the distance difference and avoid setting the new location for smaller distances.
+            By that we risk having far too many GetContactPoint() calls freezing the whole system.
+            In TargetedMovementGenerator<T>::Update() we check the distance to the target and at
+            some range we calculate a new position. The calculation takes some processor cycles due to vmaps.
+            If the distance to the target it too large to ignore,
+            but the distance to the new contact point is short enough to be ignored,
+            we will calculate a new contact point each update loop, but will never move to it.
+            The system will freeze.
+            ralf
+
+            //We don't update Mob Movement, if the difference between New destination and last destination is < BothObjectSize
+            float  bothObjectSize = i_target->GetObjectBoundingRadius() + owner.GetObjectBoundingRadius() + CONTACT_DISTANCE;
+            if( i_destinationHolder.HasDestination() && i_destinationHolder.GetDestinationDiff(x,y,z) < bothObjectSize )
+                return;
+        */
+
+        //ACE_High_Res_Timer timer = ACE_High_Res_Timer();
+        //ACE_hrtime_t elapsed;
+        //timer.start();
+
+        bool forceDest = false;
+        // allow pets following their master to cheat while generating paths
+        if(owner.GetTypeId() == TYPEID_UNIT && ((Creature*)&owner)->IsPet()
+            && owner.hasUnitState(UNIT_STAT_FOLLOW))
+            forceDest = true;
+
+        bool newPathCalculated = true;
+        if(!i_path)
+            i_path = new PathInfo(&owner, x, y, z, false, forceDest);
+        else
+            newPathCalculated = i_path->Update(x, y, z, false, forceDest);
+
+        //timer.stop();
+        //timer.elapsed_microseconds(elapsed);
+        //sLog.outDebug("Path found in %llu microseconds", elapsed);
+
+        // nothing we can do here ...
+        if(i_path->getPathType() & PATHFIND_NOPATH)
+            return;
+
+        PointPath pointPath = i_path->getFullPath();
+
+        if (i_destinationHolder.HasArrived() && m_pathPointsSent)
+            --m_pathPointsSent;
+
+        Traveller<T> traveller(owner);
+        i_path->getNextPosition(x, y, z);
+        i_destinationHolder.SetDestination(traveller, x, y, z, false);
+
+        // send the path if:
+        //    we have brand new path
+        //    we have visited almost all of the previously sent points
+        //    movespeed has changed
+        //    the owner is stopped (caused by some movement effects)
+        if (newPathCalculated || m_pathPointsSent < 2 || i_recalculateTravel || owner.IsStopped())
+        {
+            // send 10 nodes, or send all nodes if there are less than 10 left
+            m_pathPointsSent = std::min<uint32>(10, pointPath.size() - 1);
+            uint32 endIndex = m_pathPointsSent + 1;
+
+            // dist to next node + world-unit length of the path
+            x -= owner.GetPositionX();
+            y -= owner.GetPositionY();
+            z -= owner.GetPositionZ();
+            float dist = sqrt(x*x + y*y + z*z) + pointPath.GetTotalLength(1, endIndex);
+
+            // calculate travel time, set spline, then send path
+            uint32 traveltime = uint32(dist / (traveller.Speed()*0.001f));
+            SplineFlags flags = owner.GetTypeId() == TYPEID_UNIT ? ((Creature*)&owner)->GetSplineFlags() : SPLINEFLAG_WALKMODE;
+            owner.SendMonsterMoveByPath(pointPath, 1, endIndex, flags, traveltime);
+        }
+
+        D::_addUnitStateMove(owner);
+        if (owner.GetTypeId() == TYPEID_UNIT && ((Creature*)&owner)->CanFly())
+            ((Creature&)owner).AddSplineFlag(SPLINEFLAG_FLYING);
+    }
 }
 
 template<>
@@ -217,71 +292,172 @@ bool TargetedMovementGeneratorMedium<T,D>::Update(T &owner, const uint32 & time_
     if (i_path && (i_path->getPathType() & PATHFIND_NOPATH))
         return true;
 
-    Traveller<T> traveller(owner);
-
-    if (!i_destinationHolder.HasDestination())
-        _setTargetLocation(owner);
-
-    if (i_destinationHolder.UpdateTraveller(traveller, time_diff, i_recalculateTravel || owner.IsStopped()))
+    if (owner.GetTypeId() == TYPEID_PLAYER && ((Player*)&owner)->IsBot())
     {
-        if (!IsActive(owner))                               // force stop processing (movement can move out active zone with cleanup movegens list)
-            return true;                                    // not expire now, but already lost
+        Unit* bot = (Unit*)&owner;
 
-        // put targeted movement generators on a higher priority
-        if (owner.GetObjectBoundingRadius())
-            i_destinationHolder.ResetUpdate(100);
+        Traveller<T> traveller(owner);
 
-        //More distance let have better performance, less distance let have more sensitive reaction at target move.
-        float dist = i_target->GetObjectBoundingRadius() + owner.GetObjectBoundingRadius() + sWorld.getConfig(CONFIG_FLOAT_RATE_TARGET_POS_RECALCULATION_RANGE);
-
-        float x,y,z;
-        i_target->GetPosition(x, y, z);
-        PathNode next_point(x, y, z);
-
-        bool targetMoved = false, needNewDest = false;
-        bool forceRecalc = i_recalculateTravel || owner.IsStopped();
-        if (i_path && !forceRecalc)
-        {
-            PathNode end_point = i_path->getEndPosition();
-            next_point = i_path->getNextPosition();
-
-            needNewDest = i_destinationHolder.HasArrived() && !inRange(next_point, i_path->getActualEndPosition(), dist, dist);
-            if(!needNewDest)
-            {
-                // GetClosePoint() will always return a point on the ground, so we need to
-                // handle the difference in elevation when the creature is flying
-                if (owner.GetTypeId() == TYPEID_UNIT && ((Creature*)&owner)->CanFly())
-                    targetMoved = i_target->GetDistanceSqr(end_point.x, end_point.y, end_point.z) > dist*dist;
-                else if (owner.GetTypeId() == TYPEID_PLAYER && ((Player*)&owner)->IsBot() && ((Player*)&owner)->IsFlying())
-                    targetMoved = i_target->GetDistanceSqr(end_point.x, end_point.y, end_point.z) > dist*dist;
-                else
-                    targetMoved = i_target->GetDistance2d(end_point.x, end_point.y) > dist;
-            }
-        }
-
-        if (!i_path || targetMoved || needNewDest || forceRecalc)
-        {
-            // (re)calculate path
+        if (!i_destinationHolder.HasDestination())
             _setTargetLocation(owner);
 
-            next_point = i_path->getNextPosition();
-
-            // Set new Angle For Map::
-            owner.SetOrientation(owner.GetAngle(next_point.x, next_point.y));
-        }
-        // Update the Angle of the target only for Map::, no need to send packet for player
-        else if (!i_angle && !owner.HasInArc(0.01f, next_point.x, next_point.y))
-            owner.SetOrientation(owner.GetAngle(next_point.x, next_point.y));
-
-        if ((owner.IsStopped() && !i_destinationHolder.HasArrived()) || i_recalculateTravel)
+        if (i_destinationHolder.UpdateTraveller(traveller, time_diff, i_recalculateTravel || owner.IsStopped()))
         {
-            i_recalculateTravel = false;
+            if (!IsActive(owner))                               // force stop processing (movement can move out active zone with cleanup movegens list)
+                return true;                                    // not expire now, but already lost
 
-            //Angle update will take place into owner.StopMoving()
-            owner.SetOrientation(owner.GetAngle(next_point.x, next_point.y));
+            // put targeted movement generators on a higher priority
+            if (owner.GetObjectBoundingRadius())
+                i_destinationHolder.ResetUpdate(100);
 
-            owner.StopMoving();
-            static_cast<D*>(this)->_reachTarget(owner);
+            //More distance let have better performance, less distance let have more sensitive reaction at target move.
+            float dist;
+            float x,y,z;
+            if (i_target.getTarget()==bot)
+            {
+                dist = owner.GetObjectBoundingRadius() + sWorld.getConfig(CONFIG_FLOAT_RATE_TARGET_POS_RECALCULATION_RANGE);
+                x = i_x; y = i_y; z = i_z;
+            }
+            else
+            {
+                dist = i_target->GetObjectBoundingRadius() + owner.GetObjectBoundingRadius() + sWorld.getConfig(CONFIG_FLOAT_RATE_TARGET_POS_RECALCULATION_RANGE);
+                i_target->GetPosition(x, y, z);
+            }
+
+            PathNode next_point(x, y, z);
+
+            bool targetMoved = false, needNewDest = false;
+            bool forceRecalc = i_recalculateTravel || owner.IsStopped();
+            if (i_path && !forceRecalc)
+            {
+                PathNode end_point = i_path->getEndPosition();
+                next_point = i_path->getNextPosition();
+
+                needNewDest = i_destinationHolder.HasArrived() && !inRange(next_point, i_path->getActualEndPosition(), dist, dist);
+                if(!needNewDest)
+                {
+                    // GetClosePoint() will always return a point on the ground, so we need to
+                    // handle the difference in elevation when the creature is flying
+                    if (i_target.getTarget()==bot)
+                    {
+                        if (((Player*)&owner)->IsFlying())
+                        {
+                            float dx = x - end_point.x;
+                            float dy = y - end_point.y;
+                            float dz = z - end_point.z;
+                            float distance = dx*dx+dy*dy+dz*dz;
+                            targetMoved = (distance > 0 ? distance : 0) > dist*dist;
+                        }
+                        else
+                        {
+                            float dx = x - end_point.x;
+                            float dy = y - end_point.y;
+                            float distance = sqrt((dx*dx) + (dy*dy));
+                            targetMoved = (distance > 0 ? distance : 0) > dist;
+                        }
+                    }
+                    else
+                    {
+                        if (((Player*)&owner)->IsFlying())
+                            targetMoved = i_target->GetDistanceSqr(end_point.x, end_point.y, end_point.z) > dist*dist;
+                        else
+                            targetMoved = i_target->GetDistance2d(end_point.x, end_point.y) > dist;
+                    }
+                }
+            }
+
+            if (!i_path || targetMoved || needNewDest || forceRecalc)
+            {
+                // (re)calculate path
+                _setTargetLocation(owner);
+
+                next_point = i_path->getNextPosition();
+
+                // Set new Angle For Map::
+                owner.SetOrientation(owner.GetAngle(next_point.x, next_point.y));
+            }
+            // Update the Angle of the target only for Map::, no need to send packet for player
+            else if (!i_angle && !owner.HasInArc(0.01f, next_point.x, next_point.y))
+                owner.SetOrientation(owner.GetAngle(next_point.x, next_point.y));
+
+            if ((owner.IsStopped() && !i_destinationHolder.HasArrived()) || i_recalculateTravel)
+            {
+                i_recalculateTravel = false;
+
+                //Angle update will take place into owner.StopMoving()
+                owner.SetOrientation(owner.GetAngle(next_point.x, next_point.y));
+
+                owner.StopMoving();
+                static_cast<D*>(this)->_reachTarget(owner);
+            }
+        }
+    }
+    else
+    {
+        Traveller<T> traveller(owner);
+
+        if (!i_destinationHolder.HasDestination())
+            _setTargetLocation(owner);
+
+        if (i_destinationHolder.UpdateTraveller(traveller, time_diff, i_recalculateTravel || owner.IsStopped()))
+        {
+            if (!IsActive(owner))                               // force stop processing (movement can move out active zone with cleanup movegens list)
+                return true;                                    // not expire now, but already lost
+
+            // put targeted movement generators on a higher priority
+            if (owner.GetObjectBoundingRadius())
+                i_destinationHolder.ResetUpdate(100);
+
+            //More distance let have better performance, less distance let have more sensitive reaction at target move.
+            float dist = i_target->GetObjectBoundingRadius() + owner.GetObjectBoundingRadius() + sWorld.getConfig(CONFIG_FLOAT_RATE_TARGET_POS_RECALCULATION_RANGE);
+
+            float x,y,z;
+            i_target->GetPosition(x, y, z);
+            PathNode next_point(x, y, z);
+
+            bool targetMoved = false, needNewDest = false;
+            bool forceRecalc = i_recalculateTravel || owner.IsStopped();
+            if (i_path && !forceRecalc)
+            {
+                PathNode end_point = i_path->getEndPosition();
+                next_point = i_path->getNextPosition();
+
+                needNewDest = i_destinationHolder.HasArrived() && !inRange(next_point, i_path->getActualEndPosition(), dist, dist);
+                if(!needNewDest)
+                {
+                    // GetClosePoint() will always return a point on the ground, so we need to
+                    // handle the difference in elevation when the creature is flying
+                    if (owner.GetTypeId() == TYPEID_UNIT && ((Creature*)&owner)->CanFly())
+                        targetMoved = i_target->GetDistanceSqr(end_point.x, end_point.y, end_point.z) > dist*dist;
+                    else
+                        targetMoved = i_target->GetDistance2d(end_point.x, end_point.y) > dist;
+                }
+            }
+
+            if (!i_path || targetMoved || needNewDest || forceRecalc)
+            {
+                // (re)calculate path
+                _setTargetLocation(owner);
+
+                next_point = i_path->getNextPosition();
+
+                // Set new Angle For Map::
+                owner.SetOrientation(owner.GetAngle(next_point.x, next_point.y));
+            }
+            // Update the Angle of the target only for Map::, no need to send packet for player
+            else if (!i_angle && !owner.HasInArc(0.01f, next_point.x, next_point.y))
+                owner.SetOrientation(owner.GetAngle(next_point.x, next_point.y));
+
+            if ((owner.IsStopped() && !i_destinationHolder.HasArrived()) || i_recalculateTravel)
+            {
+                i_recalculateTravel = false;
+
+                //Angle update will take place into owner.StopMoving()
+                owner.SetOrientation(owner.GetAngle(next_point.x, next_point.y));
+
+                owner.StopMoving();
+                static_cast<D*>(this)->_reachTarget(owner);
+            }
         }
     }
     return true;
@@ -415,6 +591,24 @@ void FollowMovementGenerator<T>::Reset(T &owner)
 }
 
 //-----------------------------------------------//
+template<>
+void FollowMovementGenerator<Player>::SetDestinationTarget(Player &owner, Unit &target, float offset, float angle)
+{
+    i_target.link(&target, this);
+    i_offset=offset;
+    i_angle=angle;
+}
+
+template<>
+void FollowMovementGenerator<Player>::SetDestinationXYZ(Player &owner, float x, float y, float z)
+{
+    i_target.link(&owner, this);
+    i_offset=0.0f;
+    i_angle=0.0f;
+    i_x = x, i_y = y, i_z = z;
+}
+//-----------------------------------------------//
+
 template void TargetedMovementGeneratorMedium<Player,ChaseMovementGenerator<Player> >::_setTargetLocation(Player &);
 template void TargetedMovementGeneratorMedium<Player,FollowMovementGenerator<Player> >::_setTargetLocation(Player &);
 template void TargetedMovementGeneratorMedium<Creature,ChaseMovementGenerator<Creature> >::_setTargetLocation(Creature &);

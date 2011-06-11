@@ -41,13 +41,15 @@ class MANGOS_DLL_SPEC TargetedMovementGeneratorMedium
     protected:
         TargetedMovementGeneratorMedium()
             : TargetedMovementGeneratorBase(), i_offset(0), i_angle(0), i_recalculateTravel(false),
-                i_path(NULL), m_pathPointsSent(0) {}
+                i_path(NULL), m_pathPointsSent(0), i_x(0.0f), i_y(0.0f), i_z(0.0f) {}
         TargetedMovementGeneratorMedium(Unit &target)
             : TargetedMovementGeneratorBase(target), i_offset(0), i_angle(0), i_recalculateTravel(false),
-                i_path(NULL), m_pathPointsSent(0) {}
+                i_path(NULL), m_pathPointsSent(0), i_x(target.GetPositionX()), i_y(target.GetPositionY()),
+                i_z(target.GetPositionZ()) {}
         TargetedMovementGeneratorMedium(Unit &target, float offset, float angle)
             : TargetedMovementGeneratorBase(target), i_offset(offset), i_angle(angle), i_recalculateTravel(false),
-                i_path(NULL), m_pathPointsSent(0) {}
+                i_path(NULL), m_pathPointsSent(0), i_x(target.GetPositionX()), i_y(target.GetPositionY()),
+                i_z(target.GetPositionZ()) {}
         ~TargetedMovementGeneratorMedium() { delete i_path; }
 
     public:
@@ -80,6 +82,10 @@ class MANGOS_DLL_SPEC TargetedMovementGeneratorMedium
 
         PathInfo* i_path;
         uint32 m_pathPointsSent;
+
+        //don't use it in move chase...
+        //in fact never call movechase with bot
+        float i_x, i_y, i_z;
 };
 
 template<class T>
@@ -123,32 +129,8 @@ class MANGOS_DLL_SPEC FollowMovementGenerator : public TargetedMovementGenerator
         void Reset(T &);
 
         Unit* GetTargetDestination() const { return i_target.getTarget(); }
-        void SetXYZDestination(float x, float y, float z) 
-        {
-            //if (i_target->GetTypeId() == TYPEID_PLAYER)
-
-            Unit *unitToMove = i_target.getTarget();
-            
-            if (unitToMove->GetTypeId() == TYPEID_PLAYER)
-            {
-                Traveller<Player> traveller(*(Player*)unitToMove);
-                i_destinationHolder.SetDestination(traveller, x, y, z);
-            }
-            /*
-            else
-            {
-                Traveller<Creature> traveller((Creature*)unitToMove);
-                i_destinationHolder.SetDestination(traveller, x, y, z);
-            }
-            */
-
-            /*else
-                CreatureTraveller traveller(i_target);*/
-            
-            //sLog.outString("NOT IMPLEMENTED YET SetDestination(float x, float y, float z)");
-        }
-
-        void SetTargetDestination(Unit &target, float offset = 0.0f, float angle = 0.0f) { i_target.link(&target, this); i_offset=offset; i_angle=angle; }
+        void SetDestinationXYZ(Player&, float, float, float);
+        void SetDestinationTarget(Player &, Unit &, float = 0.0f, float = 0.0f);
 
         static void _clearUnitStateMove(T &u) { u.clearUnitState(UNIT_STAT_FOLLOW_MOVE); }
         static void _addUnitStateMove(T &u)  { u.addUnitState(UNIT_STAT_FOLLOW_MOVE); }
