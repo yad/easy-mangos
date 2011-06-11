@@ -4613,7 +4613,7 @@ void Aura::HandleAuraModStun(bool apply, bool Real)
             Unit* caster = GetCaster();
             if(!caster)
                 return;
-            caster->CastSpell(target, 71757, true); 
+            caster->CastSpell(target, 71757, true);
         }
 
         // Summon the Naj'entus Spine GameObject on target if spell is Impaling Spine

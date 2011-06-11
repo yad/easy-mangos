@@ -1122,7 +1122,7 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
             InterruptCurrentCastingSpell(pSpell->m_spellInfo->Id);
 
         m_bot->GetIndispensableItems();
-        
+
         /*sLog.outString("%s => %s", m_bot->GetName(), m_followTarget ? m_followTarget->GetName() : "NULL");
         sLog.outString("%s !> %s", m_bot->GetName(), m_bot->getVictim() ? m_bot->getVictim()->GetName() : "NULL");
         sLog.outString("Movement : %u", m_bot->GetMotionMaster()->GetCurrentMovementGeneratorType());

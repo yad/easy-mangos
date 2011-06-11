@@ -7782,10 +7782,10 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
 
             // Cast on corpses...
             if (unitTarget &&
-                unitTarget->getDeathState() == CORPSE && 
+                unitTarget->getDeathState() == CORPSE &&
                 (unitTarget->GetCreatureTypeMask() & CREATURE_TYPEMASK_MECHANICAL_OR_ELEMENTAL) == 0 ||
                     // ...or own Risen Ghoul pet - self explode effect
-                (unitTarget && unitTarget->GetEntry() == 26125 && 
+                (unitTarget && unitTarget->GetEntry() == 26125 &&
                 unitTarget->GetCreatorGuid() == m_caster->GetObjectGuid()) )
             {
                 targetUnitMap.push_back(unitTarget);

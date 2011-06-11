@@ -2033,7 +2033,7 @@ bool Pet::Create(uint32 guidlow, CreatureCreatePos& cPos, CreatureInfo const* ci
 
     if (owner->GetTypeId() == TYPEID_PLAYER)
         setFaction(((Player*)owner)->GetTeam());
-    else 
+    else
         setFaction(owner->getFaction());
                                            // Faction be owerwritten later, if ForceFaction present
 

@@ -1180,7 +1180,7 @@ namespace MaNGOS
             WorldObject const& GetFocusObject() const { return i_obj; }
             bool operator()(Creature* u)
             {
-                if (u->GetObjectGuid() != i_obj.GetObjectGuid() && 
+                if (u->GetObjectGuid() != i_obj.GetObjectGuid() &&
                     (!u->isAlive() || u->IsCorpse()) &&
                     !u->IsDeadByDefault() &&
                     (u->GetCreatureTypeMask() & CREATURE_TYPEMASK_MECHANICAL_OR_ELEMENTAL) == 0 &&
