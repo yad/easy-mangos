@@ -922,7 +922,6 @@ void PlayerbotAI::MoveTo(Unit* target, float angle, float minDist, float maxDist
         dist = gr ? (float)gr->GetMembersCount() : 1.0f;
         dist > MAX_DIST_POS_IN_GROUP ? MAX_DIST_POS_IN_GROUP : dist;
      }
-     sLog.outString("%u, %s", target->GetTypeId(), target->GetName());
      m_bot->GetMotionMaster()->SetDestinationTarget(target, dist == 0.0f ? minDist : rand_float(minDist, dist), angle);
      SetInFront(target);
 }
@@ -1200,6 +1199,16 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
                 }
             }
 
+            //probably too often called
+            m_bot->CombatStop(true);
+            m_bot->SetSelectionGuid(ObjectGuid());
+
+            CheckRoles();
+            if (GetLeader()->getLevel() != m_bot->getLevel())
+                InitBotStatsForLevel(GetLeader()->getLevel());
+            GetClassAI()->DoNonCombatActions();
+            CheckMount();
+
             switch (m_botState)
             {
                 case BOTSTATE_COMBAT:
@@ -1215,19 +1224,7 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
                     break;
                 }
                 default:
-                {
-                    if (m_bot->isInCombat())
-                    {
-                        m_bot->CombatStop(true);
-                        m_bot->SetSelectionGuid(ObjectGuid());
-                    }
-                    CheckRoles();
-                    if (GetLeader()->getLevel() != m_bot->getLevel())
-                        InitBotStatsForLevel(GetLeader()->getLevel());
-                    GetClassAI()->DoNonCombatActions();
-                    CheckMount();
                     break;
-                }
             }
         }
         else
