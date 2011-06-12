@@ -24,6 +24,7 @@ PlayerbotClassAI::~PlayerbotClassAI() {}
 
 bool PlayerbotClassAI::DoCombatManeuver(Unit *, bool) { return false; }
 void PlayerbotClassAI::DoFastBuffOnOneself() {}
+bool PlayerbotClassAI::DoEvadeAction() { return false; }
 
 void PlayerbotClassAI::DoNonCombatActions(){}
 

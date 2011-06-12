@@ -109,6 +109,7 @@ public:
 
     // all combat actions go here
     bool DoCombatManeuver(Unit*, bool);
+    bool DoEvadeAction();
 
     // all non combat actions go here, ex buffs, heals, rezzes
     void DoNonCombatActions();
