@@ -902,7 +902,6 @@ void PlayerbotAI::MoveTo(Unit* target, float angle, float minDist, float maxDist
         dist = gr ? (float)gr->GetMembersCount() : 1.0f;
         dist > MAX_DIST_POS_IN_GROUP ? MAX_DIST_POS_IN_GROUP : dist;
      }
-     sLog.outString("%u, %s", target->GetTypeId(), target->GetName());
      m_bot->GetMotionMaster()->SetDestinationTarget(target, dist == 0.0f ? minDist : rand_float(minDist, dist), angle);
      SetInFront(target);
 }
