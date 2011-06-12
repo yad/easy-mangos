@@ -663,6 +663,17 @@ void PlayerbotAI::DoCombatManeuver(Unit* forcedTarget)
 
     if (GetCombatType()==BOTCOMBAT_CAC)
     {
+        if (combatTarget->getVictim() == m_bot && m_bot->IsWithinDistInMap(combatTarget, ATTACK_DISTANCE))
+        {
+            if (m_bot->getClass() == CLASS_ROGUE)
+            {
+                if (!GetClassAI()->DoEvadeAction())
+                    GetClassAI()->DoProtectSelfAction();
+            }
+            else
+                GetClassAI()->DoProtectSelfAction();
+        }
+
         if (m_bot->IsWithinDistInMap(combatTarget, MIN_DIST_COMBAT_CAC_TARGET))
         {
             //Last Attack() has failed so :
@@ -709,10 +720,12 @@ void PlayerbotAI::DoCombatManeuver(Unit* forcedTarget)
             }
             else
             {
-                GetClassAI()->DoEvadeAction();
+                if (!GetClassAI()->DoEvadeAction())
+                    GetClassAI()->DoProtectSelfAction();
             }
         }
-        else
+        
+        if (HasArrived())
         {
             if (!m_bot->getVictim())
                 m_bot->Attack(combatTarget, false);

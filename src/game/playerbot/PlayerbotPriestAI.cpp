@@ -58,6 +58,7 @@ void PlayerbotPriestAI::InitSpells(PlayerbotAI* const ai)
     SHADOWFORM                    = ai->initSpell(SHADOWFORM_1);
     VAMPIRIC_EMBRACE              = ai->initSpell(VAMPIRIC_EMBRACE_1);
     SHADOW_WORD_DEATH             = ai->initSpell(SHADOW_WORD_DEATH_1);
+    DISPERSION                    = ai->initSpell(DISPERSION_1);
 
     // DISCIPLINE
     PENANCE                       = ai->initSpell(PENANCE_1);
@@ -71,6 +72,7 @@ void PlayerbotPriestAI::InitSpells(PlayerbotAI* const ai)
     MASS_DISPEL                   = ai->initSpell(MASS_DISPEL_1);
     POWER_INFUSION                = ai->initSpell(POWER_INFUSION_1);
     INNER_FOCUS                   = ai->initSpell(INNER_FOCUS_1);
+    PAIN_SUPPRESSION              = ai->initSpell(PAIN_SUPPRESSION_1);
 
     RECENTLY_BANDAGED  = 11196; // first aid check
 
@@ -85,6 +87,31 @@ void PlayerbotPriestAI::InitSpells(PlayerbotAI* const ai)
 }
 
 PlayerbotPriestAI::~PlayerbotPriestAI() {}
+
+bool PlayerbotPriestAI::DoProtectSelfAction()
+{
+    PlayerbotAI *ai = GetAI();
+    if (!ai)
+        return false;
+
+    Player *m_bot = GetPlayerBot();
+    if (!m_bot)
+        return false;
+    
+    if (!m_bot->HasAura(DISPERSION) && ai->CastSpell(DISPERSION))
+        return true;
+
+    if (!m_bot->HasAura(PAIN_SUPPRESSION) && ai->CastSpell(PAIN_SUPPRESSION))
+        return true;
+
+    if (m_bot->GetHealthPercent() < 40 && ai->CastSpell(DESPERATE_PRAYER))
+        return true;
+
+    if (!m_bot->HasAura(POWER_WORD_SHIELD) && ai->CastSpell(POWER_WORD_SHIELD))
+        return true;
+
+    return false;
+}
 
 bool PlayerbotPriestAI::HealTarget(Unit* target)
 {

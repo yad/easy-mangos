@@ -132,6 +132,22 @@ bool PlayerbotHunterAI::DoEvadeAction()
     return false;
 }
 
+bool PlayerbotHunterAI::DoProtectSelfAction()
+{
+    PlayerbotAI *ai = GetAI();
+    if (!ai)
+        return false;
+
+    Player *m_bot = GetPlayerBot();
+    if (!m_bot)
+        return false;
+
+    if (!m_bot->HasAura(DETERRENCE) && ai->CastSpell(DETERRENCE))
+        return true;
+
+    return false;
+}
+
 bool PlayerbotHunterAI::DoCombatManeuver(Unit *pTarget, bool cac)
 {
     PlayerbotAI *ai = GetAI();

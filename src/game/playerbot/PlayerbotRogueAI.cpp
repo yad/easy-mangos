@@ -91,6 +91,22 @@ bool PlayerbotRogueAI::DoEvadeAction()
     return false;
 }
 
+bool PlayerbotRogueAI::DoProtectSelfAction()
+{
+    PlayerbotAI *ai = GetAI();
+    if (!ai)
+        return false;
+
+    Player *m_bot = GetPlayerBot();
+    if (!m_bot)
+        return false;
+
+    if (!m_bot->HasAura(EVASION) && ai->CastSpell(EVASION))
+        return true;
+
+    return false;
+}
+
 bool PlayerbotRogueAI::DoCombatManeuver(Unit *pTarget, bool cac)
 {
     if (!pTarget)

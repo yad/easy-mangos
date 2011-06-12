@@ -111,6 +111,25 @@ bool PlayerbotMageAI::DoEvadeAction()
     return false;
 }
 
+bool PlayerbotMageAI::DoProtectSelfAction()
+{
+    PlayerbotAI *ai = GetAI();
+    if (!ai)
+        return false;
+
+    Player *m_bot = GetPlayerBot();
+    if (!m_bot)
+        return false;
+
+    if (!m_bot->HasAura(ICE_BARRIER) && ai->CastSpell(ICE_BARRIER))
+        return true;
+
+    if (!m_bot->HasAura(MANA_SHIELD) && ai->CastSpell(MANA_SHIELD))
+        return true;
+
+    return false;
+}
+
 bool PlayerbotMageAI::DoCombatManeuver(Unit *pTarget, bool cac)
 {
     PlayerbotAI* ai = GetAI();

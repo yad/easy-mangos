@@ -105,6 +105,31 @@ void PlayerbotWarriorAI::InitSpells(PlayerbotAI* const ai)
 
 PlayerbotWarriorAI::~PlayerbotWarriorAI() {}
 
+bool PlayerbotWarriorAI::DoProtectSelfAction()
+{
+    PlayerbotAI *ai = GetAI();
+    if (!ai)
+        return false;
+
+    Player *m_bot = GetPlayerBot();
+    if (!m_bot)
+        return false;
+    
+    if (!m_bot->HasAura(DEFENSIVE_STANCE) && ai->CastSpell(DEFENSIVE_STANCE))
+        return true;
+
+    if (m_bot->GetHealthPercent() < 40 && !m_bot->HasAura(SHIELD_WALL) && ai->CastSpell(SHIELD_WALL))
+        return true;
+
+    if (m_bot->GetHealthPercent() < 60 && !m_bot->HasAura(ENRAGED_REGENERATION) && ai->CastSpell(ENRAGED_REGENERATION))
+        return true;
+
+    if (!m_bot->HasAura(SPELL_REFLECTION) && ai->CastSpell(SPELL_REFLECTION))
+        return true;
+
+    return false;
+}
+
 bool PlayerbotWarriorAI::DoCombatManeuver(Unit *pTarget, bool cac)
 {
     PlayerbotAI* ai = GetAI();

@@ -99,6 +99,7 @@ public:
 
     // all combat actions go here
     bool DoCombatManeuver(Unit*, bool);
+    bool DoProtectSelfAction();
 
     // all non combat actions go here, ex buffs, heals, rezzes
     void DoNonCombatActions();
@@ -144,7 +145,8 @@ private:
            MIND_SEAR,
            SHADOWFORM,
            VAMPIRIC_EMBRACE,
-           SHADOW_WORD_DEATH;
+           SHADOW_WORD_DEATH,
+           DISPERSION;
 
     // discipline
     uint32 POWER_WORD_SHIELD,
@@ -157,7 +159,8 @@ private:
            PENANCE,
            DIVINE_SPIRIT,
            PRAYER_OF_SPIRIT,
-           INNER_FOCUS;
+           INNER_FOCUS,
+           PAIN_SUPPRESSION;
 
     // first aid
     uint32 RECENTLY_BANDAGED;
