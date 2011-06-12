@@ -1180,6 +1180,10 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
                 }
             }
 
+            //probably too often called
+            m_bot->CombatStop(true);
+            m_bot->SetSelectionGuid(ObjectGuid());
+
             switch (m_botState)
             {
                 case BOTSTATE_COMBAT:
@@ -1196,11 +1200,6 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
                 }
                 default:
                 {
-                    if (m_bot->isInCombat())
-                    {
-                        m_bot->CombatStop(true);
-                        m_bot->SetSelectionGuid(ObjectGuid());
-                    }
                     CheckRoles();
                     if (GetLeader()->getLevel() != m_bot->getLevel())
                         InitBotStatsForLevel(GetLeader()->getLevel());

@@ -23,6 +23,7 @@
 #include "../QuestDef.h"
 #include "../GameEventMgr.h"
 #include "../ObjectGuid.h"
+#include "../BattleGround.h"
 
 class WorldPacket;
 class WorldObject;
@@ -32,6 +33,9 @@ class Object;
 class Item;
 class PlayerbotClassAI;
 class PlayerbotMgr;
+class BattleGround;
+
+typedef std::map<ObjectGuid, BattleGroundPlayer> BattleGroundPlayerMap;
 
 #define MIN_HP_PERCENT_BEFORE_FLEEING  15.0f
 #define MAX_BOTLOOT_DISTANCE           25.0f
@@ -90,7 +94,6 @@ public:
     typedef std::list<Unit*> BotVictimList;
     typedef std::map<uint32, float> SpellRanges;
     typedef std::vector<uint32> BotTaxiNode;
-    typedef std::map<ObjectGuid, BattleGroundPlayer> BattleGroundPlayerMap;
 
 public:
     PlayerbotAI(PlayerbotMgr * const mgr, Player * const bot);
