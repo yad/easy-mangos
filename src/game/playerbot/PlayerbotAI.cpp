@@ -696,13 +696,13 @@ void PlayerbotAI::DoCombatManeuver(Unit* forcedTarget)
     }
     else
     {
-        if (m_bot->IsWithinDistInMap(combatTarget, ATTACK_DISTANCE))
+        if (combatTarget->getVictim() != m_bot && m_bot->IsWithinDistInMap(combatTarget, ATTACK_DISTANCE))
         {
             m_bot->AttackStop();
             m_bot->SendAttackSwingCancelAttack();
             m_bot->ClearInCombat();
             float x, y, z;
-            m_bot->GetClosePoint(x, y, z, combatTarget->GetObjectBoundingRadius(), MAX_DIST_COMBAT_RANGED_TARGET, m_bot->GetOrientation(), combatTarget);
+            m_bot->GetClosePoint(x, y, z, combatTarget->GetObjectBoundingRadius(), (MAX_DIST_COMBAT_RANGED_TARGET - 15.0f), m_bot->GetOrientation(), combatTarget);
             MoveTo(x, y, z);
         }
         else

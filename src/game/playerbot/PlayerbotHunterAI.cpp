@@ -132,7 +132,7 @@ bool PlayerbotHunterAI::DoCombatManeuver(Unit *pTarget, bool cac)
 
     // Hunter
     Unit* pVictim = pTarget->getVictim();
-
+    /*
     // check for pet and heal if neccessary
     Pet *pet = m_bot->GetPet();
     if ((pet)
@@ -145,7 +145,7 @@ bool PlayerbotHunterAI::DoCombatManeuver(Unit *pTarget, bool cac)
     else if ((pet)
              && (INTIMIDATION > 0 && pVictim == pet && !pet->HasAura(INTIMIDATION, EFFECT_INDEX_0) && ai->CastSpell(INTIMIDATION, m_bot)))
 
-        return true;
+        return true;*/
 
     // racial traits
     if (m_bot->getRace() == RACE_ORC && !m_bot->HasAura(BLOOD_FURY, EFFECT_INDEX_0) && ai->CastSpell(BLOOD_FURY, m_bot))
