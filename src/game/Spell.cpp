@@ -413,10 +413,6 @@ Spell::Spell( Unit* caster, SpellEntry const *info, bool triggered, ObjectGuid o
     }
 
     CleanupTargetList();
-
-    if(sWorld.getConfig(CONFIG_BOOL_NO_COOLDOWN))
-        if(m_caster->GetTypeId() == TYPEID_PLAYER)
-            ((Player*)m_caster)->RemoveSpellCooldown(m_spellInfo->Id, true);
 }
 
 Spell::~Spell()
@@ -4417,6 +4413,9 @@ void Spell::SendPlaySpellVisual(uint32 SpellID)
 
 void Spell::TakeCastItem()
 {
+    if(sWorld.getConfig(CONFIG_BOOL_NO_COST))
+        return;
+
     if(!m_CastItem || m_caster->GetTypeId() != TYPEID_PLAYER)
         return;
 
@@ -4476,6 +4475,9 @@ void Spell::TakeCastItem()
 
 void Spell::TakePower()
 {
+    if(sWorld.getConfig(CONFIG_BOOL_NO_COST))
+        return;
+
     if(m_CastItem || m_triggeredByAuraSpell)
         return;
 
@@ -4509,6 +4511,9 @@ void Spell::TakePower()
 
 SpellCastResult Spell::CheckOrTakeRunePower(bool take)
 {
+    if(sWorld.getConfig(CONFIG_BOOL_NO_COST))
+        return SPELL_CAST_OK;
+
     if(m_caster->GetTypeId() != TYPEID_PLAYER)
         return SPELL_CAST_OK;
 
@@ -4608,6 +4613,9 @@ SpellCastResult Spell::CheckOrTakeRunePower(bool take)
 
 void Spell::TakeReagents()
 {
+    if(sWorld.getConfig(CONFIG_BOOL_NO_COST))
+        return;
+
     if (m_caster->GetTypeId() != TYPEID_PLAYER)
         return;
 
@@ -4792,13 +4800,14 @@ SpellCastResult Spell::CheckCast(bool strict)
     {
         if(m_triggeredByAuraSpell)
             return SPELL_FAILED_DONT_REPORT;
-        else
+        else if (!sWorld.getConfig(CONFIG_BOOL_NO_COOLDOWN))
             return SPELL_FAILED_NOT_READY;
     }
 
     // check global cooldown
     if (strict && !m_IsTriggeredSpell && HasGlobalCooldown())
-        return SPELL_FAILED_NOT_READY;
+        if (!sWorld.getConfig(CONFIG_BOOL_NO_COOLDOWN))
+            return SPELL_FAILED_NOT_READY;
 
     // only allow triggered spells if at an ended battleground
     if (!m_IsTriggeredSpell && m_caster->GetTypeId() == TYPEID_PLAYER)
@@ -4944,8 +4953,11 @@ SpellCastResult Spell::CheckCast(bool strict)
             if (target->IsTaxiFlying())
                 return SPELL_FAILED_BAD_TARGETS;
 
-            if(!m_IsTriggeredSpell && !(m_spellInfo->AttributesEx2 & SPELL_ATTR_EX2_IGNORE_LOS) && VMAP::VMapFactory::checkSpellForLoS(m_spellInfo->Id) && !m_caster->IsWithinLOSInMap(target))
-                return SPELL_FAILED_LINE_OF_SIGHT;
+            if(!sWorld.getConfig(CONFIG_BOOL_NO_CHECK_IN_FRONT))
+            {
+                if(!m_IsTriggeredSpell && !(m_spellInfo->AttributesEx2 & SPELL_ATTR_EX2_IGNORE_LOS) && VMAP::VMapFactory::checkSpellForLoS(m_spellInfo->Id) && !m_caster->IsWithinLOSInMap(target))
+                    return SPELL_FAILED_LINE_OF_SIGHT;
+            }
 
             // auto selection spell rank implemented in WorldSession::HandleCastSpellOpcode
             // this case can be triggered if rank not found (too low-level target for first rank)
@@ -6282,9 +6294,12 @@ SpellCastResult Spell::CheckRange(bool strict)
             return SPELL_FAILED_OUT_OF_RANGE;
         if(min_range && dist < min_range)
             return SPELL_FAILED_TOO_CLOSE;
-        if( m_caster->GetTypeId() == TYPEID_PLAYER &&
-            (m_spellInfo->FacingCasterFlags & SPELL_FACING_FLAG_INFRONT) && !m_caster->HasInArc( M_PI_F, target ) )
-            return SPELL_FAILED_UNIT_NOT_INFRONT;
+        if(!sWorld.getConfig(CONFIG_BOOL_NO_CHECK_IN_FRONT))
+        {
+            if( m_caster->GetTypeId() == TYPEID_PLAYER &&
+                (m_spellInfo->FacingCasterFlags & SPELL_FACING_FLAG_INFRONT) && !m_caster->HasInArc( M_PI_F, target ) )
+                return SPELL_FAILED_UNIT_NOT_INFRONT;
+        }
     }
 
     if (pGoTarget)

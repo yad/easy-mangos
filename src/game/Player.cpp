@@ -605,6 +605,7 @@ Player::Player (WorldSession *session): Unit(), m_mover(this), m_camera(this), m
     m_LFGState = new LFGPlayerState(this);
 
     m_chaos_mode = false;
+    m_latest_spell = 0;
     m_has_level_up = true;
 }
 
@@ -1442,8 +1443,11 @@ void Player::Update( uint32 update_diff, uint32 p_time )
         if (!m_regenTimer)
             RegenerateAll();
 
-        if (sWorld.getConfig(CONFIG_BOOL_NO_COOLDOWN))
-            RemoveAllSpellCooldown();
+        if (GetLatestSpell()!=0 && sWorld.getConfig(CONFIG_BOOL_NO_COOLDOWN))
+        {
+           RemoveSpellCooldown(GetLatestSpell(), true);
+           SetLatestSpell(0);
+        }
 
         while (m_chaos_mode && !getAttackers().empty())
         {
@@ -20339,6 +20343,9 @@ void Player::AddSpellAndCategoryCooldowns(SpellEntry const* spellInfo, uint32 it
 
 void Player::AddSpellCooldown(uint32 spellid, uint32 itemid, time_t end_time)
 {
+    if (sWorld.getConfig(CONFIG_BOOL_NO_COOLDOWN))
+        return;
+
     SpellCooldown sc;
     sc.end = end_time;
     sc.itemid = itemid;

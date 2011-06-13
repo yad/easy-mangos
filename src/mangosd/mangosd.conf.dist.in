@@ -1665,6 +1665,14 @@ LFG.MaxKicks            = 5
 #         Set it to 1 to disable cooldown
 #     Default : 0 (Cooldown Enable)
 #
+#     Custom.NoCheckInFront
+#         Set it to 1 to disable cast in front spell
+#     Default : 0 (Cast in front Enable)
+#
+#     Custom.NoCost
+#         Set it to 1 to disable spell cost
+#     Default : 0 (Cast cost)
+#
 #     Custom.HurtInRealTime
 #         Set it to 1 to disable autohurt with weapon
 #     Default : 0 (Autohurt Enable)
@@ -1695,6 +1703,8 @@ LFG.MaxKicks            = 5
 Custom.SpeedGame = 1
 Custom.NoCastTime = 0
 Custom.NoCooldown = 0
+Custom.NoCheckInFront = 0
+Custom.NoCost = 0
 Custom.HurtInRealTime = 0
 Custom.NoWaitAfterCast = 0
 Custom.AllowFlyingMountsEverywhere = 0

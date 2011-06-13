@@ -375,6 +375,10 @@ void WorldSession::HandleCastSpellOpcode(WorldPacket& recvPacket)
             _player->RemoveFlyingSpells();
     }
 
+    if (sWorld.getConfig(CONFIG_BOOL_NO_COOLDOWN))
+        _player->RemoveSpellCooldown(spellId, true);
+    _player->SetLatestSpell(spellId);
+
     //  Players on vehicles may cast many simple spells (like knock) from self
 
     Unit* mover = NULL;

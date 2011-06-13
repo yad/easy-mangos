@@ -2512,6 +2512,8 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         bool GetChaosMode() { return m_chaos_mode; }
         void SetChaosMode(bool c) { m_chaos_mode = c; }
+        uint32 GetLatestSpell() { return m_latest_spell; }
+        void SetLatestSpell(uint32 s) { m_latest_spell = s; }
         bool GetHasLevelUp() { return m_has_level_up; }
         void SetHasLevelUp(bool l) { m_has_level_up = l; }
 
@@ -2751,6 +2753,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         static const float m_diminishing_k[MAX_CLASSES];
 
         bool m_chaos_mode;
+        uint32 m_latest_spell;
         bool m_has_level_up;
 
     private:
