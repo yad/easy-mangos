@@ -99,20 +99,9 @@ bool PlayerbotRogueAI::DoProtectSelfAction()
 
 bool PlayerbotRogueAI::DoCombatManeuver(Unit *pTarget, bool cac)
 {
-    if (!pTarget)
-        return false;
-
     PlayerbotAI *ai = GetAI();
-    if (!ai)
-        return false;
-
     Player * m_bot = GetPlayerBot();
-    if (!m_bot)
-        return false;
-
     Player* m_master = ai->GetLeader();
-    if (!m_master)
-        return false;
 
     //TODO implement STEALTH
 

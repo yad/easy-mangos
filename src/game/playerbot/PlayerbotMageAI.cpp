@@ -98,14 +98,9 @@ PlayerbotMageAI::~PlayerbotMageAI() {}
 bool PlayerbotMageAI::DoEvadeAction()
 {
     PlayerbotAI *ai = GetAI();
-    if (!ai)
-        return false;
-
     Player *m_bot = GetPlayerBot();
-    if (!m_bot)
-        return false;
 
-    if (!m_bot->HasAura(ICE_BLOCK) && ai->CastSpell(ICE_BLOCK))
+    if (ai->CastAura(ICE_BLOCK, m_bot))
         return true;
 
     return false;
@@ -114,18 +109,16 @@ bool PlayerbotMageAI::DoEvadeAction()
 bool PlayerbotMageAI::DoProtectSelfAction()
 {
     PlayerbotAI *ai = GetAI();
-    if (!ai)
-        return false;
-
     Player *m_bot = GetPlayerBot();
-    if (!m_bot)
-        return false;
 
-    if (!m_bot->HasAura(ICE_BARRIER) && ai->CastSpell(ICE_BARRIER))
-        return true;
+    static const uint32 spells[] = {ICE_BARRIER, MANA_SHIELD};
+    static uint32 elt = sizeof(spells) / sizeof(uint32);
 
-    if (!m_bot->HasAura(MANA_SHIELD) && ai->CastSpell(MANA_SHIELD))
-        return true;
+    for (uint32 i = 0; i < elt; i++)
+    {
+        if (ai->CastAura(spells[i], m_bot))
+            return true;
+    }
 
     return false;
 }

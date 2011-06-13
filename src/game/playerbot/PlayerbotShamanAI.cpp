@@ -112,17 +112,8 @@ void PlayerbotShamanAI::HealTarget(Unit *target, uint8 hp)
 bool PlayerbotShamanAI::DoCombatManeuver(Unit *pTarget, bool cac)
 {
     PlayerbotAI *ai = GetAI();
-    if (!ai)
-        return false;
-
     Player * m_bot = GetPlayerBot();
-    if (!m_bot)
-        return false;
-
     Player* m_master = ai->GetLeader();
-    if (!m_master)
-        return false;
-
     Group *m_group = m_bot->GetGroup();
 
     // Heal myself

@@ -119,14 +119,9 @@ bool PlayerbotHunterAI::HasPet(Player* bot)
 bool PlayerbotHunterAI::DoEvadeAction()
 {
     PlayerbotAI *ai = GetAI();
-    if (!ai)
-        return false;
-
     Player *m_bot = GetPlayerBot();
-    if (!m_bot)
-        return false;
 
-    if (!m_bot->HasAura(FEIGN_DEATH) && ai->CastSpell(FEIGN_DEATH))
+    if (ai->CastAura(FEIGN_DEATH, m_bot))
         return true;
 
     return false;
@@ -135,14 +130,9 @@ bool PlayerbotHunterAI::DoEvadeAction()
 bool PlayerbotHunterAI::DoProtectSelfAction()
 {
     PlayerbotAI *ai = GetAI();
-    if (!ai)
-        return false;
-
     Player *m_bot = GetPlayerBot();
-    if (!m_bot)
-        return false;
 
-    if (!m_bot->HasAura(DETERRENCE) && ai->CastSpell(DETERRENCE))
+    if (ai->CastAura(DETERRENCE, m_bot))
         return true;
 
     return false;
@@ -151,16 +141,8 @@ bool PlayerbotHunterAI::DoProtectSelfAction()
 bool PlayerbotHunterAI::DoCombatManeuver(Unit *pTarget, bool cac)
 {
     PlayerbotAI *ai = GetAI();
-    if (!ai)
-        return false;
-
     Player * m_bot = GetPlayerBot();
-    if (!m_bot)
-        return false;
-
     Player* m_master = ai->GetLeader();
-    if (!m_master)
-        return false;
 
     // Hunter
     Unit* pVictim = pTarget->getVictim();

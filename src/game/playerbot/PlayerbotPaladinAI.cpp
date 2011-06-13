@@ -96,13 +96,8 @@ PlayerbotPaladinAI::~PlayerbotPaladinAI() {}
 bool PlayerbotPaladinAI::DoProtectSelfAction()
 {
     PlayerbotAI *ai = GetAI();
-    if (!ai)
-        return false;
-
     Player *m_bot = GetPlayerBot();
-    if (!m_bot)
-        return false;
-    
+ 
     if (m_bot->GetHealthPercent() < 20 && ai->CastSpell(LAY_ON_HANDS))
         return true;
 
@@ -134,16 +129,8 @@ bool PlayerbotPaladinAI::DoCombatManeuver(Unit *pTarget, bool cac)
     Unit* pVictim = pTarget->getVictim();
 
     PlayerbotAI *ai = GetAI();
-    if (!ai)
-        return false;
-
     Player * m_bot = GetPlayerBot();
-    if (!m_bot)
-        return false;
-
     Player* m_master = ai->GetLeader();
-    if (!m_master)
-        return false;
 
     // damage spells
     Group *m_group = m_bot->GetGroup();
