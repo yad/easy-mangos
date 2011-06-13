@@ -1255,11 +1255,11 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
                 case BOTSTATE_LOOTING:
                 {
                     m_bot->CombatStop(true);
-					WorldPacket data( SMSG_ATTACKSTOP, (4+16) );
-					data << m_bot->GetPackGUID();
-					data << uint64(0);
-					data << uint32(0);
-					m_bot->SendMessageToSet(&data, true);
+                    WorldPacket data( SMSG_ATTACKSTOP, (4+16) );
+                    data << m_bot->GetPackGUID();
+                    data << uint64(0);
+                    data << uint32(0);
+                    m_bot->SendMessageToSet(&data, true);
                     m_bot->SetSelectionGuid(ObjectGuid());
                     InterruptCurrentCastingSpell();
                     CastAura(25990, m_bot); // Regen hp + mana : Spell Aura Gruccu Food
