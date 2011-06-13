@@ -116,6 +116,38 @@ bool PlayerbotHunterAI::HasPet(Player* bot)
         return false;  //hunter either has no pet or stabled
 } // end HasPet
 
+bool PlayerbotHunterAI::DoEvadeAction()
+{
+    PlayerbotAI *ai = GetAI();
+    if (!ai)
+        return false;
+
+    Player *m_bot = GetPlayerBot();
+    if (!m_bot)
+        return false;
+
+    if (!m_bot->HasAura(FEIGN_DEATH) && ai->CastSpell(FEIGN_DEATH))
+        return true;
+
+    return false;
+}
+
+bool PlayerbotHunterAI::DoProtectSelfAction()
+{
+    PlayerbotAI *ai = GetAI();
+    if (!ai)
+        return false;
+
+    Player *m_bot = GetPlayerBot();
+    if (!m_bot)
+        return false;
+
+    if (!m_bot->HasAura(DETERRENCE) && ai->CastSpell(DETERRENCE))
+        return true;
+
+    return false;
+}
+
 bool PlayerbotHunterAI::DoCombatManeuver(Unit *pTarget, bool cac)
 {
     PlayerbotAI *ai = GetAI();
@@ -157,51 +189,6 @@ bool PlayerbotHunterAI::DoCombatManeuver(Unit *pTarget, bool cac)
         m_rangedCombat = false;
     else
         m_rangedCombat = true;
-
-    if (!m_rangedCombat)
-    {
-        if (pTarget->getVictim() == m_bot)
-        {
-            if (FEIGN_DEATH && !m_bot->HasAura(FEIGN_DEATH) && ai->CastSpell(FEIGN_DEATH))
-                return true;
-        }
-        /*//[Yad] : je désactive les mouvements GetMotionMaster ne doivent plus être changé dans les AI
-        else if (ai->HasArrived() && !m_bot->hasUnitState(UNIT_STAT_NO_FREE_MOVE) && !m_bot->hasUnitState(UNIT_STAT_CONTROLLED))
-        {
-            float xb, yb, zb, xt, yt, zt, xbt, ybt, angle, offset_x, offset_y;
-            m_bot->GetPosition(xb,yb,zb);
-            pTarget->GetPosition(xt,yt,zt);
-            angle = atan(abs(xb - xt) / abs(yb - yt));
-            offset_x = ATTACK_DISTANCE * 2 * sin(angle);
-            offset_y = ATTACK_DISTANCE * 2 * cos(angle);
-
-            xbt = (xb < xt) ? (xt - offset_x) : (xt + offset_x);
-            ybt = (yb < yt) ? (yt - offset_y) : (yt + offset_y);
-
-            const TerrainInfo *map = m_bot->GetTerrain();
-
-            if (map->GetHeight(xbt, ybt, zb + 2.0f, true) > (zb - 10.0f) && map->GetHeight(xbt, ybt, zb + 2.0f, true) < (zb + 5.0f) && pTarget->IsWithinLOS(xbt, ybt, map->GetHeight(xbt, ybt, zb + 2.0f, true)))
-            {
-                m_bot->AttackStop();
-                ai->MoveTo(xbt, ybt, map->GetHeight(xbt, ybt, zb + 2.0f, true));
-                //m_bot->GetMotionMaster()->MovePoint(m_master->GetMapId(), xbt, ybt, map->GetHeight(xbt, ybt, zb + 2.0f, true));
-            }
-            else
-            {
-                xbt = (xb < xt) ? (xt + offset_x) : (xt - offset_x);
-                ybt = (yb < yt) ? (yt + offset_y) : (yt - offset_y);
-
-                if (map->GetHeight(xbt, ybt, zb + 2.0f, true) > (zb - 10.0f) && map->GetHeight(xbt, ybt, zb + 2.0f, true) < (zb + 5.0f) && pTarget->IsWithinLOS(xbt, ybt, map->GetHeight(xbt, ybt, zb + 2.0f, true)))
-                {
-                    m_bot->AttackStop();
-                    ai->MoveTo(xbt, ybt, map->GetHeight(xbt, ybt, zb + 2.0f, true));
-                    //m_bot->GetMotionMaster()->MovePoint(m_master->GetMapId(), xbt, ybt, map->GetHeight(xbt, ybt, zb + 2.0f, true));
-                }
-            }
-
-            return true;
-        }*/
-    }
 
     if (!m_bot->HasAura(ASPECT_OF_THE_VIPER) && ai->GetManaPercent() < 50 && ai->CastSpell(ASPECT_OF_THE_VIPER, m_bot))
         return true;

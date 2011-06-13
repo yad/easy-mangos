@@ -41,6 +41,8 @@ public:
     // all combat actions go here
     virtual bool DoCombatManeuver(Unit*, bool);
     virtual void DoFastBuffOnOneself();
+    virtual bool DoEvadeAction();
+    virtual bool DoProtectSelfAction();
 
     // all non combat actions go here, ex buffs, heals, rezzes
     virtual void DoNonCombatActions();

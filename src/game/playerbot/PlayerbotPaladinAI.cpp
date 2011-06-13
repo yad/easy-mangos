@@ -93,6 +93,22 @@ void PlayerbotPaladinAI::InitSpells(PlayerbotAI* const ai)
 
 PlayerbotPaladinAI::~PlayerbotPaladinAI() {}
 
+bool PlayerbotPaladinAI::DoProtectSelfAction()
+{
+    PlayerbotAI *ai = GetAI();
+    if (!ai)
+        return false;
+
+    Player *m_bot = GetPlayerBot();
+    if (!m_bot)
+        return false;
+    
+    if (m_bot->GetHealthPercent() < 20 && ai->CastSpell(LAY_ON_HANDS))
+        return true;
+
+    return false;
+}
+
 bool PlayerbotPaladinAI::HealTarget(Unit *target)
 {
     PlayerbotAI* ai = GetAI();

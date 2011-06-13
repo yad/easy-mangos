@@ -116,6 +116,7 @@ public:
 
     // all combat actions go here
     bool DoCombatManeuver(Unit*, bool);
+    bool DoProtectSelfAction();
 
     // all non combat actions go here, ex buffs, heals, rezzes
     void DoNonCombatActions();
@@ -173,7 +174,8 @@ private:
            GIFT_OF_THE_WILD,
            THORNS,
            INNERVATE,
-           BARKSKIN;
+           BARKSKIN,
+           SURVIVAL_INSTINCTS;
 
     // druid heals
     uint32 LIFEBLOOM,

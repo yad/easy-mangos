@@ -73,6 +73,7 @@ void PlayerbotDruidAI::InitSpells(PlayerbotAI* const ai)
     CHALLENGING_ROAR              = ai->initSpell(CHALLENGING_ROAR_1);
     ENRAGE                        = ai->initSpell(ENRAGE_1);
     GROWL                         = ai->initSpell(GROWL_1);
+    SURVIVAL_INSTINCTS            = ai->initSpell(SURVIVAL_INSTINCTS_1);
 
     RECENTLY_BANDAGED             = 11196; // first aid check
 
@@ -82,6 +83,23 @@ void PlayerbotDruidAI::InitSpells(PlayerbotAI* const ai)
 }
 
 PlayerbotDruidAI::~PlayerbotDruidAI() {}
+
+bool PlayerbotDruidAI::DoProtectSelfAction()
+{
+    PlayerbotAI *ai = GetAI();
+    if (!ai)
+        return false;
+
+    Player *m_bot = GetPlayerBot();
+    if (!m_bot)
+        return false;
+    
+    // [Chjuci] : Il faut implémenter le changement de forme en ours redoutable avant de lancer instincts de survie
+    if (!m_bot->HasAura(SURVIVAL_INSTINCTS) && ai->CastSpell(SURVIVAL_INSTINCTS))
+        return true;
+
+    return false;
+}
 
 bool PlayerbotDruidAI::HealTarget(Unit *target)
 {

@@ -90,6 +90,28 @@ void PlayerbotDeathKnightAI::InitSpells(PlayerbotAI* const ai)
 
 PlayerbotDeathKnightAI::~PlayerbotDeathKnightAI() {}
 
+bool PlayerbotDeathKnightAI::DoProtectSelfAction()
+{
+    PlayerbotAI *ai = GetAI();
+    if (!ai)
+        return false;
+
+    Player *m_bot = GetPlayerBot();
+    if (!m_bot)
+        return false;
+    
+    if (!m_bot->HasAura(BONE_SHIELD) && ai->CastSpell(BONE_SHIELD))
+        return true;
+
+    if (!m_bot->HasAura(ANTI_MAGIC_SHELL) && ai->CastSpell(ANTI_MAGIC_SHELL))
+        return true;
+
+    if (!m_bot->HasAura(ANTI_MAGIC_ZONE) && ai->CastSpell(ANTI_MAGIC_ZONE))
+        return true;
+
+    return false;
+}
+
 bool PlayerbotDeathKnightAI::DoCombatManeuver(Unit *pTarget, bool cac)
 {
     PlayerbotAI *ai = GetAI();
