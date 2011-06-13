@@ -91,24 +91,19 @@ PlayerbotPriestAI::~PlayerbotPriestAI() {}
 bool PlayerbotPriestAI::DoProtectSelfAction()
 {
     PlayerbotAI *ai = GetAI();
-    if (!ai)
-        return false;
-
     Player *m_bot = GetPlayerBot();
-    if (!m_bot)
-        return false;
     
-    if (!m_bot->HasAura(DISPERSION) && ai->CastSpell(DISPERSION))
-        return true;
-
-    if (!m_bot->HasAura(PAIN_SUPPRESSION) && ai->CastSpell(PAIN_SUPPRESSION))
-        return true;
-
     if (m_bot->GetHealthPercent() < 40 && ai->CastSpell(DESPERATE_PRAYER))
         return true;
 
-    if (!m_bot->HasAura(WEAKENED_SOUL) && !m_bot->HasAura(POWER_WORD_SHIELD) && ai->CastSpell(POWER_WORD_SHIELD))
-        return true;
+    static const uint32 spells[] = {DISPERSION, PAIN_SUPPRESSION, POWER_WORD_SHIELD};
+    static uint32 elt = sizeof(spells) / sizeof(uint32);
+
+    for (uint32 i = 0; i < elt; i++)
+    {
+        if (ai->CastAura(spells[i], m_bot))
+            return true;
+    }
 
     return false;
 }
