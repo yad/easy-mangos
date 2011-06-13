@@ -135,12 +135,6 @@ void WorldSession::SendPacket(WorldPacket const* packet)
 {
     if (GetPlayer() && GetPlayer()->IsInWorld())
     {
-        /*if (!GetPlayer()->IsBot())
-        {
-            WorldPacket *p = (WorldPacket *)packet;
-            p->Print();
-        }*/
-
         ReadInvitePaquet(packet);
         if (IsBotSession() && GetPlayer()->GetPlayerbotAI() && GetPlayer()->GetPlayerbotAI()->GetLeader())
             GetPlayer()->GetPlayerbotAI()->HandleBotOutgoingPacket(*packet);
@@ -282,7 +276,7 @@ bool WorldSession::Update(PacketFilter& updater)
                     if (_player && !IsBotSession() && _player->GetPlayerbotMgr())
                         _player->GetPlayerbotMgr()->HandleMasterIncomingPacket(*packet);
                     /*if (_player && !_player->IsBot())
-                        packet->Print();*/
+                        sLog.outString(LookupOpcodeName(packet->GetOpcode()));*/
                     break;
                 case STATUS_LOGGEDIN_OR_RECENTLY_LOGGEDOUT:
                     if(!_player && !m_playerRecentlyLogout)
