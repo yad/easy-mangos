@@ -771,12 +771,11 @@ Item* PlayerbotAI::FindConsumable(uint32 displayId) const
     return NULL;
 }
 
-void PlayerbotAI::InterruptCurrentCastingSpell(uint32 spellId)
+void PlayerbotAI::InterruptCurrentCastingSpell()
 {
-    WorldPacket* const packet = new WorldPacket(CMSG_CANCEL_CAST, 5);
-    *packet << spellId;
-    *packet << m_bot->GetObjectGuid();
-    m_bot->GetSession()->QueuePacket(packet);
+    if(m_bot->IsNonMeleeSpellCasted(false))
+        m_bot->InterruptNonMeleeSpells(false,m_CurrentlyCastingSpellId);
+    m_CurrentlyCastingSpellId = 0;
 }
 
 void PlayerbotAI::Feast()
@@ -1226,10 +1225,11 @@ void PlayerbotAI::InitBotStatsForLevel(uint32 level, bool forced)
 
 Spell* PlayerbotAI::GetCurrentSpell() const
 {
-    for (uint32 i = 0; i < CURRENT_MAX_SPELL; ++i)
-        if(m_bot->GetCurrentSpell(CurrentSpellTypes(i)))
-            return m_bot->GetCurrentSpell(CurrentSpellTypes(i));
-    return NULL;
+    if (m_CurrentlyCastingSpellId == 0)
+        return NULL;
+
+    Spell* const pSpell = m_bot->FindCurrentSpellBySpellId(m_CurrentlyCastingSpellId);
+    return pSpell;
 }
 
 bool PlayerbotAI::HasAura(uint32 spellId, const Unit* unit) const
@@ -1310,14 +1310,15 @@ bool PlayerbotAI::CastSpell(uint32 spellId, Unit* target)
                 GroupReference *ref = m_bot->GetGroup()->GetFirstMember();
                 while (ref)
                 {
-                    if (ref->getSource()==m_bot || !ref->getSource()->IsBot()
+                    if (ref->getSource()==m_bot || !ref->getSource()->IsBot() || !ref->getSource()->GetPlayerbotAI()
                         || ref->getSource()->isDead() || !ref->getSource()->IsInWorld())
                     {
                         ref = ref->next();
                         continue;
                     }
 
-                    if (ref->getSource()->FindCurrentSpellBySpellId(spellId))
+                    Spell *spell = ref->getSource()->GetPlayerbotAI()->GetCurrentSpell();
+                    if (spell && spell->m_spellInfo->Id==spellId)
                     {
                         m_bot->SetSelectionGuid(ObjectGuid());
                         return false;
@@ -1338,6 +1339,14 @@ bool PlayerbotAI::CastSpell(uint32 spellId, Unit* target)
         m_bot->SetSelectionGuid(pTarget->GetObjectGuid());
     }
 
+    /*SpellCastTimesEntry const * castTimeEntry = sSpellCastTimesStore.LookupEntry(pSpellInfo->CastingTimeIndex);
+    if (castTimeEntry && castTimeEntry->CastTime)
+    {
+        float x,y,z;
+        m_bot->GetMotionMaster()->GetDestination(x,y,z);
+        MoveTo(x,y,z);
+    }*/
+
     m_bot->CastSpell(pTarget, pSpellInfo, false);
 
     Spell* const pSpell = m_bot->FindCurrentSpellBySpellId(spellId);
@@ -1347,7 +1356,7 @@ bool PlayerbotAI::CastSpell(uint32 spellId, Unit* target)
         return false;
     }
 
-    m_ignoreAIUpdatesUntilTime = time(0) + (int32) ((float) pSpell->GetCastTime() / 1000.0f) + 1;
+    //m_ignoreAIUpdatesUntilTime = time(0) + (int32) ((float) pSpell->GetCastTime() / 1000.0f) + 1;
     return true;
 }
 

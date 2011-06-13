@@ -165,8 +165,7 @@ public:
 
     void EquipItem(Item& item);
     void Feast();
-    void InterruptCurrentCastingSpell(uint32);
-    Unit *GetNewCombatTarget(bool = false);
+    void InterruptCurrentCastingSpell();
     void DoCombatManeuver(Unit* = NULL);
     BotCombatType GetCombatType();
     void SetIgnoreUpdateTime(uint8 t = 0) { m_ignoreAIUpdatesUntilTime = time(0) + t; };
@@ -233,6 +232,9 @@ public:
     bool IsVisible(Unit *) const {return true;};  //Not used
     bool IsInEvadeMode() const {return false;};   //Not used
 
+    bool IsValidEnemy(Unit *, bool = false);
+    Unit *GetNewCombatTarget(bool = false);
+
 private:
     PlayerbotMgr* const m_mgr;
     Player* const m_bot;
@@ -240,6 +242,7 @@ private:
     uint16 m_role, m_new_role;
 
     time_t m_ignoreAIUpdatesUntilTime;
+    uint32 m_CurrentlyCastingSpellId;
     time_t m_enterBg, m_leaveBg;
 
     BotState m_botState;

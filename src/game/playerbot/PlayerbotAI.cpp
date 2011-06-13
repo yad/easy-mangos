@@ -64,6 +64,7 @@ class PlayerbotChatHandler : protected ChatHandler
 PlayerbotAI::PlayerbotAI(PlayerbotMgr* const mgr, Player* const bot) : m_mgr(mgr), m_bot(bot)
 {
     m_ignoreAIUpdatesUntilTime = 0;
+    m_CurrentlyCastingSpellId = 0;
 
     m_TimeDoneEating = 0;
     m_TimeDoneDrinking = 0;
@@ -374,48 +375,74 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
 
         case SMSG_SPELL_START:
         {
-            if (GetLeader()==m_bot)
-                return;
-
             WorldPacket p(packet);
             ObjectGuid castItemGuid = p.readPackGUID();
             ObjectGuid casterGuid = p.readPackGUID();
-            if(casterGuid == GetLeader()->GetObjectGuid())
+            uint8 castCount;
+            p >> castCount;
+            uint32 spellId;
+            p >> spellId;
+            uint32 castFlags;
+            p >> castFlags;
+            uint32 msTime;
+            p >> msTime;
+
+            const SpellEntry* const pSpellInfo = sSpellStore.LookupEntry(spellId);
+            if (!pSpellInfo)
+                return;
+
+            if (casterGuid == m_bot->GetObjectGuid())
             {
-                /*const Spell* spell = GetCurrentSpell();
-                if (!spell || IsPositiveSpell(spell->m_spellInfo))
-                    return;*/
+                if (pSpellInfo->AuraInterruptFlags & AURA_INTERRUPT_FLAG_NOT_SEATED)
+                    return;
+            }
+            else if(casterGuid == GetLeader()->GetObjectGuid())
+            {
+                if (IsPositiveSpell(pSpellInfo))
+                    return;
+
                 Player* mainTank = FindGroupMainTank();
                 Unit* pTarget = ObjectAccessor::GetUnit(*m_bot, GetLeader()->GetSelectionGuid());
                 if (!pTarget || !mainTank)
                     return;
 
+                m_latestVictim = pTarget;
                 if (mainTank==m_bot)
-                    MoveTo(pTarget);
+                    MoveTo(m_latestVictim);
                 else
-                    MoveTo(pTarget, m_bot->GetAngle(pTarget)+rand_float(-0.25f, 0.25f), GetDist(), 0.0f);
+                    MoveTo(m_latestVictim, m_bot->GetAngle(m_latestVictim)+rand_float(-0.25f, 0.25f), GetDist(), 0.0f);
             }
             return;
         }
 
-        /*case SMSG_SPELL_GO:
+        case SMSG_SPELL_GO:
         {
             WorldPacket p(packet);
             ObjectGuid castItemGuid = p.readPackGUID();
             ObjectGuid casterGuid = p.readPackGUID();
-            if (casterGuid == m_bot->GetObjectGuid())
+            if (casterGuid != m_bot->GetObjectGuid())
+                return;
+
+            uint32 spellId;
+            p >> spellId;
+            uint16 castFlags;
+            p >> castFlags;
+            uint32 msTime;
+            p >> msTime;
+            uint8 numHit;
+            p >> numHit;
+
+            if (m_CurrentlyCastingSpellId == spellId)
             {
-                uint32 spellId;
-                p >> spellId;
-                uint16 castFlags;
-                p >> castFlags;
-                uint32 msTime;
-                p >> msTime;
-                uint8 numHit;
-                p >> numHit;
+                Spell* const pSpell = m_bot->FindCurrentSpellBySpellId(spellId);
+                if (!pSpell)
+                    return;
+
+                if (!pSpell->IsChannelActive() && !pSpell->IsAutoRepeat())
+                    m_CurrentlyCastingSpellId = 0;
             }
             return;
-        }*/
+        }
 
         case SMSG_RESURRECT_REQUEST:
         {
@@ -499,7 +526,7 @@ Unit* PlayerbotAI::GetNewCombatTarget(bool no_dist_check)
         {
             for(Unit::AttackerSet::const_iterator itr = m_bot->getAttackers().begin(); itr != m_bot->getAttackers().end(); ++itr)
             {
-                if (!no_dist_check && !m_bot->IsWithinDistInMap((*itr)->GetOwner() ? (*itr)->GetOwner() : (*itr), MAX_DIST_COMBAT_TARGET))
+                if (!IsValidEnemy((*itr)->GetOwner() ? (*itr)->GetOwner() : (*itr), no_dist_check))
                     continue;
 
                 if ((*itr)->GetTypeId()==TYPEID_PLAYER)
@@ -525,7 +552,7 @@ Unit* PlayerbotAI::GetNewCombatTarget(bool no_dist_check)
                 {
                     for(Unit::AttackerSet::const_iterator itr = ref->getSource()->getAttackers().begin(); itr != ref->getSource()->getAttackers().end(); ++itr)
                     {
-                        if (!no_dist_check && !m_bot->IsWithinDistInMap((*itr)->GetOwner() ? (*itr)->GetOwner() : (*itr), MAX_DIST_COMBAT_TARGET))
+                        if (!IsValidEnemy((*itr)->GetOwner() ? (*itr)->GetOwner() : (*itr), no_dist_check))
                             continue;
 
                         if ((*itr)->GetTypeId()==TYPEID_PLAYER)
@@ -549,7 +576,7 @@ Unit* PlayerbotAI::GetNewCombatTarget(bool no_dist_check)
         {
             for(Unit::AttackerSet::const_iterator itr = m_bot->GetPet()->getAttackers().begin(); itr != m_bot->GetPet()->getAttackers().end(); ++itr)
             {
-                if (!no_dist_check && !m_bot->IsWithinDistInMap((*itr)->GetOwner() ? (*itr)->GetOwner() : (*itr), MAX_DIST_COMBAT_TARGET))
+                if (!IsValidEnemy((*itr)->GetOwner() ? (*itr)->GetOwner() : (*itr), no_dist_check))
                     continue;
 
                 if ((*itr)->GetTypeId()==TYPEID_PLAYER)
@@ -575,7 +602,7 @@ Unit* PlayerbotAI::GetNewCombatTarget(bool no_dist_check)
                 {
                     for(Unit::AttackerSet::const_iterator itr = ref->getSource()->GetPet()->getAttackers().begin(); itr != ref->getSource()->GetPet()->getAttackers().end(); ++itr)
                     {
-                        if (!no_dist_check && !m_bot->IsWithinDistInMap((*itr)->GetOwner() ? (*itr)->GetOwner() : (*itr), MAX_DIST_COMBAT_TARGET))
+                        if (!IsValidEnemy((*itr)->GetOwner() ? (*itr)->GetOwner() : (*itr), no_dist_check))
                             continue;
 
                         if ((*itr)->GetTypeId()==TYPEID_PLAYER)
@@ -600,6 +627,38 @@ Unit* PlayerbotAI::GetNewCombatTarget(bool no_dist_check)
     return NULL;
 }
 
+bool PlayerbotAI::IsValidEnemy(Unit* combatTarget, bool no_dist_check)
+{
+    if (!combatTarget)
+        return false;
+
+    if (!combatTarget->IsInWorld())
+        return false;
+
+    if (!combatTarget->isAlive())
+        return false;
+
+    if (!m_bot->IsInMap(combatTarget))
+        return false;
+    
+    if (!no_dist_check && !m_bot->IsWithinDistInMap(combatTarget, MAX_DIST_COMBAT_TARGET))
+        return false;
+
+    if (!m_bot->IsHostileTo(combatTarget))
+        return false;
+
+    if (!combatTarget->isTargetableForAttack())
+        return false;
+    
+    if (combatTarget->IsInWater())
+        return false;
+
+    if (!m_bot->IsWithinLOSInMap(combatTarget))
+        return false;
+
+    return true;
+}
+
 void PlayerbotAI::DoCombatManeuver(Unit* forcedTarget)
 {
     UnMount();
@@ -619,10 +678,7 @@ void PlayerbotAI::DoCombatManeuver(Unit* forcedTarget)
         }
         else
         {
-            if (!combatTarget || !combatTarget->IsInWorld()
-                || !combatTarget->isAlive()
-                || !m_bot->IsWithinDistInMap(combatTarget, MAX_DIST_COMBAT_TARGET)
-                || !m_bot->IsHostileTo(combatTarget))
+            if (!IsValidEnemy(combatTarget))
             {
                 combatTarget = GetNewCombatTarget();
                 AttackStart(combatTarget);
@@ -746,6 +802,9 @@ void PlayerbotAI::AttackStart(Unit *pWho)
 
 bool PlayerbotAI::IsInCombat()
 {
+    if (m_latestVictim)
+        return true;
+
     if (m_bot->duel)
         return true;
 
@@ -1136,7 +1195,7 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
         Spell* pSpell = NULL;
         pSpell = GetCurrentSpell();
         if (pSpell && !(pSpell->IsChannelActive() || pSpell->IsAutoRepeat()))
-            InterruptCurrentCastingSpell(pSpell->m_spellInfo->Id);
+            InterruptCurrentCastingSpell();
 
         m_bot->GetIndispensableItems();
 
@@ -1179,10 +1238,6 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
                 }
             }
 
-            //probably too often called
-            m_bot->CombatStop(true);
-            m_bot->SetSelectionGuid(ObjectGuid());
-
             CheckRoles();
             if (GetLeader()->getLevel() != m_bot->getLevel())
                 InitBotStatsForLevel(GetLeader()->getLevel());
@@ -1199,6 +1254,14 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
                 }
                 case BOTSTATE_LOOTING:
                 {
+                    m_bot->CombatStop(true);
+					WorldPacket data( SMSG_ATTACKSTOP, (4+16) );
+					data << m_bot->GetPackGUID();
+					data << uint64(0);
+					data << uint32(0);
+					m_bot->SendMessageToSet(&data, true);
+                    m_bot->SetSelectionGuid(ObjectGuid());
+                    InterruptCurrentCastingSpell();
                     CastAura(25990, m_bot); // Regen hp + mana : Spell Aura Gruccu Food
                     DoLoot();
                     break;
