@@ -181,7 +181,6 @@ void PlayerbotWarlockAI::ReinitCycles()
 
 void PlayerbotWarlockAI::InitSpells(PlayerbotAI* const ai)
 {
-    // DESTRUCTION
     SHADOW_BOLT           = ai->initSpell(SHADOW_BOLT_1);
     IMMOLATE              = ai->initSpell(IMMOLATE_1);
     INCINERATE            = ai->initSpell(INCINERATE_1);
@@ -192,16 +191,14 @@ void PlayerbotWarlockAI::InitSpells(PlayerbotAI* const ai)
     SHADOWFLAME           = ai->initSpell(SHADOWFLAME_1);
     HELLFIRE              = ai->initSpell(HELLFIRE_1);
     RAIN_OF_FIRE          = ai->initSpell(RAIN_OF_FIRE_1);
-    SOUL_FIRE             = ai->initSpell(SOUL_FIRE_1); // soul shard spells
+    SOUL_FIRE             = ai->initSpell(SOUL_FIRE_1);
     SHADOWBURN            = ai->initSpell(SHADOWBURN_1);
-    // CURSE
     CURSE_OF_WEAKNESS     = ai->initSpell(CURSE_OF_WEAKNESS_1);
     CURSE_OF_THE_ELEMENTS = ai->initSpell(CURSE_OF_THE_ELEMENTS_1);
     CURSE_OF_AGONY        = ai->initSpell(CURSE_OF_AGONY_1);
     CURSE_OF_EXHAUSTION   = ai->initSpell(CURSE_OF_EXHAUSTION_1);
     CURSE_OF_TONGUES      = ai->initSpell(CURSE_OF_TONGUES_1);
     CURSE_OF_DOOM         = ai->initSpell(CURSE_OF_DOOM_1);
-    // AFFLICTION
     CORRUPTION            = ai->initSpell(CORRUPTION_1);
     DRAIN_SOUL            = ai->initSpell(DRAIN_SOUL_1);
     DRAIN_LIFE            = ai->initSpell(DRAIN_LIFE_1);
@@ -214,7 +211,6 @@ void PlayerbotWarlockAI::InitSpells(PlayerbotAI* const ai)
     HOWL_OF_TERROR        = ai->initSpell(HOWL_OF_TERROR_1);
     FEAR                  = ai->initSpell(FEAR_1);
     SIPHON_LIFE           = ai->initSpell(SIPHON_LIFE_1);
-    // DEMONOLOGY
     DEMON_SKIN            = ai->initSpell(DEMON_SKIN_1);
     DEMON_ARMOR           = ai->initSpell(DEMON_ARMOR_1);
     DEMONIC_EMPOWERMENT   = ai->initSpell(DEMONIC_EMPOWERMENT_1);
@@ -222,31 +218,25 @@ void PlayerbotWarlockAI::InitSpells(PlayerbotAI* const ai)
     SHADOW_WARD           = ai->initSpell(SHADOW_WARD_1);
     SOULSHATTER           = ai->initSpell(SOULSHATTER_1);
     SOUL_LINK             = ai->initSpell(SOUL_LINK_1);
-    SOUL_LINK_AURA        = 25228; // dummy aura applied, after spell SOUL_LINK
-    HEALTH_FUNNEL         = ai->initSpell(HEALTH_FUNNEL_1);
+    SOUL_LINK_AURA        = 25228;
     DETECT_INVISIBILITY   = ai->initSpell(DETECT_INVISIBILITY_1);
     CREATE_FIRESTONE      = ai->initSpell(CREATE_FIRESTONE_1);
     CREATE_HEALTHSTONE    = ai->initSpell(CREATE_HEALTHSTONE_1);
     CREATE_SOULSTONE      = ai->initSpell(CREATE_SOULSTONE_1);
-    // demon summon
     SUMMON_IMP            = ai->initSpell(SUMMON_IMP_1);
     SUMMON_VOIDWALKER     = ai->initSpell(SUMMON_VOIDWALKER_1);
     SUMMON_SUCCUBUS       = ai->initSpell(SUMMON_SUCCUBUS_1);
     SUMMON_FELHUNTER      = ai->initSpell(SUMMON_FELHUNTER_1);
     SUMMON_FELGUARD       = ai->initSpell(SUMMON_FELGUARD_1);
-    // demon skills should be initialized on demons
-    BLOOD_PACT            = 0; // imp skill
-    CONSUME_SHADOWS       = 0; // voidwalker skill
-    FEL_INTELLIGENCE      = 0; // felhunter skill
-
-    RECENTLY_BANDAGED     = 11196; // first aid check
-
-    // racial
-    ARCANE_TORRENT        = ai->initSpell(ARCANE_TORRENT_MANA_CLASSES); // blood elf
-    ESCAPE_ARTIST         = ai->initSpell(ESCAPE_ARTIST_ALL); // gnome
-    EVERY_MAN_FOR_HIMSELF = ai->initSpell(EVERY_MAN_FOR_HIMSELF_ALL); // human
-    BLOOD_FURY            = ai->initSpell(BLOOD_FURY_WARLOCK); // orc
-    WILL_OF_THE_FORSAKEN  = ai->initSpell(WILL_OF_THE_FORSAKEN_ALL); // undead
+    BLOOD_PACT            = 0;
+    CONSUME_SHADOWS       = 0;
+    FEL_INTELLIGENCE      = 0;
+    RECENTLY_BANDAGED     = 11196;
+    ARCANE_TORRENT        = ai->initSpell(ARCANE_TORRENT_MANA_CLASSES);
+    ESCAPE_ARTIST         = ai->initSpell(ESCAPE_ARTIST_ALL);
+    EVERY_MAN_FOR_HIMSELF = ai->initSpell(EVERY_MAN_FOR_HIMSELF_ALL);
+    BLOOD_FURY            = ai->initSpell(BLOOD_FURY_WARLOCK);
+    WILL_OF_THE_FORSAKEN  = ai->initSpell(WILL_OF_THE_FORSAKEN_ALL);
     InitPet();
 }
 
@@ -268,7 +258,7 @@ bool PlayerbotWarlockAI::DoCombatManeuver(Unit *pTarget, bool cac)
             for (uint32 i = 1; i <= elt; ++i)
             {
                 uint32 spellId = SpellFire[(i+LastSpellDestruction)%elt];
-                if (spellId==INCINERATE && !m_bot->HasSpell(INCINERATE))
+                if (spellId==INCINERATE && !INCINERATE)
                    spellId = SHADOW_BOLT;
                 if (ai->CastSpell(spellId, pTarget))
                 {
@@ -309,7 +299,7 @@ bool PlayerbotWarlockAI::DoCombatManeuver(Unit *pTarget, bool cac)
             for (uint32 i = 1; i <= elt; ++i)
             {
                 uint32 spellId = SpellFrost[(i+LastSpellSummoning)%elt];
-                if (spellId==INCINERATE && !m_bot->HasSpell(INCINERATE))
+                if (spellId==INCINERATE && !INCINERATE)
                    spellId = SHADOW_BOLT;
                 if (ai->CastSpell(spellId, pTarget))
                 {

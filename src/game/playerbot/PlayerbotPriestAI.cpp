@@ -125,7 +125,7 @@ bool PlayerbotPriestAI::HealTarget(Unit* target)
         return true;
     else
         return false;
-} // end HealTarget
+}
 
 bool PlayerbotPriestAI::DoCombatManeuver(Unit *pTarget, bool cac)
 {
@@ -287,7 +287,7 @@ bool PlayerbotPriestAI::DoCombatManeuver(Unit *pTarget, bool cac)
         break;
     }
     return false;
-} // end DoCombatManeuver
+}
 
 void PlayerbotPriestAI::DoNonCombatActions()
 {
@@ -388,7 +388,7 @@ void PlayerbotPriestAI::DoNonCombatActions()
     }
 
     BuffPlayer(m_bot);
-} // end DoNonCombatActions
+}
 
 bool PlayerbotPriestAI::BuffPlayer(Player* target)
 {
