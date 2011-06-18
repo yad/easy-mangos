@@ -1339,11 +1339,12 @@ bool PlayerbotAI::CastSpell(uint32 spellId, Unit* target)
         m_bot->SetSelectionGuid(pTarget->GetObjectGuid());
     }
 
-    /*SpellCastTimesEntry const * castTimeEntry = sSpellCastTimesStore.LookupEntry(pSpellInfo->CastingTimeIndex);
+    /*//Dummy hack, finish it later...
+    SpellCastTimesEntry const * castTimeEntry = sSpellCastTimesStore.LookupEntry(pSpellInfo->CastingTimeIndex);
     if (castTimeEntry && castTimeEntry->CastTime)
     {
         float x,y,z;
-        m_bot->GetMotionMaster()->GetDestination(x,y,z);
+        m_bot->GetPosition(x,y,z);
         MoveTo(x,y,z);
     }*/
 
@@ -1356,6 +1357,7 @@ bool PlayerbotAI::CastSpell(uint32 spellId, Unit* target)
         return false;
     }
 
+    m_CurrentlyCastingSpellId = spellId;
     //m_ignoreAIUpdatesUntilTime = time(0) + (int32) ((float) pSpell->GetCastTime() / 1000.0f) + 1;
     return true;
 }

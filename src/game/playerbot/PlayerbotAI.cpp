@@ -438,8 +438,7 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
                 if (!pSpell)
                     return;
 
-                if (!pSpell->IsChannelActive() && !pSpell->IsAutoRepeat())
-                    m_CurrentlyCastingSpellId = 0;
+                m_CurrentlyCastingSpellId = 0;
             }
             return;
         }
@@ -1212,11 +1211,6 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
     }
     else
     {
-        Spell* pSpell = NULL;
-        pSpell = GetCurrentSpell();
-        if (pSpell && !(pSpell->IsChannelActive() || pSpell->IsAutoRepeat()))
-            InterruptCurrentCastingSpell();
-
         m_bot->GetIndispensableItems();
 
         /*sLog.outString("%s => %s", m_bot->GetName(), m_followTarget ? m_followTarget->GetName() : "NULL");
@@ -1293,10 +1287,8 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
         else
         {
             UnMount();
-            pSpell = GetCurrentSpell();
-            if (!pSpell || !pSpell->IsChannelActive())
-                if (HasArrived())
-                    DoCombatManeuver(m_latestVictim);
+            if (!GetCurrentSpell() && HasArrived())
+                DoCombatManeuver(m_latestVictim);
         }
     }
 }
