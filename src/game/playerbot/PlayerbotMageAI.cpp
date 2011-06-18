@@ -181,6 +181,8 @@ bool PlayerbotMageAI::DoCombatManeuver(Unit *pTarget, bool cac)
                 uint32 spellId = SpellFrost[(i+LastSpellFrost)%elt];
                 if (!cac && (spellId==FROST_NOVA||spellId==CONE_OF_COLD))
                    continue;
+                if (spellId==FROSTBOLT && !m_bot->HasSpell(FROSTBOLT))
+                   spellId = FIREBALL;
                 if (ai->CastSpell(spellId, pTarget))
                 {
                     LastSpellFrost = (i+LastSpellFrost)%elt;
