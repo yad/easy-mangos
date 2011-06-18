@@ -118,10 +118,13 @@ bool PlayerbotDruidAI::HealTarget()
     if (m_bot == m_master)
     {
         Unit* buffTarget = m_bot->SelectRandomPlayerToBuffHim(10.0f);
-        if (buffTarget->GetHealthPercent() < targethp)
+        if (buffTarget)
         {
-            target = buffTarget;
-            targethp = buffTarget->GetHealthPercent();
+            if (buffTarget->GetHealthPercent() < targethp)
+            {
+                target = buffTarget;
+                targethp = buffTarget->GetHealthPercent();
+            }
         }
     }
     else if (m_bot->GetGroup())

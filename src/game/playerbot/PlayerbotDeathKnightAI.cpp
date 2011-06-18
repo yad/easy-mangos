@@ -488,7 +488,7 @@ bool PlayerbotDeathKnightAI::DoCombatManeuver(Unit *pTarget, bool cac)
             }
     }
     return false;
-} // end DoCombatManeuver
+}
 
 void PlayerbotDeathKnightAI::DoNonCombatActions()
 {
@@ -510,4 +510,4 @@ void PlayerbotDeathKnightAI::DoNonCombatActions()
     if (HORN_OF_WINTER > 0)
         (!m_master->HasAura(HORN_OF_WINTER, EFFECT_INDEX_0) && ai->CastSpell (HORN_OF_WINTER, m_master));
 
-} // end DoNonCombatActions
+}

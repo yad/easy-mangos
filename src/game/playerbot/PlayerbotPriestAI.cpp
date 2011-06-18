@@ -131,13 +131,7 @@ bool PlayerbotPriestAI::DoCombatManeuver(Unit *pTarget, bool cac)
 {
     //Unit* pVictim = pTarget->getVictim();
     PlayerbotAI* ai = GetAI();
-    if (!ai)
-        return false;
-
     Player* m_master = ai->GetLeader();
-    if (!m_master)
-        return false;
-
     Player *m_bot = GetPlayerBot();
     Group *m_group = m_bot->GetGroup();
     GroupReference *ref = (m_group) ? m_group->GetFirstMember() : NULL;
@@ -151,7 +145,7 @@ bool PlayerbotPriestAI::DoCombatManeuver(Unit *pTarget, bool cac)
         // High priority to target of target
         if (targetOfTarget.IsPlayer())
         {
-            Player *tank = sObjectMgr.GetPlayer(pTarget->GetTargetGuid());
+            Player *tank = sObjectMgr.GetPlayer(targetOfTarget);
 
             if (tank->isAlive() && tank->IsInSameRaidWith(m_bot) && tank->GetHealthPercent() < 80)
             {
@@ -292,16 +286,8 @@ bool PlayerbotPriestAI::DoCombatManeuver(Unit *pTarget, bool cac)
 void PlayerbotPriestAI::DoNonCombatActions()
 {
     PlayerbotAI *ai = GetAI();
-    if (!ai)
-        return;
-
     Player * m_bot = GetPlayerBot();
-    if (!m_bot)
-        return;
-
     Player* m_master = ai->GetLeader();
-    if (!m_master)
-        return;
 
     if (m_bot->getRole() != PriestHoly)
     {

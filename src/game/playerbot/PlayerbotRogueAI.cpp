@@ -249,21 +249,11 @@ bool PlayerbotRogueAI::DoCombatManeuver(Unit *pTarget, bool cac)
     return false;
 }
 
-// end DoCombatManeuver
-
 void PlayerbotRogueAI::DoNonCombatActions()
 {
     PlayerbotAI *ai = GetAI();
-    if (!ai)
-        return;
-
     Player * m_bot = GetPlayerBot();
-    if (!m_bot)
-        return;
-
     Player* m_master = ai->GetLeader();
-    if (!m_master)
-        return;
 
     // remove stealth
     if (m_bot->HasAura(STEALTH))
@@ -302,4 +292,4 @@ void PlayerbotRogueAI::DoNonCombatActions()
         }
     }
 
-} // end DoNonCombatActions
+}

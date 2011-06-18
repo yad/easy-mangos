@@ -106,7 +106,6 @@ void PlayerbotShamanAI::HealTarget(Unit *target, uint8 hp)
         ai->CastSpell(RIPTIDE, target);
     else if (hp < 70 && CHAIN_HEAL > 0 && ai->GetManaPercent() >= 24)
         ai->CastSpell(CHAIN_HEAL, target);
-    // end HealTarget
 }
 
 bool PlayerbotShamanAI::DoCombatManeuver(Unit *pTarget, bool cac)
@@ -448,21 +447,13 @@ bool PlayerbotShamanAI::DoCombatManeuver(Unit *pTarget, bool cac)
             }
     }
     return false;
-} // end DoCombatManeuver
+}
 
 void PlayerbotShamanAI::DoNonCombatActions()
 {
     PlayerbotAI *ai = GetAI();
-    if (!ai)
-        return;
-
     Player * m_bot = GetPlayerBot();
-    if (!m_bot)
-        return;
-
     Player* m_master = ai->GetLeader();
-    if (!m_master)
-        return;
 
     SpellSequence = SPELL_ENHANCEMENT;
 
@@ -503,4 +494,4 @@ void PlayerbotShamanAI::DoNonCombatActions()
             (HealTarget(tPlayer, tPlayer->GetHealth() * 100 / tPlayer->GetMaxHealth()));
         }
     }
-} // end DoNonCombatActions
+}

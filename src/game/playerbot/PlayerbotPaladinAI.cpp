@@ -122,7 +122,7 @@ bool PlayerbotPaladinAI::HealTarget(Unit *target)
         return true;
 
     return false;
-} // end HealTarget
+}
 
 bool PlayerbotPaladinAI::DoCombatManeuver(Unit *pTarget, bool cac)
 {
@@ -363,13 +363,7 @@ bool PlayerbotPaladinAI::DoCombatManeuver(Unit *pTarget, bool cac)
 void PlayerbotPaladinAI::DoNonCombatActions()
 {
     PlayerbotAI *ai = GetAI();
-    if (!ai)
-        return;
-
     Player * m_bot = GetPlayerBot();
-    if (!m_bot)
-        return;
-
     Group* m_group = m_bot->GetGroup();
     GroupReference *ref = (m_group) ? m_group->GetFirstMember() : NULL;
     do

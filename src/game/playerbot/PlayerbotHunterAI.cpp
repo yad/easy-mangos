@@ -114,7 +114,7 @@ bool PlayerbotHunterAI::HasPet(Player* bot)
     }
     else
         return false;  //hunter either has no pet or stabled
-} // end HasPet
+}
 
 bool PlayerbotHunterAI::DoEvadeAction()
 {
@@ -249,21 +249,13 @@ bool PlayerbotHunterAI::DoCombatManeuver(Unit *pTarget, bool cac)
         }
     }
     return false;
-} // end DoCombatManeuver
+}
 
 void PlayerbotHunterAI::DoNonCombatActions()
 {
     PlayerbotAI *ai = GetAI();
-    if (!ai)
-        return;
-
     Player * m_bot = GetPlayerBot();
-    if (!m_bot)
-        return;
-
     Player* m_master = ai->GetLeader();
-    if (!m_master)
-        return;
 
     static const uint32 MinorGlyphs[] = {57903, 57866, 57870};           // feigh death - revive pet - healing pet
     static const uint32 SurvivalMajorGlyphs[] = {56832, 56826, 63066};     // serpent sting - steady shot - explosive shot
@@ -378,4 +370,4 @@ void PlayerbotHunterAI::DoNonCombatActions()
             ai->SetIgnoreUpdateTime(7);
         }
     }
-} // end DoNonCombatActions
+}
