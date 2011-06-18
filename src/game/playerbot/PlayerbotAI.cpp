@@ -401,16 +401,27 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
                 if (IsPositiveSpell(pSpellInfo))
                     return;
 
-                Player* mainTank = FindGroupMainTank();
                 Unit* pTarget = ObjectAccessor::GetUnit(*m_bot, GetLeader()->GetSelectionGuid());
-                if (!pTarget || !mainTank)
+                if (!pTarget)
                     return;
 
                 m_latestVictim = pTarget;
-                if (mainTank==m_bot)
-                    MoveTo(m_latestVictim);
+                Player* mainTank = FindGroupMainTank();
+
+                if (mainTank)
+                {
+                    if (mainTank==m_bot)
+                        MoveTo(m_latestVictim);
+                    else
+                        MoveTo(m_latestVictim, m_bot->GetAngle(m_latestVictim)+rand_float(-0.25f, 0.25f), GetDist(), 0.0f);
+                }
                 else
-                    MoveTo(m_latestVictim, m_bot->GetAngle(m_latestVictim)+rand_float(-0.25f, 0.25f), GetDist(), 0.0f);
+                {
+                    if (GetCombatType()==BOTCOMBAT_CAC)
+                        MoveTo(m_latestVictim);
+                    else
+                        MoveTo(m_latestVictim, m_bot->GetAngle(m_latestVictim)+rand_float(-0.25f, 0.25f), GetDist(), 0.0f);
+                }
             }
             return;
         }
@@ -643,9 +654,6 @@ bool PlayerbotAI::IsValidEnemy(Unit* combatTarget, bool no_dist_check)
     if (!no_dist_check && !m_bot->IsWithinDistInMap(combatTarget, MAX_DIST_COMBAT_TARGET))
         return false;
 
-    if (!m_bot->IsHostileTo(combatTarget))
-        return false;
-
     if (!combatTarget->isTargetableForAttack())
         return false;
     
@@ -684,9 +692,7 @@ void PlayerbotAI::DoCombatManeuver(Unit* forcedTarget)
             }
         }
     }
-    else if (forcedTarget->IsInWorld()
-        && forcedTarget->isAlive()
-        && m_bot->IsHostileTo(forcedTarget))
+    else if (forcedTarget->IsInWorld() && forcedTarget->isAlive())
     {
         if (m_bot->getVictim())
         {
@@ -1000,7 +1006,7 @@ void PlayerbotAI::MoveInLineOfSight(Unit *u)
     /*if (m_bot->getVictim())
         return;
 
-    if (u->isTargetableForAttack() && m_bot->IsHostileTo( u ))
+    if (u->isTargetableForAttack())
     {
         if (m_bot->IsWithinLOSInMap(u))
         {
