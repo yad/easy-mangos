@@ -153,7 +153,7 @@ public:
     bool CastSpell(uint32 spellId, Unit* target = NULL);
     bool CastPetAura(uint32 spellId, Unit* target);
     bool CastPetSpell(uint32 spellId, Unit* target = NULL);
-    bool Buff(uint32 spellId, Unit* target, void (*beforeCast)(Player *) = NULL);
+    bool Buff(uint32 spellId, Unit* target);
     bool SelfBuff(uint32 spellId);
     Spell* GetCurrentSpell() const;
     bool HasAura(uint32 spellId, const Unit* unit) const;

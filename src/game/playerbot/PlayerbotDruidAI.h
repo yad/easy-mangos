@@ -78,6 +78,7 @@ enum DruidSpells
     NOURISH_1                       = 50464,
     POUNCE_1                        = 9005,
     PROWL_1                         = 5215,
+    PULVERIZE_1                     = 80313,
     RAKE_1                          = 1822,
     RAVAGE_1                        = 6785,
     REBIRTH_1                       = 20484,
@@ -106,104 +107,94 @@ enum DruidSpells
     WRATH_1                         = 5176
 };
 
-//class Player;
-
 class MANGOS_DLL_SPEC PlayerbotDruidAI : PlayerbotClassAI
 {
-public:
-    PlayerbotDruidAI(Player* const bot, PlayerbotAI* const ai);
-    virtual ~PlayerbotDruidAI();
+    public:
+        PlayerbotDruidAI(Player* const bot, PlayerbotAI* const ai);
+        virtual ~PlayerbotDruidAI();
+        bool DoCombatManeuver(Unit*, bool);
+        bool DoProtectSelfAction();
+        void DoNonCombatActions();
+        bool BuffPlayer();
+        void InitSpells(PlayerbotAI* const ai);
+        void ReinitCycles();
+        bool ChangeForm();
+        bool HealTarget();
+        bool ReviveTarget();
 
-    // all combat actions go here
-    bool DoCombatManeuver(Unit*, bool);
-    bool DoProtectSelfAction();
+    private:
+        uint32 CAT_FORM,
+               BEAR_FORM,
+               MOONKIN_FORM,
+               TREE_OF_LIFE,
+               TRAVEL_FORM;
 
-    // all non combat actions go here, ex buffs, heals, rezzes
-    void DoNonCombatActions();
+        uint32 CLAW,
+               COWER,
+               TIGERS_FURY,
+               RIP,
+               FEROCIOUS_BITE,
+               MAIM,
+               SAVAGE_ROAR,
+               MANGLE_CAT,
+               RAKE,
+               SHRED,
+               BERSERK,
+               PULVERIZE,
+               FAERIE_FIRE_FERAL,
+               MANGLE_BEAR,
+               LACERATE,
+               SWIPE_BEAR;
 
-    // buff a specific player, usually a real PC who is not in group
-    bool BuffPlayer(Player *target);
+        uint32 BASH,
+               MAUL,
+               SWIPE,
+               DEMORALIZING_ROAR,
+               CHALLENGING_ROAR,
+               GROWL,
+               ENRAGE;
 
-    void InitSpells(PlayerbotAI* const ai);
+        uint32 MOONFIRE,
+               ROOTS,
+               WRATH,
+               STARFALL,
+               STARFIRE,
+               INSECT_SWARM,
+               FAERIE_FIRE,
+               FORCE_OF_NATURE,
+               HURRICANE;
 
-private:
-    // Heals the target based off its hps
-    bool HealTarget (Unit *target);
-    // Callback method to reset shapeshift forms blocking buffs and heals
-    static void GoBuffForm(Player *self);
+        uint32 MARK_OF_THE_WILD,
+               GIFT_OF_THE_WILD,
+               THORNS,
+               INNERVATE,
+               BARKSKIN,
+               SURVIVAL_INSTINCTS;
 
-    // druid cat/bear/dire bear/moonkin/tree of life forms
-    uint32 CAT_FORM,
-           BEAR_FORM,
-           MOONKIN_FORM,
-           TREE_OF_LIFE,
-           TRAVEL_FORM;
+        uint32 LIFEBLOOM,
+               REJUVENATION,
+               REGROWTH,
+               NOURISH,
+               HEALING_TOUCH,
+               WILD_GROWTH,
+               SWIFTMEND,
+               TRANQUILITY,
+               REVIVE;
 
-    // druid cat attacks
-    uint32 CLAW,
-           COWER,
-           TIGERS_FURY,
-           RAKE,
-           RIP,
-           FEROCIOUS_BITE,
-           MAIM,
-           MANGLE;
+        uint32 RECENTLY_BANDAGED;
 
-    // druid bear/dire bear attacks & buffs
-    uint32 BASH,
-           MAUL,
-           SWIPE,
-           DEMORALIZING_ROAR,
-           CHALLENGING_ROAR,
-           GROWL,
-           ENRAGE;
+        uint32 ARCANE_TORRENT,
+               GIFT_OF_THE_NAARU,
+               STONEFORM,
+               ESCAPE_ARTIST,
+               EVERY_MAN_FOR_HIMSELF,
+               SHADOWMELD,
+               BLOOD_FURY,
+               WAR_STOMP,
+               BERSERKING,
+               WILL_OF_THE_FORSAKEN;
 
-    // druid attacks & debuffs
-    uint32 MOONFIRE,
-           ROOTS,
-           WRATH,
-           STARFALL,
-           STARFIRE,
-           INSECT_SWARM,
-           FAERIE_FIRE,
-           FORCE_OF_NATURE,
-           HURRICANE;
-
-    // druid buffs
-    uint32 MARK_OF_THE_WILD,
-           GIFT_OF_THE_WILD,
-           THORNS,
-           INNERVATE,
-           BARKSKIN,
-           SURVIVAL_INSTINCTS;
-
-    // druid heals
-    uint32 LIFEBLOOM,
-           REJUVENATION,
-           REGROWTH,
-           NOURISH,
-           HEALING_TOUCH,
-           WILD_GROWTH,
-           SWIFTMEND,
-           TRANQUILITY,
-           REVIVE;
-
-    // first aid
-    uint32 RECENTLY_BANDAGED;
-
-    // racial
-    uint32 ARCANE_TORRENT,
-           GIFT_OF_THE_NAARU,
-           STONEFORM,
-           ESCAPE_ARTIST,
-           EVERY_MAN_FOR_HIMSELF,
-           SHADOWMELD,
-           BLOOD_FURY,
-           WAR_STOMP,
-           BERSERKING,
-           WILL_OF_THE_FORSAKEN;
-
-    uint32 SpellSequence, DruidSpellCombat;
+        uint32 LastSpellDruidFeralCat, LastSpellDruidFeralBear, LastSpellDruidBalance;
 };
 
 #endif

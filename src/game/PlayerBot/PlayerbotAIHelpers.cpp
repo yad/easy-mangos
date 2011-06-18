@@ -434,7 +434,7 @@ Player* PlayerbotAI::FindGroupMainTank()
             case WarriorProtection:
                 return ref->getSource();
             case DruidFeralCombat:
-                if (ref->getSource()->HasAura(5487, EFFECT_INDEX_0)) //TODO fixit
+                if (ref->getSource()->HasAura(5487))
                     mainTank = ref->getSource();
                 break;
             case PaladinProtection:
@@ -1113,32 +1113,22 @@ bool PlayerbotAI::CheckTeleport()
         return false;
 
     if (m_bot->IsBeingTeleported())
-    {
-        //m_bot->GetMotionMaster()->Clear(true);
         return false;
-    }
 
     //Don't remove this check !
     if (GetLeader() && m_bot!=GetLeader())
     {
         if (!GetLeader()->GetMap() || !GetLeader()->GetTerrain())
-        {
-            //m_bot->GetMotionMaster()->Clear(true);
             return false;
-        }
 
         if (!m_bot->IsInMap(GetLeader()))
         {
-            //m_bot->GetMotionMaster()->Clear(true);
             SetFollowTarget(GetLeader(), true);
             return false;
         }
 
         if (GetLeader()->IsBeingTeleported())
-        {
-            //m_bot->GetMotionMaster()->Clear(true);
             return false;
-        }
     }
 
     if (m_bot->GetGroup())
@@ -1147,16 +1137,11 @@ bool PlayerbotAI::CheckTeleport()
         while (ref)
         {
             if (!ref->getSource()->GetMap() || !ref->getSource()->GetTerrain())
-            {
-                //m_bot->GetMotionMaster()->Clear(true);
                 return false;
-            }
 
             if (ref->getSource()->IsBeingTeleported())
-            {
-                //m_bot->GetMotionMaster()->Clear(true);
                 return false;
-            }
+
             ref = ref->next();
         }
     }
@@ -1418,7 +1403,7 @@ bool PlayerbotAI::CastPetSpell(uint32 spellId, Unit* target)
     return true;
 }
 
-bool PlayerbotAI::Buff(uint32 spellId, Unit* target, void (*beforeCast)(Player *))
+bool PlayerbotAI::Buff(uint32 spellId, Unit* target)
 {
     if (spellId == 0)
         return false;
@@ -1445,19 +1430,18 @@ bool PlayerbotAI::Buff(uint32 spellId, Unit* target, void (*beforeCast)(Player *
         int32 bonus = m_bot->CalculateSpellDamage(target, spellProto, SpellEffectIndex(i));
         Unit::AuraList const& auras = target->GetAurasByType(AuraType(spellProto->EffectApplyAuraName[i]));
         for (Unit::AuraList::const_iterator it = auras.begin(); it != auras.end(); ++it)
+        {
             if ((*it)->GetModifier()->m_miscvalue == spellProto->EffectMiscValue[i] && (*it)->GetModifier()->m_amount >= bonus)
             {
                 sameOrBetterAuraFound = true;
                 break;
             }
+        }
         willBenefitFromSpell = willBenefitFromSpell || !sameOrBetterAuraFound;
     }
 
     if (!willBenefitFromSpell)
         return false;
-
-    if (beforeCast)
-        (*beforeCast)(m_bot);
 
     return CastSpell(spellProto->Id, target);
 }

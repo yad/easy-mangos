@@ -81,16 +81,13 @@ void PlayerbotMageAI::InitSpells(PlayerbotAI* const ai)
     ICE_ARMOR               = ai->initSpell(ICE_ARMOR_1);
     ICE_BLOCK               = ai->initSpell(ICE_BLOCK_1);
     COLD_SNAP               = ai->initSpell(COLD_SNAP_1);
-
-    RECENTLY_BANDAGED       = 11196; // first aid check
-
-    // racial
-    ARCANE_TORRENT          = ai->initSpell(ARCANE_TORRENT_MANA_CLASSES); // blood elf
-    GIFT_OF_THE_NAARU       = ai->initSpell(GIFT_OF_THE_NAARU_MAGE); // draenei
-    ESCAPE_ARTIST           = ai->initSpell(ESCAPE_ARTIST_ALL); // gnome
-    EVERY_MAN_FOR_HIMSELF   = ai->initSpell(EVERY_MAN_FOR_HIMSELF_ALL); // human
-    BERSERKING              = ai->initSpell(BERSERKING_ALL); // troll
-    WILL_OF_THE_FORSAKEN    = ai->initSpell(WILL_OF_THE_FORSAKEN_ALL); // undead
+    RECENTLY_BANDAGED       = 11196;
+    ARCANE_TORRENT          = ai->initSpell(ARCANE_TORRENT_MANA_CLASSES);
+    GIFT_OF_THE_NAARU       = ai->initSpell(GIFT_OF_THE_NAARU_MAGE);
+    ESCAPE_ARTIST           = ai->initSpell(ESCAPE_ARTIST_ALL);
+    EVERY_MAN_FOR_HIMSELF   = ai->initSpell(EVERY_MAN_FOR_HIMSELF_ALL);
+    BERSERKING              = ai->initSpell(BERSERKING_ALL);
+    WILL_OF_THE_FORSAKEN    = ai->initSpell(WILL_OF_THE_FORSAKEN_ALL);
 }
 
 PlayerbotMageAI::~PlayerbotMageAI() {}
@@ -244,54 +241,40 @@ bool PlayerbotMageAI::BuffPlayer()
     Player* m_bot = GetPlayerBot();
     Player* m_master = ai->GetLeader();
 
+    if (!ai->Buff(DALARAN_INTELLECT, m_bot))
+        if (ai->Buff(ARCANE_INTELLECT, m_bot))
+            return true;
+
     if (m_bot == m_master)
     {
-        if (!ai->Buff(DALARAN_INTELLECT, m_bot))
-            if (ai->Buff(ARCANE_INTELLECT, m_bot))
-                return true;
-
         Unit* buffTarget = m_bot->SelectRandomPlayerToBuffHim(10.0f);
         if (buffTarget && buffTarget->getPowerType()==POWER_MANA)
             if (!ai->Buff(DALARAN_INTELLECT, buffTarget))
                 if (ai->Buff(ARCANE_INTELLECT, buffTarget))
                     return true;
     }
-    else
+    else if (m_bot->GetGroup())
     {
-        if (!ai->Buff(DALARAN_INTELLECT, m_bot))
-            if (ai->Buff(ARCANE_INTELLECT, m_bot))
-                return true;
-
-        if (m_master->isAlive() && m_master->getPowerType()==POWER_MANA)
+        GroupReference *ref = NULL;
+        ref = m_bot->GetGroup()->GetFirstMember();
+        while (ref)
         {
-            if (!ai->Buff(DALARAN_INTELLECT, m_master))
-                if (ai->Buff(ARCANE_INTELLECT, m_master))
-                    return true;
+            Player* pl = ref->getSource();
+            if (pl!=m_bot && pl->isAlive() && !pl->duel && pl->getPowerType()==POWER_MANA)
+                if (!ai->Buff(DALARAN_INTELLECT, pl))
+                    if (ai->Buff(ARCANE_INTELLECT, pl))
+                        return true;
+            ref = ref->next();
         }
-
-        if (m_bot->GetGroup())
+        ref = m_bot->GetGroup()->GetFirstMember();
+        while (ref)
         {
-            GroupReference *ref = NULL;
-            ref = m_bot->GetGroup()->GetFirstMember();
-            while (ref)
-            {
-                Player* pl = ref->getSource();
-                if (pl!=m_bot && pl!=m_master && pl->isAlive() && !pl->duel && pl->getPowerType()==POWER_MANA)
-                    if (!ai->Buff(DALARAN_INTELLECT, pl))
-                        if (ai->Buff(ARCANE_INTELLECT, pl))
-                            return true;
-                ref = ref->next();
-            }
-            ref = m_bot->GetGroup()->GetFirstMember();
-            while (ref)
-            {
-                Player* pl = ref->getSource();
-                if (pl!=m_bot && pl!=m_master && pl->isAlive() && !pl->duel && pl->GetPet() && pl->GetPet()->getPowerType()==POWER_MANA)
-                    if (!ai->Buff(DALARAN_INTELLECT, pl->GetPet()))
-                        if (ai->Buff(ARCANE_INTELLECT, pl->GetPet()))
-                            return true;
-                ref = ref->next();
-            }
+            Player* pl = ref->getSource();
+            if (pl!=m_bot && pl->isAlive() && !pl->duel && pl->GetPet() && pl->GetPet()->getPowerType()==POWER_MANA)
+                if (!ai->Buff(DALARAN_INTELLECT, pl->GetPet()))
+                    if (ai->Buff(ARCANE_INTELLECT, pl->GetPet()))
+                        return true;
+            ref = ref->next();
         }
     }
     return false;
