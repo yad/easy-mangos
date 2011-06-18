@@ -135,6 +135,8 @@ void WorldSession::SendPacket(WorldPacket const* packet)
 {
     if (GetPlayer() && GetPlayer()->IsInWorld())
     {
+        /*if (GetPlayer() && !GetPlayer()->IsBot())
+            sLog.outString(LookupOpcodeName(packet->GetOpcode()));*/
         ReadInvitePaquet(packet);
         if (IsBotSession() && GetPlayer()->GetPlayerbotAI() && GetPlayer()->GetPlayerbotAI()->GetLeader())
             GetPlayer()->GetPlayerbotAI()->HandleBotOutgoingPacket(*packet);
