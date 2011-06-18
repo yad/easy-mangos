@@ -60,7 +60,7 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner)
         else
         {
             // prevent redundant micro-movement for bots, other followers.
-            if (i_offset && i_target->IsWithinDistInMap(&owner,2*i_offset))
+            if (i_offset && !i_target->GetTransport() && i_target->IsWithinDistInMap(&owner,2*i_offset))
             {
                 if (i_destinationHolder.HasDestination())
                     return;
@@ -79,21 +79,27 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner)
             }
         }
 
-        bool forceDest = false;
+        /*bool forceDest = false;
         // allow bots following their leader to cheat while generating paths (bypass mmaps)
-        /*if(owner.GetTypeId() == TYPEID_PLAYER && ((Player*)&owner)->IsBot()
+        if(owner.GetTypeId() == TYPEID_PLAYER && ((Player*)&owner)->IsBot()
             && owner.hasUnitState(UNIT_STAT_FOLLOW))
             forceDest = true;*/
 
         bool newPathCalculated = true;
         if(!i_path)
-            i_path = new PathInfo(&owner, x, y, z, false, forceDest);
+            i_path = new PathInfo(&owner, x, y, z, false, false);
         else
-            newPathCalculated = i_path->Update(x, y, z, false, forceDest);
+            newPathCalculated = i_path->Update(x, y, z, false, false);
 
-        // nothing we can do here ...
         if(i_path->getPathType() & PATHFIND_NOPATH)
-            return;
+        {
+            newPathCalculated = i_path->Update(x, y, z, false, true);
+            if(i_path->getPathType() & PATHFIND_NOPATH)
+            {
+                ((Player*)&owner)->TeleportTo(((Player*)&owner)->GetMapId(), x, y, z, 0.0f);
+                return;
+            }
+        }
 
         PointPath pointPath = i_path->getFullPath();
 
