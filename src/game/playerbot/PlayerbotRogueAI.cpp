@@ -78,14 +78,9 @@ PlayerbotRogueAI::~PlayerbotRogueAI() {}
 bool PlayerbotRogueAI::DoEvadeAction()
 {
     PlayerbotAI *ai = GetAI();
-    if (!ai)
-        return false;
-
     Player *m_bot = GetPlayerBot();
-    if (!m_bot)
-        return false;
 
-    if (!m_bot->HasAura(VANISH) && ai->CastSpell(VANISH))
+    if (ai->CastAura(VANISH, m_bot))
         return true;
 
     return false;
@@ -94,14 +89,9 @@ bool PlayerbotRogueAI::DoEvadeAction()
 bool PlayerbotRogueAI::DoProtectSelfAction()
 {
     PlayerbotAI *ai = GetAI();
-    if (!ai)
-        return false;
-
     Player *m_bot = GetPlayerBot();
-    if (!m_bot)
-        return false;
 
-    if (!m_bot->HasAura(EVASION) && ai->CastSpell(EVASION))
+    if (ai->CastAura(EVASION, m_bot))
         return true;
 
     return false;
@@ -109,20 +99,9 @@ bool PlayerbotRogueAI::DoProtectSelfAction()
 
 bool PlayerbotRogueAI::DoCombatManeuver(Unit *pTarget, bool cac)
 {
-    if (!pTarget)
-        return false;
-
     PlayerbotAI *ai = GetAI();
-    if (!ai)
-        return false;
-
     Player * m_bot = GetPlayerBot();
-    if (!m_bot)
-        return false;
-
     Player* m_master = ai->GetLeader();
-    if (!m_master)
-        return false;
 
     //TODO implement STEALTH
 

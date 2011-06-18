@@ -87,15 +87,10 @@ PlayerbotDruidAI::~PlayerbotDruidAI() {}
 bool PlayerbotDruidAI::DoProtectSelfAction()
 {
     PlayerbotAI *ai = GetAI();
-    if (!ai)
-        return false;
-
     Player *m_bot = GetPlayerBot();
-    if (!m_bot)
-        return false;
-    
+
     // [Chjuci] : Il faut implémenter le changement de forme en ours redoutable avant de lancer instincts de survie
-    if (!m_bot->HasAura(SURVIVAL_INSTINCTS) && ai->CastSpell(SURVIVAL_INSTINCTS))
+    if (ai->CastAura(SURVIVAL_INSTINCTS, m_bot))
         return true;
 
     return false;
@@ -139,16 +134,8 @@ bool PlayerbotDruidAI::HealTarget(Unit *target)
 bool PlayerbotDruidAI::DoCombatManeuver(Unit *pTarget, bool cac)
 {
     PlayerbotAI *ai = GetAI();
-    if (!ai)
-        return false;
-
     Player * m_bot = GetPlayerBot();
-    if (!m_bot)
-        return false;
-
     Player* m_master = ai->GetLeader();
-    if (!m_master)
-        return false;
 
     uint32 masterHP = m_master->GetHealth() * 100 / m_master->GetMaxHealth();
 

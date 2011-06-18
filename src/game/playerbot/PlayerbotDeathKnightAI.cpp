@@ -93,21 +93,16 @@ PlayerbotDeathKnightAI::~PlayerbotDeathKnightAI() {}
 bool PlayerbotDeathKnightAI::DoProtectSelfAction()
 {
     PlayerbotAI *ai = GetAI();
-    if (!ai)
-        return false;
-
     Player *m_bot = GetPlayerBot();
-    if (!m_bot)
-        return false;
-    
-    if (!m_bot->HasAura(BONE_SHIELD) && ai->CastSpell(BONE_SHIELD))
-        return true;
 
-    if (!m_bot->HasAura(ANTI_MAGIC_SHELL) && ai->CastSpell(ANTI_MAGIC_SHELL))
-        return true;
+    static const uint32 spells[] = {BONE_SHIELD, ANTI_MAGIC_SHELL, ANTI_MAGIC_ZONE};
+    static uint32 elt = sizeof(spells) / sizeof(uint32);
 
-    if (!m_bot->HasAura(ANTI_MAGIC_ZONE) && ai->CastSpell(ANTI_MAGIC_ZONE))
-        return true;
+    for (uint32 i = 0; i < elt; i++)
+    {
+        if (ai->CastAura(spells[i], m_bot))
+            return true;
+    }
 
     return false;
 }
@@ -115,16 +110,8 @@ bool PlayerbotDeathKnightAI::DoProtectSelfAction()
 bool PlayerbotDeathKnightAI::DoCombatManeuver(Unit *pTarget, bool cac)
 {
     PlayerbotAI *ai = GetAI();
-    if (!ai)
-        return false;
-
     Player * m_bot = GetPlayerBot();
-    if (!m_bot)
-        return false;
-
     Player* m_master = ai->GetLeader();
-    if (!m_master)
-        return false;
 
     //ai->SetMovementTarget( PlayerbotAI::MOVEMENT_FOLLOW, m_master ); // dont want to melee mob
 
