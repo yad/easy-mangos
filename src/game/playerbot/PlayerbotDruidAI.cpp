@@ -220,7 +220,9 @@ bool PlayerbotDruidAI::DoCombatManeuver(Unit *pTarget, bool cac)
                 if (ai->CastAura(FAERIE_FIRE_FERAL, pTarget))
                     return true;
 
-                //TODO : Demoralizing Roar toutes les 30 sec
+                if (ai->CastAura(DEMORALIZING_ROAR, pTarget))
+                    return true;
+
                 static const uint32 SpellDruidFeralBear[] = {MANGLE_BEAR, LACERATE, LACERATE, LACERATE,
                     SWIPE_BEAR, MANGLE_BEAR, PULVERIZE, TIGERS_FURY, BERSERK, SAVAGE_ROAR};
                 static uint32 elt = sizeof(SpellDruidFeralBear)/sizeof(uint32);
