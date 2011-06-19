@@ -149,6 +149,7 @@ public:
     Item* FindItem(uint32 ItemId);
     Item* FindConsumable(uint32 displayId) const;
 
+    bool Cast(uint32 spellId, Unit* target, bool OneAuraByCaster = false);
     bool CastAura(uint32 spellId, Unit* target);
     bool CastSpell(uint32 spellId, Unit* target = NULL);
     bool CastPetAura(uint32 spellId, Unit* target);
@@ -157,6 +158,7 @@ public:
     bool SelfBuff(uint32 spellId);
     Spell* GetCurrentSpell() const;
     bool HasAura(uint32 spellId, const Unit* unit) const;
+    bool HasAuraFromUnit(uint32 spellId, Unit *target, Unit *caster);
 
     void UseItem(Item *item, uint32 targetFlag, ObjectGuid targetGUID);
     void UseItem(Item *item, uint8 targetInventorySlot);

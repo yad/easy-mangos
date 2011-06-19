@@ -95,7 +95,7 @@ bool PlayerbotPriestAI::DoProtectSelfAction()
     
     if (m_bot->GetHealthPercent() < 40 && ai->CastSpell(DESPERATE_PRAYER))
         return true;
-
+    
     static const uint32 spells[] = {DISPERSION, PAIN_SUPPRESSION, POWER_WORD_SHIELD};
     static uint32 elt = sizeof(spells) / sizeof(uint32);
 

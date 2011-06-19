@@ -1223,10 +1223,34 @@ bool PlayerbotAI::HasAura(uint32 spellId, const Unit* unit) const
         return false;
 
     for (Unit::SpellAuraHolderMap::const_iterator iter = unit->GetSpellAuraHolderMap().begin(); iter != unit->GetSpellAuraHolderMap().end(); ++iter)
-    {
         if (iter->second->GetId() == spellId)
             return true;
+
+    return false;
+}
+
+bool PlayerbotAI::HasAuraFromUnit(uint32 spellId, Unit *target, Unit *caster)
+{
+    for (Unit::SpellAuraHolderMap::const_iterator itr = target->GetSpellAuraHolderMap().begin(); itr != target->GetSpellAuraHolderMap().end(); ++itr)
+        if (itr->second->GetId() == spellId && itr->second->GetCasterGuid() == caster->GetObjectGuid())
+            return true;
+
+    return false;
+}
+
+bool PlayerbotAI::Cast(uint32 spellId, Unit *target, bool OneAuraByCaster)
+{
+    if (OneAuraByCaster)
+    {
+        if (!HasAuraFromUnit(spellId, target, m_bot))
+            return CastSpell(spellId, target);
     }
+    else
+    {
+        if (!HasAura(spellId, target))
+            return CastSpell(spellId, target);
+    }
+
     return false;
 }
 
