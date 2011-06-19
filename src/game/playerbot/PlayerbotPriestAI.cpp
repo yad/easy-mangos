@@ -100,10 +100,8 @@ bool PlayerbotPriestAI::DoProtectSelfAction()
     static uint32 elt = sizeof(spells) / sizeof(uint32);
 
     for (uint32 i = 0; i < elt; i++)
-    {
         if (ai->CastAura(spells[i], m_bot))
             return true;
-    }
 
     return false;
 }
@@ -123,8 +121,8 @@ bool PlayerbotPriestAI::HealTarget(Unit* target)
         return true;
     else if (hp < 80 && !target->HasAuraFromUnit(RENEW, m_bot) && ai->CastSpell(RENEW, target))
         return true;
-    else
-        return false;
+    
+    return false;
 }
 
 bool PlayerbotPriestAI::DoCombatManeuver(Unit *pTarget, bool cac)
@@ -286,8 +284,10 @@ bool PlayerbotPriestAI::DoCombatManeuver(Unit *pTarget, bool cac)
 void PlayerbotPriestAI::DoNonCombatActions()
 {
     PlayerbotAI *ai = GetAI();
-    Player * m_bot = GetPlayerBot();
-    Player* m_master = ai->GetLeader();
+    Player *m_bot = GetPlayerBot();
+    Player *m_master = ai->GetLeader();
+    Group *m_group = m_bot->GetGroup();
+    GroupReference *ref = (m_group) ? m_group->GetFirstMember() : NULL;
 
     if (m_bot->getRole() != PriestHoly)
     {
@@ -323,71 +323,53 @@ void PlayerbotPriestAI::DoNonCombatActions()
     if (ai->SelfBuff(INNER_FIRE))
         return;
 
-    // buff and heal master's group
-    if (m_master->GetGroup())
+    // buff and heal group
+    ref = (m_group) ? m_group->GetFirstMember() : NULL;
+    do
     {
-        // Buff master with group buffs
-        if (m_master->isAlive())
-        {
-            if (PRAYER_OF_FORTITUDE && ai->HasSpellReagents(PRAYER_OF_FORTITUDE) && ai->Buff(PRAYER_OF_FORTITUDE, m_master))
+        Player *g_member = (ref) ? ref->getSource() : m_bot;
+
+        if (!g_member->isAlive())
+            if (ai->CastSpell(RESURRECTION, g_member))
                 return;
 
-            if (PRAYER_OF_SPIRIT && ai->HasSpellReagents(PRAYER_OF_SPIRIT) && ai->Buff(PRAYER_OF_SPIRIT, m_master))
-                return;
-        }
+        if (HealTarget(g_member))
+            return;
 
-        Group::MemberSlotList const& groupSlot = m_master->GetGroup()->GetMemberSlots();
-        for (Group::member_citerator itr = groupSlot.begin(); itr != groupSlot.end(); itr++)
-        {
-            Player *tPlayer = sObjectMgr.GetPlayer(itr->guid);
-            if (!tPlayer || tPlayer == m_bot)
-                continue;
+        if (BuffPlayer(g_member))
+            return;
 
-            // first rezz em
-            if (!tPlayer->isAlive())
-            {
-                if (!ai->CastSpell(RESURRECTION, tPlayer))
-                    continue;
-            }
-            else
-            {
-                // buff and heal
-                if (BuffPlayer(tPlayer))
-                    return;
+    }while (ref = (ref) ? ref->next() : NULL);
 
-                if (HealTarget(tPlayer))
-                    return;
-            }
-        }
-    }
-    else
+
+    // Buff master with group buffs
+    if (m_group && m_master->isAlive())
     {
-        if (m_master->isAlive())
-        {
-            if (BuffPlayer(m_master))
-                return;
-            if (HealTarget(m_master))
-                return;
-        }
-        else
-            ai->CastSpell(RESURRECTION, m_master);
+        if ((!m_bot->HasAura(PRAYER_OF_FORTITUDE) || !m_master->HasAura(PRAYER_OF_FORTITUDE)) && ai->Buff(PRAYER_OF_FORTITUDE, m_master))
+            return;
+
+        if ((!m_bot->HasAura(PRAYER_OF_SPIRIT) || !m_master->HasAura(PRAYER_OF_SPIRIT)) && ai->Buff(PRAYER_OF_SPIRIT, m_master))
+            return;
     }
 
-    BuffPlayer(m_bot);
+    return;
 }
 
 bool PlayerbotPriestAI::BuffPlayer(Player* target)
 {
-    PlayerbotAI * ai = GetAI();
-    Pet * pet = target->GetPet();
+    PlayerbotAI *ai = GetAI();
+    Pet *pet = target->GetPet();
 
-    if (pet && pet->isAlive() && ai->Buff(POWER_WORD_FORTITUDE, pet))
-        return true;
+    if (!PRAYER_OF_FORTITUDE)
+    {
+        if (pet && pet->isAlive() && ai->Buff(POWER_WORD_FORTITUDE, pet))
+            return true;
 
-    if (target->isAlive() && ai->Buff(POWER_WORD_FORTITUDE, target))
-        return true;
+        if (target->isAlive() && ai->Buff(POWER_WORD_FORTITUDE, target))
+            return true;
+    }
 
-    if ((target->getClass() == CLASS_DRUID || target->getPowerType() == POWER_MANA) && target->isAlive() && ai->Buff(DIVINE_SPIRIT, target))
+    if (!PRAYER_OF_SPIRIT && (target->getClass() == CLASS_DRUID || target->getPowerType() == POWER_MANA) && target->isAlive() && ai->Buff(DIVINE_SPIRIT, target))
         return true;
 
     return false;

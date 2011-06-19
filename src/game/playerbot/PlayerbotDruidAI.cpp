@@ -397,6 +397,9 @@ bool PlayerbotDruidAI::BuffPlayer()
     }
     else if (m_bot->GetGroup())
     {
+        if (m_master->isAlive() && (!m_bot->HasAura(GIFT_OF_THE_WILD) || !m_master->HasAura(GIFT_OF_THE_WILD)) && ai->Buff(GIFT_OF_THE_WILD, m_master))
+            return true;
+
         GroupReference *ref = NULL;
         ref = m_bot->GetGroup()->GetFirstMember();
         while (ref)
@@ -404,7 +407,7 @@ bool PlayerbotDruidAI::BuffPlayer()
             Player* pl = ref->getSource();
             if (pl!=m_bot && pl->isAlive() && !pl->duel)
             {
-                if (ai->Buff(MARK_OF_THE_WILD, pl))
+                if (!GIFT_OF_THE_WILD && ai->Buff(MARK_OF_THE_WILD, pl))
                     return true;
                 if (ai->Buff(THORNS, pl))
                     return true;
@@ -417,7 +420,7 @@ bool PlayerbotDruidAI::BuffPlayer()
             Player* pl = ref->getSource();
             if (pl!=m_bot && pl->isAlive() && !pl->duel && pl->GetPet())
             {
-                if (ai->Buff(MARK_OF_THE_WILD, pl->GetPet()))
+                if (!GIFT_OF_THE_WILD && ai->Buff(MARK_OF_THE_WILD, pl->GetPet()))
                     return true;
                 if (ai->Buff(THORNS, pl->GetPet()))
                     return true;

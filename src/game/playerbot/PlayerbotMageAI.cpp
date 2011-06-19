@@ -113,7 +113,7 @@ bool PlayerbotMageAI::DoProtectSelfAction()
 
     for (uint32 i = 0; i < elt; i++)
     {
-        if (ai->CastAura(spells[i], m_bot))
+        if (!m_bot->HasAura(spells[i]) && ai->CastSpell(spells[i], m_bot))
             return true;
     }
 
