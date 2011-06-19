@@ -201,35 +201,40 @@ void PlayerbotMageAI::DoNonCombatActions()
     Player* m_bot = GetPlayerBot();
     Player* m_master = ai->GetLeader();
 
+    static const uint32 armor[] = {FROST_ARMOR, ICE_ARMOR, MAGE_ARMOR, MOLTEN_ARMOR};
+    int elt = sizeof(armor) / sizeof(uint32);
+    int num;
+
     switch (m_bot->getRole())
     {
         case MageFire:
         {
-            if (!ai->CastAura(MOLTEN_ARMOR, m_bot))
-                if (!ai->CastAura(ICE_ARMOR, m_bot))
-                    if (ai->CastAura(FROST_ARMOR, m_bot))
-                        return;
+            for (num = elt-1; num >= 0; num--)
+                if (armor[num])
+                    break;
             break;
         }
         case MageArcane:
         {
-            if (!ai->CastAura(MAGE_ARMOR, m_bot))
-                if (!ai->CastAura(ICE_ARMOR, m_bot))
-                    if (ai->CastAura(FROST_ARMOR, m_bot))
-                        return;
+            for (num = elt-2; num >= 0; num--)
+                if (armor[num])
+                    break;
             break;
         }
         case MageFrost:
         {
-            if (!ai->CastAura(ICE_ARMOR, m_bot))
-                if (ai->CastAura(FROST_ARMOR, m_bot))
-                    return;
+            for (num = elt-3; num >= 0; num--)
+                if (armor[num])
+                    break;
 
             if (!m_bot->GetPet() && ai->CastSpell(SUMMON_WATER_ELEMENTAL, m_bot))
                 return;
             break;
         }
     }
+
+    if (ai->Cast(armor[num]))
+        return;
 
     if (BuffPlayer())
         return;

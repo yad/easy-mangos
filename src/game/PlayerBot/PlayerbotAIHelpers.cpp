@@ -1240,6 +1240,9 @@ bool PlayerbotAI::HasAuraFromUnit(uint32 spellId, Unit *target, Unit *caster)
 
 bool PlayerbotAI::Cast(uint32 spellId, Unit *target, bool OneAuraByCaster)
 {
+    if (!target)
+        target = m_bot;
+
     if (OneAuraByCaster)
     {
         if (!HasAuraFromUnit(spellId, target, m_bot))

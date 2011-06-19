@@ -149,7 +149,7 @@ public:
     Item* FindItem(uint32 ItemId);
     Item* FindConsumable(uint32 displayId) const;
 
-    bool Cast(uint32 spellId, Unit* target, bool OneAuraByCaster = false);
+    bool Cast(uint32 spellId, Unit *target = NULL, bool OneAuraByCaster = false);
     bool CastAura(uint32 spellId, Unit* target);
     bool CastSpell(uint32 spellId, Unit* target = NULL);
     bool CastPetAura(uint32 spellId, Unit* target);
