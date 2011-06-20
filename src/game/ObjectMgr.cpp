@@ -2497,6 +2497,66 @@ void ObjectMgr::LoadItemConverts()
     sLog.outString(">> Loaded %u Item converts", count);
 }
 
+void ObjectMgr::LoadItemExpireConverts()
+{
+    m_ItemExpireConvert.clear();                            // needed for reload case
+
+    uint32 count = 0;
+
+    QueryResult *result = WorldDatabase.Query("SELECT entry,item FROM item_expire_convert");
+
+    if (!result)
+    {
+        BarGoLink bar(1);
+
+        bar.step();
+
+        sLog.outString();
+        sLog.outErrorDb(">> Loaded 0 Item expire converts . DB table `item_expire_convert` is empty.");
+        return;
+    }
+
+    BarGoLink bar(result->GetRowCount());
+
+    do
+    {
+        Field *fields = result->Fetch();
+        bar.step();
+
+        uint32 itemEntry    = fields[0].GetUInt32();
+        uint32 itemTargetId = fields[1].GetUInt32();
+
+        ItemPrototype const* pItemEntryProto = sItemStorage.LookupEntry<ItemPrototype>(itemEntry);
+        if (!pItemEntryProto)
+        {
+            sLog.outErrorDb("Table `item_expire_convert`: Item %u not exist in `item_template`.", itemEntry);
+            continue;
+        }
+
+        ItemPrototype const* pItemTargetProto = sItemStorage.LookupEntry<ItemPrototype>(itemTargetId);
+        if (!pItemTargetProto)
+        {
+            sLog.outErrorDb("Table `item_expire_convert`: Item target %u for original item %u not exist in `item_template`.", itemTargetId, itemEntry);
+            continue;
+        }
+
+        // Expire convert possible only for items with duration
+        if (pItemEntryProto->Duration == 0)
+        {
+            sLog.outErrorDb("Table `item_expire_convert` not appropriate item %u conversion to %u. Table can be used for items with duration.", itemEntry, itemTargetId);
+            continue;
+        }
+
+        m_ItemExpireConvert[itemEntry] = itemTargetId;
+
+        ++count;
+    } while (result->NextRow());
+
+    delete result;
+
+    sLog.outString();
+    sLog.outString(">> Loaded %u Item expire converts", count);
+}
 
 void ObjectMgr::LoadItemRequiredTarget()
 {
@@ -2873,8 +2933,6 @@ void ObjectMgr::LoadCreatureSpells()
 
     BarGoLink bar( (int)result->GetRowCount() );
 
-    m_creatureSpellStorage.clear();
-
     do
     {
         Field* fields = result->Fetch();
@@ -2890,12 +2948,13 @@ void ObjectMgr::LoadCreatureSpells()
         }
 
 
-        CreatureSpellsList* pCreatureSpells = &m_creatureSpellStorage[creature_id];
+        uint8 activeState  = fields[3].GetUInt8();
+        CreatureSpellsList* pCreatureSpells = &m_creatureSpellStorage[activeState][creature_id];
 
         if (!pCreatureSpells)
         {
-            m_creatureSpellStorage.insert(std::make_pair(creature_id,CreatureSpellsList()));
-            pCreatureSpells = &m_creatureSpellStorage[creature_id];
+            m_creatureSpellStorage[activeState].insert(std::make_pair(creature_id,CreatureSpellsList()));
+            pCreatureSpells = &m_creatureSpellStorage[activeState][creature_id];
             MANGOS_ASSERT(pCreatureSpells);
         }
 
@@ -2903,7 +2962,6 @@ void ObjectMgr::LoadCreatureSpells()
         CreatureSpellEntry creatureSpellEntry;
 
         creatureSpellEntry.spell        = fields[1].GetUInt32();
-        creatureSpellEntry.activeState  = fields[3].GetUInt8();
         creatureSpellEntry.disabled     = fields[4].GetBool();
         creatureSpellEntry.flags        = fields[5].GetUInt32();
 
@@ -2917,10 +2975,10 @@ void ObjectMgr::LoadCreatureSpells()
     sLog.outString( ">> Loaded %u creature spell definitions", count );
 }
 
-CreatureSpellsList const* ObjectMgr::GetCreatureSpells(uint32 creature_id)
+CreatureSpellsList const* ObjectMgr::GetCreatureSpells(uint32 creature_id, uint8 activeState)
 {
-    CreatureSpellStorage::const_iterator itr = m_creatureSpellStorage.find(creature_id);
-    if (itr == m_creatureSpellStorage.end())
+    CreatureSpellStorage::const_iterator itr = m_creatureSpellStorage[activeState].find(creature_id);
+    if (itr == m_creatureSpellStorage[activeState].end())
         return NULL;
     else
         return &itr->second;

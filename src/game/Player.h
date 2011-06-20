@@ -124,7 +124,11 @@ struct SpellModifier
     SpellModifier() : charges(0), lastAffected(NULL) {}
 
     SpellModifier(SpellModOp _op, SpellModType _type, int32 _value, uint32 _spellId, uint64 _mask, uint32 _mask2 = 0, int16 _charges = 0)
-        : op(_op), type(_type), charges(_charges), value(_value), mask(_mask), mask2(_mask2), spellId(_spellId), lastAffected(NULL)
+        : op(_op), type(_type), charges(_charges), value(_value), mask(_mask, _mask2), spellId(_spellId), lastAffected(NULL)
+    {}
+
+    SpellModifier(SpellModOp _op, SpellModType _type, int32 _value, uint32 _spellId, ClassFamilyMask _mask, int16 _charges = 0)
+        : op(_op), type(_type), charges(_charges), value(_value), mask(_mask), spellId(_spellId), lastAffected(NULL)
     {}
 
     SpellModifier(SpellModOp _op, SpellModType _type, int32 _value, SpellEntry const* spellEntry, SpellEffectIndex eff, int16 _charges = 0);
@@ -137,8 +141,7 @@ struct SpellModifier
     SpellModType type : 8;
     int16 charges     : 16;
     int32 value;
-    uint64 mask;
-    uint32 mask2;
+    ClassFamilyMask mask;
     uint32 spellId;
     Spell const* lastAffected;
 };
@@ -716,7 +719,7 @@ enum EquipmentSetUpdateState
 
 struct EquipmentSet
 {
-    EquipmentSet() : Guid(0), state(EQUIPMENT_SET_NEW)
+    EquipmentSet() : Guid(0), IgnoreMask(0), state(EQUIPMENT_SET_NEW)
     {
         for(int i = 0; i < EQUIPMENT_SLOT_END; ++i)
             Items[i] = 0;
@@ -725,6 +728,7 @@ struct EquipmentSet
     uint64 Guid;
     std::string Name;
     std::string IconName;
+    uint32 IgnoreMask;
     uint32 Items[EQUIPMENT_SLOT_END];
     EquipmentSetUpdateState state;
 };
@@ -1227,18 +1231,18 @@ class MANGOS_DLL_SPEC Player : public Unit
             return _CanStoreItem( bag, slot, dest, pItem->GetEntry(), count, pItem, swap, NULL );
 
         }
-        InventoryResult CanStoreItems( Item **pItem,int count) const;
-        InventoryResult CanEquipNewItem( uint8 slot, uint16 &dest, uint32 item, bool swap ) const;
-        InventoryResult CanEquipItem( uint8 slot, uint16 &dest, Item *pItem, bool swap, bool not_loading = true ) const;
+        InventoryResult CanStoreItems(Item **pItem,int count) const;
+        InventoryResult CanEquipNewItem(uint8 slot, uint16 &dest, uint32 item, bool swap) const;
+        InventoryResult CanEquipItem(uint8 slot, uint16 &dest, Item *pItem, bool swap, bool direct_action = true) const;
 
         InventoryResult CanEquipUniqueItem( Item * pItem, uint8 except_slot = NULL_SLOT, uint32 limit_count = 1 ) const;
         InventoryResult CanEquipUniqueItem( ItemPrototype const* itemProto, uint8 except_slot = NULL_SLOT, uint32 limit_count = 1 ) const;
         InventoryResult CanUnequipItems( uint32 item, uint32 count ) const;
         InventoryResult CanUnequipItem( uint16 src, bool swap ) const;
         InventoryResult CanBankItem( uint8 bag, uint8 slot, ItemPosCountVec& dest, Item *pItem, bool swap, bool not_loading = true ) const;
-        InventoryResult CanUseItem( Item *pItem, bool not_loading = true ) const;
-        bool HasItemTotemCategory( uint32 TotemCategory ) const;
-        InventoryResult CanUseItem( ItemPrototype const *pItem ) const;
+        InventoryResult CanUseItem(Item *pItem, bool direct_action = true) const;
+        bool HasItemTotemCategory(uint32 TotemCategory) const;
+        InventoryResult CanUseItem(ItemPrototype const *pItem) const;
         InventoryResult CanUseAmmo( uint32 item ) const;
         Item* StoreNewItem( ItemPosCountVec const& pos, uint32 item, bool update,int32 randomPropertyId = 0, AllowedLooterSet* allowedLooters = NULL );
         Item* StoreItem( ItemPosCountVec const& pos, Item *pItem, bool update );
@@ -1267,93 +1271,21 @@ class MANGOS_DLL_SPEC Player : public Unit
         /// Flying mounts everywhere mode
         void FlyingMountsSpellsToItems();
         bool CanUseFlyingMounts(SpellEntry const* spellInfo);
-        //helpers
-        bool isFlyingSpell(SpellEntry const* spellInfo) const
-        {
-            return spellInfo->EffectApplyAuraName[0]==SPELL_AURA_MOUNTED &&
-            spellInfo->EffectApplyAuraName[1]==SPELL_AURA_MOD_FLIGHT_SPEED_MOUNTED &&
-            spellInfo->EffectApplyAuraName[2]==SPELL_AURA_MOD_INCREASE_MOUNTED_SPEED;
-        }
+        bool isFlyingSpell(SpellEntry const* spellInfo) const;
+        bool isRunningSpell(SpellEntry const* spellInfo) const;
+        bool isFlyingFormSpell(SpellEntry const* spellInfo) const;
+        bool isRunningFormSpell(SpellEntry const* spellInfo) const;
+        void RemoveFlyingSpells();
+        void RemoveFlyingFormSpells();
+        void RemoveRunningFormSpells();
+        void RemoveAllFlyingSpells();
+        bool HasAuraTypeFlyingSpell();
+        bool HasAuraTypeFlyingFormSpell();
+        bool HasAuraTypeRunningFormSpell();
+        bool GetFlyingMountTimer();
+        void SetFlyingMountTimer();
 
-        bool isRunningSpell(SpellEntry const* spellInfo) const
-        {
-            return spellInfo->EffectApplyAuraName[0]==SPELL_AURA_MOUNTED &&
-            spellInfo->EffectApplyAuraName[1]==SPELL_AURA_MOD_INCREASE_MOUNTED_SPEED;
-        }
-
-        bool isFlyingFormSpell(SpellEntry const* spellInfo) const
-        {
-            return spellInfo->EffectApplyAuraName[0]==SPELL_AURA_MOD_SHAPESHIFT &&
-            spellInfo->EffectApplyAuraName[1]==SPELL_AURA_MECHANIC_IMMUNITY &&
-            spellInfo->EffectApplyAuraName[2]==SPELL_AURA_FLY;
-        }
-
-        bool isRunningFormSpell(SpellEntry const* spellInfo) const
-        {
-            return spellInfo->EffectApplyAuraName[0]==SPELL_AURA_MOD_SHAPESHIFT &&
-            spellInfo->EffectApplyAuraName[1]==SPELL_AURA_MECHANIC_IMMUNITY &&
-            spellInfo->EffectApplyAuraName[2]!=SPELL_AURA_FLY;
-        }
-
-        void RemoveFlyingSpells()
-        {
-            Unmount();
-            RemoveSpellsCausingAura(SPELL_AURA_MOUNTED);
-            RemoveSpellsCausingAura(SPELL_AURA_MOD_FLIGHT_SPEED_MOUNTED);
-            RemoveSpellsCausingAura(SPELL_AURA_MOD_INCREASE_MOUNTED_SPEED);
-        }
-
-        void RemoveFlyingFormSpells()
-        {
-            RemoveSpellsCausingAura(SPELL_AURA_MOD_SHAPESHIFT);
-            RemoveSpellsCausingAura(SPELL_AURA_MECHANIC_IMMUNITY);
-            RemoveSpellsCausingAura(SPELL_AURA_FLY);
-        }
-
-        void RemoveRunningFormSpells()
-        {
-            RemoveSpellsCausingAura(SPELL_AURA_MOD_SHAPESHIFT);
-            RemoveSpellsCausingAura(SPELL_AURA_MECHANIC_IMMUNITY);
-        }
-
-        void RemoveAllFlyingSpells()
-        {
-            RemoveFlyingSpells();
-            RemoveFlyingFormSpells();
-        }
-
-        bool HasAuraTypeFlyingSpell()
-        {
-            return HasAuraType(SPELL_AURA_MOUNTED) &&
-            HasAuraType(SPELL_AURA_MOD_FLIGHT_SPEED_MOUNTED) &&
-            HasAuraType(SPELL_AURA_MOD_INCREASE_MOUNTED_SPEED);
-        }
-
-        bool HasAuraTypeFlyingFormSpell()
-        {
-            return HasAuraType(SPELL_AURA_MOD_SHAPESHIFT) &&
-            HasAuraType(SPELL_AURA_MECHANIC_IMMUNITY) &&
-            HasAuraType(SPELL_AURA_FLY);
-        }
-
-        bool HasAuraTypeRunningFormSpell()
-        {
-            return HasAuraType(SPELL_AURA_MOD_SHAPESHIFT) &&
-            HasAuraType(SPELL_AURA_MECHANIC_IMMUNITY) &&
-            !HasAuraType(SPELL_AURA_FLY);
-        }
-
-        bool GetFlyingMountTimer()
-        {
-            return m_flytimer < time(NULL);
-        }
-
-        void SetFlyingMountTimer()
-        {
-            m_flytimer = time(NULL) + 0.5;
-        }
-        //end of helpers.
-        ///end of Flying mounts everywhere mode
+        Item* ConvertItem(Item* item, uint32 newItemId);
 
         InventoryResult _CanTakeMoreSimilarItems(uint32 entry, uint32 count, Item* pItem, uint32* no_space_count = NULL) const;
         InventoryResult _CanStoreItem( uint8 bag, uint8 slot, ItemPosCountVec& dest, uint32 entry, uint32 count, Item *pItem = NULL, bool swap = false, uint32* no_space_count = NULL ) const;
@@ -2382,6 +2314,9 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         void SendCinematicStart(uint32 CinematicSequenceId);
         void SendMovieStart(uint32 MovieId);
+
+        // select modelid depending on hair color or skin tone
+        uint32 GetModelForForm(SpellShapeshiftFormEntry const* ssEntry) const;
 
         /*********************************************************/
         /***                 INSTANCE SYSTEM                   ***/

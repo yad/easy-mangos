@@ -356,6 +356,7 @@ class Spell
         void EffectCancelAura(SpellEffectIndex eff_idx);
 
         void EffectFriendSummon(SpellEffectIndex eff_idx);
+        void EffectServerSide(SpellEffectIndex eff_idx);
 
         Spell(Unit* caster, SpellEntry const *info, bool triggered, ObjectGuid originalCasterGUID = ObjectGuid(), SpellEntry const* triggeredBy = NULL);
         ~Spell();
@@ -804,6 +805,9 @@ namespace MaNGOS
                             if (!i_originalCaster->IsHostileTo( itr->getSource() ))
                                 continue;
                         }
+
+                        if (!itr->getSource()->IsVisibleTargetForAoEDamage(i_originalCaster, i_spell.m_spellInfo))
+                            continue;
                     }
                     break;
                     case SPELL_TARGETS_ALL:

@@ -3399,3 +3399,88 @@ bool ChatHandler::HandleBotAddPOI(char* args)
         id, x, y, z, mapid, zoneid, minlevel, maxlevel, territory);
     return true;
 }
+
+bool Player::isFlyingSpell(SpellEntry const* spellInfo) const
+{
+    return spellInfo->EffectApplyAuraName[0]==SPELL_AURA_MOUNTED &&
+    spellInfo->EffectApplyAuraName[1]==SPELL_AURA_MOD_FLIGHT_SPEED_MOUNTED &&
+    spellInfo->EffectApplyAuraName[2]==SPELL_AURA_MOD_INCREASE_MOUNTED_SPEED;
+}
+
+bool Player::isRunningSpell(SpellEntry const* spellInfo) const
+{
+    return spellInfo->EffectApplyAuraName[0]==SPELL_AURA_MOUNTED &&
+    spellInfo->EffectApplyAuraName[1]==SPELL_AURA_MOD_INCREASE_MOUNTED_SPEED;
+}
+
+bool Player::isFlyingFormSpell(SpellEntry const* spellInfo) const
+{
+    return spellInfo->EffectApplyAuraName[0]==SPELL_AURA_MOD_SHAPESHIFT &&
+    spellInfo->EffectApplyAuraName[1]==SPELL_AURA_MECHANIC_IMMUNITY &&
+    spellInfo->EffectApplyAuraName[2]==SPELL_AURA_FLY;
+}
+
+bool Player::isRunningFormSpell(SpellEntry const* spellInfo) const
+{
+    return spellInfo->EffectApplyAuraName[0]==SPELL_AURA_MOD_SHAPESHIFT &&
+    spellInfo->EffectApplyAuraName[1]==SPELL_AURA_MECHANIC_IMMUNITY &&
+    spellInfo->EffectApplyAuraName[2]!=SPELL_AURA_FLY;
+}
+
+void Player::RemoveFlyingSpells()
+{
+    Unmount();
+    RemoveSpellsCausingAura(SPELL_AURA_MOUNTED);
+    RemoveSpellsCausingAura(SPELL_AURA_MOD_FLIGHT_SPEED_MOUNTED);
+    RemoveSpellsCausingAura(SPELL_AURA_MOD_INCREASE_MOUNTED_SPEED);
+}
+
+void Player::RemoveFlyingFormSpells()
+{
+    RemoveSpellsCausingAura(SPELL_AURA_MOD_SHAPESHIFT);
+    RemoveSpellsCausingAura(SPELL_AURA_MECHANIC_IMMUNITY);
+    RemoveSpellsCausingAura(SPELL_AURA_FLY);
+}
+
+void Player::RemoveRunningFormSpells()
+{
+    RemoveSpellsCausingAura(SPELL_AURA_MOD_SHAPESHIFT);
+    RemoveSpellsCausingAura(SPELL_AURA_MECHANIC_IMMUNITY);
+}
+
+void Player::RemoveAllFlyingSpells()
+{
+    RemoveFlyingSpells();
+    RemoveFlyingFormSpells();
+}
+
+bool Player::HasAuraTypeFlyingSpell()
+{
+    return HasAuraType(SPELL_AURA_MOUNTED) &&
+        HasAuraType(SPELL_AURA_MOD_FLIGHT_SPEED_MOUNTED) &&
+        HasAuraType(SPELL_AURA_MOD_INCREASE_MOUNTED_SPEED);
+}
+
+bool Player::HasAuraTypeFlyingFormSpell()
+{
+    return HasAuraType(SPELL_AURA_MOD_SHAPESHIFT) &&
+        HasAuraType(SPELL_AURA_MECHANIC_IMMUNITY) &&
+        HasAuraType(SPELL_AURA_FLY);
+}
+
+bool Player::HasAuraTypeRunningFormSpell()
+{
+    return HasAuraType(SPELL_AURA_MOD_SHAPESHIFT) &&
+        HasAuraType(SPELL_AURA_MECHANIC_IMMUNITY) &&
+        !HasAuraType(SPELL_AURA_FLY);
+}
+
+bool Player::GetFlyingMountTimer()
+{
+    return m_flytimer < time(NULL);
+}
+
+void Player::SetFlyingMountTimer()
+{
+    m_flytimer = time(NULL) + 0.5;
+}

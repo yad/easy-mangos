@@ -379,9 +379,9 @@ bool WorldSession::Update(PacketFilter& updater)
     }
 
     ///- Cleanup socket pointer if need
-    if (m_Socket && m_Socket->IsClosed ())
+    if (m_Socket && m_Socket->IsClosed())
     {
-        m_Socket->RemoveReference ();
+        m_Socket->RemoveReference();
         m_Socket = NULL;
     }
 

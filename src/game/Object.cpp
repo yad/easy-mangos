@@ -92,12 +92,11 @@ void Object::_InitValues()
     m_objectUpdated = false;
 }
 
-void Object::_Create(uint32 guidlow, uint32 entry, HighGuid guidhigh)
+void Object::_Create(ObjectGuid guid)
 {
     if(!m_uint32Values)
         _InitValues();
 
-    ObjectGuid guid = ObjectGuid(guidhigh, entry, guidlow);
     SetGuidValue(OBJECT_FIELD_GUID, guid);
     SetUInt32Value(OBJECT_FIELD_TYPE, m_objectType);
     m_PackGUID.Set(guid);
@@ -247,9 +246,9 @@ void Object::DestroyForPlayer( Player *target, bool anim ) const
 
 void Object::BuildMovementUpdate(ByteBuffer * data, uint16 updateFlags) const
 {
+/* removed by zergtmn. strange...
     uint16 moveFlags2 = (isType(TYPEMASK_UNIT) ? ((Unit*)this)->m_movementInfo.GetMovementFlags2() : MOVEFLAG2_NONE);
 
-/* removed by zergtmn. strange...
     if(GetTypeId() == TYPEID_UNIT)
         if(((Creature*)this)->GetVehicleKit())
             moveFlags2 |= MOVEFLAG2_ALLOW_PITCHING;         // always allow pitch
@@ -1104,8 +1103,8 @@ void Object::MarkForClientUpdate()
 }
 
 WorldObject::WorldObject()
-    : m_isActiveObject(false), m_currMap(NULL), m_mapId(0), m_InstanceId(0), m_phaseMask(PHASEMASK_NORMAL),
-    m_groupLootTimer(0), m_groupLootId(0), m_lootGroupRecipientId(0), m_name("")
+    : m_groupLootTimer(0), m_groupLootId(0), m_lootGroupRecipientId(0),
+    m_isActiveObject(false), m_currMap(NULL), m_mapId(0), m_InstanceId(0), m_phaseMask(PHASEMASK_NORMAL)
 {
 }
 
@@ -1549,7 +1548,7 @@ void WorldObject::UpdateAllowedPositionZ(float x, float y, float &z) const
                 float max_z = GetTerrain()->GetWaterOrGroundLevel(x, y, z, &ground_z, !((Unit const*)this)->HasAuraType(SPELL_AURA_WATER_WALK));
                 if (max_z > INVALID_HEIGHT)
                 {
-                    if (z > max_z)
+                    if (max_z != ground_z && z > max_z)
                         z = max_z;
                     else if (z < ground_z)
                         z = ground_z;
@@ -2258,17 +2257,12 @@ void WorldObject::SetLootRecipient(Unit *unit)
 }
 
 // Frozen Mod
-void Object::ForceValuesUpdateAtIndex(uint32 i)
+void Object::ForceValuesUpdateAtIndex(uint16 index)
 {
-    m_uint32Values_mirror[i] = GetUInt32Value(i) + 1; // makes server think the field changed
-    if(m_inWorld)
-    {
-        if(!m_objectUpdated)
-        {
-            AddToClientUpdateList();
-            m_objectUpdated = true;
-        }
-    }
+    MANGOS_ASSERT( index < m_valuesCount || PrintIndexError( index, true ) );
+
+    m_uint32Values_mirror[index] = m_uint32Values[index] + 1; // makes server think the field changed
+    MarkForClientUpdate();
 }
 // Frozen Mod
 

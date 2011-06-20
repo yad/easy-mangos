@@ -1059,7 +1059,7 @@ struct CharmInfo
         bool HasReactState(ReactStates state) { return (m_reactState == state); }
 
         void InitPossessCreateSpells();
-        void InitVehicleCreateSpells();
+        void InitVehicleCreateSpells(uint8 seatId = 0);
         void InitCharmCreateSpells();
         void InitPetActionBar();
         void InitEmptyActionBar();
@@ -1438,6 +1438,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
 
         bool HasAuraFromUnit(uint32 Spell, Unit *caster);
         bool HasAuraType(AuraType auraType) const;
+        bool HasAffectedAura(AuraType auraType, SpellEntry const* spellProto) const;
         bool HasAura(uint32 spellId, SpellEffectIndex effIndex) const;
         bool HasAura(uint32 spellId) const
         {
@@ -1693,7 +1694,13 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         uint32 m_invisibilityMask;
 
         ShapeshiftForm GetShapeshiftForm() const { return ShapeshiftForm(GetByteValue(UNIT_FIELD_BYTES_2, 3)); }
-        void  SetShapeshiftForm(ShapeshiftForm form) { SetByteValue(UNIT_FIELD_BYTES_2, 3, form); }
+        void  SetShapeshiftForm(ShapeshiftForm form)
+        {
+            SetByteValue(UNIT_FIELD_BYTES_2, 3, form);
+            // always update this field to prevent problems with shapeshifting
+            if (GetTypeId() == TYPEID_PLAYER)
+                ForceValuesUpdateAtIndex(UNIT_FIELD_BYTES_2);
+        }
 
         bool IsInFeralForm() const
         {
@@ -1707,6 +1714,9 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
             return form != FORM_NONE && form != FORM_BATTLESTANCE && form != FORM_BERSERKERSTANCE && form != FORM_DEFENSIVESTANCE &&
                 form != FORM_SHADOW;
         }
+
+        virtual uint32 GetModelForForm(SpellShapeshiftFormEntry const* ssEntry) const;
+        uint32 GetModelForForm() const;     // for current form
 
         float m_modMeleeHitChance;
         float m_modRangedHitChance;
@@ -1755,6 +1765,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         bool isVisibleForOrDetect(Unit const* u, WorldObject const* viewPoint, bool detect, bool inVisibleList = false, bool is3dDistance = true) const;
         bool canDetectInvisibilityOf(Unit const* u) const;
         void SetPhaseMask(uint32 newPhaseMask, bool update);// overwrite WorldObject::SetPhaseMask
+        bool IsVisibleTargetForAoEDamage(WorldObject const* caster, SpellEntry const* spellInfo) const;
 
         // virtual functions for all world objects types
         bool isVisibleForInState(Player const* u, WorldObject const* viewPoint, bool inVisibleList) const;
@@ -1798,7 +1809,11 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         uint8 GetVisibleAurasCount() const { return m_visibleAuras.size(); }
 
         Aura* GetAura(uint32 spellId, SpellEffectIndex effindex);
-        Aura* GetAura(AuraType type, SpellFamily family, uint64 familyFlag, uint32 familyFlag2 = 0, ObjectGuid casterGuid = ObjectGuid());
+        Aura* GetAura(AuraType type, SpellFamily family, ClassFamilyMask const& classMask, ObjectGuid casterGuid = ObjectGuid());
+        Aura* GetAura(AuraType type, SpellFamily family, uint64 familyFlag, uint32 familyFlag2 = 0, ObjectGuid casterGuid = ObjectGuid())
+        {
+            return GetAura(type, family, ClassFamilyMask(familyFlag, familyFlag2), casterGuid);
+        }
         SpellAuraHolder* GetSpellAuraHolder (uint32 spellid) const;
         SpellAuraHolder* GetSpellAuraHolder (uint32 spellid, ObjectGuid casterGUID) const;
 
@@ -1879,6 +1894,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         uint32 SpellCriticalHealingBonus(SpellEntry const *spellProto, uint32 damage, Unit *pVictim);
 
         bool IsTriggeredAtSpellProcEvent(Unit *pVictim, SpellAuraHolder* holder, SpellEntry const* procSpell, uint32 procFlag, uint32 procExtra, WeaponAttackType attType, bool isVictim, SpellProcEventEntry const*& spellProcEvent );
+        bool IsTriggeredAtCustomProcEvent(Unit *pVictim, SpellAuraHolder* holder, SpellEntry const* procSpell, uint32 procFlag, uint32 procExtra, WeaponAttackType attType, bool isVictim, SpellProcEventEntry const*& spellProcEvent );
         // Aura proc handlers
         SpellAuraProcResult HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAura, SpellEntry const *procSpell, uint32 procFlag, uint32 procEx, uint32 cooldown);
         SpellAuraProcResult HandleHasteAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAura, SpellEntry const *procSpell, uint32 procFlag, uint32 procEx, uint32 cooldown);
@@ -1911,6 +1927,8 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
             // this aura type can't proc
             return SPELL_AURA_PROC_CANT_TRIGGER;
         }
+        SpellAuraProcResult HandleDamageShieldAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAura, SpellEntry const *procSpell, uint32 procFlag, uint32 procEx, uint32 cooldown);
+        SpellAuraProcResult HandleDropChargeByDamageProc(Unit *pVictim, uint32 damage, Aura* triggeredByAura, SpellEntry const *procSpell, uint32 procFlag, uint32 procEx, uint32 cooldown);
 
         void SetLastManaUse() { m_lastManaUseTimer = 5000; }
         bool IsUnderLastManaUseEffect() const;
@@ -2009,13 +2027,13 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         inline bool IsSpoofSamePlayerFaction(void)    { return m_spoofSamePlayerFaction; }
         // Frozen Mod
 
-        void SetThreatRedirectionTarget(uint64 guid, uint32 pct)
+        void SetThreatRedirectionTarget(ObjectGuid guid, uint32 pct)
         {
             m_misdirectionTargetGUID = guid;
             m_ThreatRedirectionPercent = pct;
         }
         uint32 GetThreatRedirectionPercent() { return m_ThreatRedirectionPercent; }
-        Unit *GetMisdirectionTarget();
+        Unit* GetMisdirectionTarget() { return m_misdirectionTargetGUID.IsEmpty() ?  NULL : GetMap()->GetUnit(m_misdirectionTargetGUID); }
 
         // Movement info
         MovementInfo m_movementInfo;
@@ -2146,7 +2164,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
 
         GuardianPetList m_guardianPets;
         uint32 m_ThreatRedirectionPercent;
-        uint64 m_misdirectionTargetGUID;
+        ObjectGuid m_misdirectionTargetGUID;
 
         ObjectGuid m_TotemSlot[MAX_TOTEM_SLOT];
 

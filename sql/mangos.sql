@@ -24,7 +24,7 @@ CREATE TABLE `db_version` (
   `version` varchar(120) default NULL,
   `creature_ai_version` varchar(120) default NULL,
   `cache_id` int(10) default '0',
-  `required_11602_01_mangos_spell_proc_event` bit(1) default NULL
+  `required_11646_01_mangos_item_expire_convert` bit(1) default NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 ROW_FORMAT=FIXED COMMENT='Used DB version notes';
 
 --
@@ -2193,7 +2193,7 @@ CREATE TABLE `item_convert` (
   `entry` mediumint(8) unsigned NOT NULL default '0',
   `item` mediumint(8) unsigned NOT NULL default '0',
   PRIMARY KEY  (`entry`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 ROW_FORMAT=FIXED COMMENT='Npc System';
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 ROW_FORMAT=FIXED COMMENT='Item Convert System';
 
 --
 -- Dumping data for table `item_convert`
@@ -2223,6 +2223,26 @@ CREATE TABLE `item_enchantment_template` (
 LOCK TABLES `item_enchantment_template` WRITE;
 /*!40000 ALTER TABLE `item_enchantment_template` DISABLE KEYS */;
 /*!40000 ALTER TABLE `item_enchantment_template` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `item_expire_convert`
+--
+
+DROP TABLE IF EXISTS `item_expire_convert`;
+CREATE TABLE `item_expire_convert` (
+  `entry` mediumint(8) unsigned NOT NULL default '0',
+  `item` mediumint(8) unsigned NOT NULL default '0',
+  PRIMARY KEY  (`entry`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 ROW_FORMAT=FIXED COMMENT='Item Convert System';
+
+--
+-- Dumping data for table `item_convert`
+--
+
+LOCK TABLES `item_convert` WRITE;
+/*!40000 ALTER TABLE `item_convert` DISABLE KEYS */;
+/*!40000 ALTER TABLE `item_convert` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -14551,8 +14571,8 @@ INSERT INTO `spell_bonus_data` VALUES
 (9007,  0,      0,       0,     0.03,  'Druid - Pounce Bleed'),
 (1822,  0,      0,       0,     0.06,  'Druid - Rake'),
 (8936,  0.539,  0.188,   0,     0,     'Druid - Regrowth'),
-(50288, 0.05,   0,       0,     0,     'Druid - Starfall'),
-(50294, 0.012,  0,       0,     0,     'Druid - Starfall AOE'),
+(50288, 0.3,    0,       0,     0,     'Druid - Starfall'),
+(50294, 0.13,   0,       0,     0,     'Druid - Starfall AOE'),
 (18562, 0,      0,       0,     0,     'Druid - Swiftmend'),
 (44203, 0.538,  0,       0,     0,     'Druid - Tranquility Triggered'),
 (48438, 0,      0.11505, 0,     0,     'Druid - Wild Growth'),
@@ -17139,6 +17159,7 @@ INSERT INTO `spell_proc_event` VALUES
 (28719, 0x00,  7, 0x00000020, 0x00000020, 0x00000020, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (28744, 0x00,  7, 0x00000040, 0x00000040, 0x00000040, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00044000, 0x00000000, 0.000000, 0.000000,  0),
 (28752, 0x7F,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
+(28761, 0x7F,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (28789, 0x00, 10, 0xC0000000, 0xC0000000, 0xC0000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (28802, 0x7F,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00010000, 0.000000, 0.000000,  0),
 (28809, 0x00,  6, 0x00001000, 0x00001000, 0x00001000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
