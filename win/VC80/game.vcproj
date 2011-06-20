@@ -1041,6 +1041,42 @@
 				RelativePath="..\..\src\game\World.h"
 				>
 			</File>
+            <File
+				RelativePath="..\..\src\game\WorldPvP.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\game\WorldPvP.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\game\WorldPvPEP.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\game\WorldPvPEP.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\game\WorldPvPMgr.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\game\WorldPvPMgr.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\game\WorldPvPSI.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\game\WorldPvPSI.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\game\ZoneScript.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Motion generators"

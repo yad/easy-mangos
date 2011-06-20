@@ -66,10 +66,12 @@ class WorldSession;
 class Creature;
 class Player;
 class Unit;
+class Group;
 class Map;
 class UpdateMask;
 class InstanceData;
 class TerrainInfo;
+class ZoneScript;
 
 typedef UNORDERED_MAP<Player*, UpdateData> UpdateDataMapType;
 
@@ -356,6 +358,9 @@ class MANGOS_DLL_SPEC Object
 
         virtual bool HasQuest(uint32 /* quest_id */) const { return false; }
         virtual bool HasInvolvedQuest(uint32 /* quest_id */) const { return false; }
+
+        virtual void StartGroupLoot( Group* group, uint32 timer ) { }
+
     protected:
 
         Object ( );
@@ -370,6 +375,8 @@ class MANGOS_DLL_SPEC Object
         void BuildMovementUpdate(ByteBuffer * data, uint16 updateFlags) const;
         void BuildValuesUpdate(uint8 updatetype, ByteBuffer *data, UpdateMask *updateMask, Player *target ) const;
         void BuildUpdateDataForPlayer(Player* pl, UpdateDataMapType& update_players);
+
+        virtual void StopGroupLoot() { }
 
         uint16 m_objectType;
 
@@ -573,6 +580,9 @@ class MANGOS_DLL_SPEC WorldObject : public Object
         //obtain terrain data for map where this object belong...
         TerrainInfo const* GetTerrain() const;
 
+        void SetZoneScript();
+        ZoneScript * GetZoneScript() const { return m_zoneScript; }
+
         void AddToClientUpdateList();
         void RemoveFromClientUpdateList();
         void BuildUpdateData(UpdateDataMapType &);
@@ -594,6 +604,7 @@ class MANGOS_DLL_SPEC WorldObject : public Object
         void SetLocationMapId(uint32 _mapId) { m_mapId = _mapId; }
         void SetLocationInstanceId(uint32 _instanceId) { m_InstanceId = _instanceId; }
 
+        ZoneScript *m_zoneScript;
         std::string m_name;
 
         bool m_isActiveObject;

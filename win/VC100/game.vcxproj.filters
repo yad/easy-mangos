@@ -252,6 +252,18 @@
     <ClCompile Include="..\..\src\game\World.cpp">
       <Filter>World/Handlers</Filter>
     </ClCompile>
+	<ClCompile Include="..\..\src\game\WorldPvP.cpp">
+      <Filter>World/Handlers</Filter>
+    </ClCompile>
+	<ClCompile Include="..\..\src\game\WorldPvPEP.cpp">
+      <Filter>World/Handlers</Filter>
+    </ClCompile>
+	<ClCompile Include="..\..\src\game\WorldPvPMgr.cpp">
+      <Filter>World/Handlers</Filter>
+    </ClCompile>
+	<ClCompile Include="..\..\src\game\WorldPvPSI.cpp">
+      <Filter>World/Handlers</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\game\ConfusedMovementGenerator.cpp">
       <Filter>Motion generators</Filter>
     </ClCompile>
@@ -640,6 +652,21 @@
       <Filter>World/Handlers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\game\World.h">
+      <Filter>World/Handlers</Filter>
+    </ClInclude>
+	<ClInclude Include="..\..\src\game\WorldPvP.h">
+      <Filter>World/Handlers</Filter>
+    </ClInclude>
+	<ClInclude Include="..\..\src\game\WorldPvPEP.h">
+      <Filter>World/Handlers</Filter>
+    </ClInclude>
+	<ClInclude Include="..\..\src\game\WorldPvPMgr.h">
+      <Filter>World/Handlers</Filter>
+    </ClInclude>
+	<ClInclude Include="..\..\src\game\WorldPvPSI.h">
+      <Filter>World/Handlers</Filter>
+    </ClInclude>
+	<ClInclude Include="..\..\src\game\ZoneScript.h">
       <Filter>World/Handlers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\game\ConfusedMovementGenerator.h">

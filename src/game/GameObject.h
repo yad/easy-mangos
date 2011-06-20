@@ -310,7 +310,7 @@ struct GameObjectInfo
             uint32 radius;                                  //0
             uint32 spell;                                   //1
             uint32 worldState1;                             //2
-            uint32 worldstate2;                             //3
+            uint32 worldState2;                             //3
             uint32 winEventID1;                             //4
             uint32 winEventID2;                             //5
             uint32 contestedEventID1;                       //6
@@ -320,7 +320,7 @@ struct GameObjectInfo
             uint32 neutralEventID1;                         //10
             uint32 neutralEventID2;                         //11
             uint32 neutralPercent;                          //12
-            uint32 worldstate3;                             //13
+            uint32 worldState3;                             //13
             uint32 minSuperiority;                          //14
             uint32 maxSuperiority;                          //15
             uint32 minTime;                                 //16
@@ -581,6 +581,25 @@ enum LootState
     GO_JUST_DEACTIVATED
 };
 
+enum CapturePointState
+{
+    CAPTURE_STATE_NEUTRAL = 0,
+    CAPTURE_STATE_PROGRESS,
+    CAPTURE_STATE_CONTEST,
+    CAPTURE_STATE_WIN
+};
+
+// slider values meaning
+// 0   = full horde
+// 100 = full alliance
+// 50  = middle
+enum CapturePointSlider
+{
+    CAPTURE_SLIDER_ALLIANCE = 100,
+    CAPTURE_SLIDER_HORDE    = 0,
+    CAPTURE_SLIDER_NEUTRAL  = 50
+};
+
 class Unit;
 struct GameObjectDisplayInfoEntry;
 
@@ -703,6 +722,16 @@ class MANGOS_DLL_SPEC GameObject : public WorldObject
         void SaveRespawnTime();
 
         Loot        loot;
+        void StartGroupLoot(Group* group, uint32 timer);
+
+        ObjectGuid GetLootRecipientGuid() const { return m_lootRecipientGuid; }
+        uint32 GetLootGroupRecipientId() const { return m_lootGroupRecipientId; }
+        Player* GetLootRecipient() const;                   // use group cases as prefered
+        Group* GetGroupLootRecipient() const;
+        bool HasLootRecipient() const { return m_lootGroupRecipientId || !m_lootRecipientGuid.IsEmpty(); }
+        bool IsGroupLootRecipient() const { return m_lootGroupRecipientId; }
+        void SetLootRecipient(Unit* unit);
+        Player* GetOriginalLootRecipient() const;           // ignore group changes/etc, not for looting
 
         bool HasQuest(uint32 quest_id) const;
         bool HasInvolvedQuest(uint32 quest_id) const;
@@ -724,6 +753,11 @@ class MANGOS_DLL_SPEC GameObject : public WorldObject
         GridReference<GameObject> &GetGridRef() { return m_gridRef; }
 
     protected:
+        uint32      m_captureTime;
+        double      m_captureTicks;
+        uint8       m_captureState;
+        uint32      m_progressFaction;                      // faction which has the most players in range of a capture point
+        uint32      m_ownerFaction;                         // faction which has conquered the capture point
         uint32      m_spellId;
         time_t      m_respawnTime;                          // (secs) time of next respawn (or despawn if GO have owner()),
         uint32      m_respawnDelayTime;                     // (secs) if 0 then current GO state no dependent from timer
@@ -733,6 +767,11 @@ class MANGOS_DLL_SPEC GameObject : public WorldObject
                                                             // For traps/goober this: spell casting cooldown, for doors/buttons: reset time.
 
         typedef std::set<ObjectGuid> GuidsSet;
+        typedef std::set<Player*> PlayersSet;
+
+        PlayersSet m_CapturePlayersSet;                     // players in the radius of the capture point
+        PlayersSet m_AlliancePlayersSet;                    // player sets for each faction
+        PlayersSet m_HordePlayersSet;
 
         GuidsSet m_SkillupSet;                              // players that already have skill-up at GO use
 
@@ -745,6 +784,13 @@ class MANGOS_DLL_SPEC GameObject : public WorldObject
         GameObjectInfo const* m_goInfo;
         GameObjectDisplayInfoEntry const* m_displayInfo;
         int64 m_rotation;
+
+        uint32 m_groupLootTimer;                            // (msecs)timer used for group loot
+        uint32 m_groupLootId;                               // used to find group which is looting
+        void StopGroupLoot();
+
+        ObjectGuid m_lootRecipientGuid;                     // player who will have rights for looting if m_lootGroupRecipient==0 or group disbanded
+        uint32 m_lootGroupRecipientId;                      // group who will have rights for looting if set and exist
     private:
         void SwitchDoorOrButton(bool activate, bool alternative = false);
         void SetRotationQuat(float qx, float qy, float qz, float qw);
