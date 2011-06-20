@@ -35,6 +35,7 @@
 #include "MapManager.h"
 #include "MapPersistentStateMgr.h"
 #include "BattleGround.h"
+#include "WorldPvPMgr.h"
 #include "BattleGroundAV.h"
 #include "Util.h"
 #include "ScriptMgr.h"
@@ -64,7 +65,6 @@ GameObject::GameObject() : WorldObject(),
     m_cooldownTime = 0;
 
     m_rotation = 0;
-
     m_health = 0;
 }
 
@@ -173,6 +173,12 @@ bool GameObject::Create(uint32 guidlow, uint32 name_id, Map *map, uint32 phaseMa
             SetGoState(GO_STATE_ACTIVE);
     }
 
+    // Notify the outdoor pvp script
+    if(m_zoneScript)
+        m_zoneScript->OnGameObjectCreate(this);
+
+    SetZoneScript();
+
     return true;
 }
 
@@ -202,66 +208,36 @@ void GameObject::Update(uint32 update_diff, uint32 diff)
             MaNGOS::PlayerListSearcher<MaNGOS::AnyPlayerInObjectRangeCheck > checker(pointPlayers, u_check);
             Cell::VisitWorldObjects(this, checker, radius);
 
+            // clear the player sets at every tick to avoid errors and to speed up the process
+            m_CapturePlayersSet.clear();
+            m_AlliancePlayersSet.clear();
+            m_HordePlayersSet.clear();
+
             for (std::list<Player*>::iterator itr = pointPlayers.begin(); itr != pointPlayers.end(); ++itr)
             {
-                if (m_CapturePlayersSet.find((*itr)->GetObjectGuid()) != m_CapturePlayersSet.end())
-                    continue;
-                else
-                {
-                    // each faction in its list
-                    if (((Player*)(*itr))->GetTeam() == ALLIANCE)
-                        m_AlliancePlayersSet.insert((*itr)->GetObjectGuid());
-                    else if (((Player*)(*itr))->GetTeam() == HORDE)
-                        m_HordePlayersSet.insert((*itr)->GetObjectGuid());
+                // each faction in its list
+                if (((Player*)(*itr))->GetTeam() == ALLIANCE)
+                    m_AlliancePlayersSet.insert((*itr));
+                else if (((Player*)(*itr))->GetTeam() == HORDE)
+                    m_HordePlayersSet.insert((*itr));
 
-                    // also use a general list to make things easy for now
-                    m_CapturePlayersSet.insert((*itr)->GetObjectGuid());
-                }
+                // also use a general list to make things easy for now
+                m_CapturePlayersSet.insert((*itr));
             }
 
             // return if no players found
             if (m_CapturePlayersSet.empty())
                 return;
 
-            for (std::set<ObjectGuid>::iterator itr = m_CapturePlayersSet.begin(); itr != m_CapturePlayersSet.end(); ++itr)
+            for (PlayerSet::iterator itr = m_CapturePlayersSet.begin(); itr != m_CapturePlayersSet.end(); ++itr)
             {
-                if (Player* p_captor = GetMap()->GetPlayer(*itr))
-                {
-                    // check the radius for the players already in the set; remove those which are not valid
-                    if (!p_captor->IsWithinDistInMap(this, radius))
-                    {
-                        p_captor->SendUpdateWorldState(info->capturePoint.worldState1, 0);
-                        m_CapturePlayersSet.erase(p_captor->GetObjectGuid());
+                // check use conditions:
+                if (!(*itr)->IsWorldPvPActive())
+                    return;
 
-                        // also erase from faction sets
-                        if (p_captor->GetTeam() == ALLIANCE)
-                            m_AlliancePlayersSet.erase(p_captor->GetObjectGuid());
-                        else if (p_captor->GetTeam() == HORDE)
-                            m_HordePlayersSet.erase(p_captor->GetObjectGuid());
-                    }
-                    else
-                    {
-                        // check use conditions:
-                        if (!p_captor->isAlive())
-                            return;
-                        if (p_captor->HasStealthAura())
-                            return;
-                        if (p_captor->HasInvisibilityAura())
-                            return;
-                        if (!p_captor->IsPvP() && !sWorld.IsPvPRealm())
-                            return;
-                        if (p_captor->IsTaxiFlying())
-                            return;
-                        if (p_captor->HasMovementFlag(MOVEFLAG_FLYING))
-                            return;
-                        if (p_captor->isGameMaster())
-                            return;
-
-                        // if conditions are ok, then use the button
-                        // further checks and calculations will be done in the use function
-                        Use(p_captor);
-                    }
-                }
+                // if conditions are ok, then use the button
+                // further checks and calculations will be done in the use function
+                Use((*itr));
             }
             m_captureTime = 1000;
         }
@@ -1697,6 +1673,7 @@ void GameObject::Use(Unit* user)
             // default value to increase the slider is 1/max players
             // we multiply this value with the number of players in range
 
+            //Player* player = (Player*)user;
             double m_sliderTick = m_RangePlayers * ((double)1 / (double)info->capturePoint.maxSuperiority);
 
             // calculate the slider movement only for the major faction
@@ -1735,7 +1712,11 @@ void GameObject::Use(Unit* user)
             {
                 if (info->capturePoint.winEventID1)
                 {
-                    if (!sScriptMgr.OnProcessEvent(info->capturePoint.winEventID1, user, this, true))
+                    // send zone script
+                    if(m_zoneScript)
+                       m_zoneScript->ProcessEvent(this, (Player*)user, info->capturePoint.winEventID1);
+                    // if zone script fails send to scriptMgr
+                    else if (!sScriptMgr.OnProcessEvent(info->capturePoint.winEventID1, user, this, true))
                         GetMap()->ScriptsStart(sEventScripts, info->capturePoint.winEventID1, user, this);
 
                     m_captureState = CAPTURE_STATE_WIN;
@@ -1747,7 +1728,11 @@ void GameObject::Use(Unit* user)
             {
                 if (info->capturePoint.winEventID2)
                 {
-                    if (!sScriptMgr.OnProcessEvent(info->capturePoint.winEventID2, user, this, true))
+                    // send zone script
+                    if(m_zoneScript)
+                       m_zoneScript->ProcessEvent(this, (Player*)user, info->capturePoint.winEventID2);
+                    // if zone script fails send to scriptMgr
+                    else if (!sScriptMgr.OnProcessEvent(info->capturePoint.winEventID2, user, this, true))
                         GetMap()->ScriptsStart(sEventScripts, info->capturePoint.winEventID2, user, this);
 
                     m_captureState = CAPTURE_STATE_WIN;
@@ -1762,7 +1747,11 @@ void GameObject::Use(Unit* user)
             {
                 if (info->capturePoint.contestedEventID1)
                 {
-                    if (!sScriptMgr.OnProcessEvent(info->capturePoint.contestedEventID1, user, this, true))
+                    // send zone script
+                    if(m_zoneScript)
+                       m_zoneScript->ProcessEvent(this, (Player*)user, info->capturePoint.contestedEventID1);
+                    // if zone script fails send to scriptMgr
+                    else if (!sScriptMgr.OnProcessEvent(info->capturePoint.contestedEventID1, user, this, true))
                         GetMap()->ScriptsStart(sEventScripts, info->capturePoint.contestedEventID1, user, this);
 
                     m_captureState = CAPTURE_STATE_CONTEST;
@@ -1774,7 +1763,11 @@ void GameObject::Use(Unit* user)
             {
                 if (info->capturePoint.contestedEventID2)
                 {
-                    if (!sScriptMgr.OnProcessEvent(info->capturePoint.contestedEventID2, user, this, true))
+                    // send zone script
+                    if(m_zoneScript)
+                       m_zoneScript->ProcessEvent(this, (Player*)user, info->capturePoint.contestedEventID2);
+                    // if zone script fails send to scriptMgr
+                    else if (!sScriptMgr.OnProcessEvent(info->capturePoint.contestedEventID2, user, this, true))
                         GetMap()->ScriptsStart(sEventScripts, info->capturePoint.contestedEventID2, user, this);
 
                     m_captureState = CAPTURE_STATE_CONTEST;
@@ -1785,12 +1778,20 @@ void GameObject::Use(Unit* user)
 
             // progress event aly
             // alliance takes the tower from neutral to alliance OR alliance takes the tower from contested to allaince
-            if (((uint32)m_captureTicks == CAPTURE_SLIDER_NEUTRAL + m_neutralPercent/2 + 1 && m_captureState == CAPTURE_STATE_NEUTRAL && m_progressFaction == ALLIANCE) || (m_captureState == CAPTURE_STATE_CONTEST && m_progressFaction == ALLIANCE))
+            if ((uint32)m_captureTicks == CAPTURE_SLIDER_NEUTRAL + m_neutralPercent/2 + 1 && ((m_captureState == CAPTURE_STATE_NEUTRAL && m_progressFaction == ALLIANCE) || (m_captureState == CAPTURE_STATE_CONTEST && m_progressFaction == ALLIANCE)))
             {
                 if (info->capturePoint.progressEventID1)
                 {
-                    if (!sScriptMgr.OnProcessEvent(info->capturePoint.progressEventID1, user, this, true))
+                    // send zone script
+                    if(m_zoneScript)
+                       m_zoneScript->ProcessEvent(this, (Player*)user, info->capturePoint.progressEventID1);
+                    // if zone script fails send to scriptMgr
+                    else if (!sScriptMgr.OnProcessEvent(info->capturePoint.progressEventID1, user, this, true))
                         GetMap()->ScriptsStart(sEventScripts, info->capturePoint.progressEventID1, user, this);
+
+                    // handle objective complete
+                    if (m_captureState != CAPTURE_STATE_CONTEST)
+                        sWorldPvPMgr.HandleObjectiveComplete(m_AlliancePlayersSet, info->capturePoint.progressEventID1);
 
                     // set capture state to aly
                     m_captureState = CAPTURE_STATE_PROGRESS;
@@ -1799,12 +1800,20 @@ void GameObject::Use(Unit* user)
             }
             // progress event horde
             // horde takes the tower from neutral to horde OR horde takes the tower from contested to horde
-            else if (((uint32)m_captureTicks == CAPTURE_SLIDER_NEUTRAL - m_neutralPercent/2 - 1 && m_captureState == CAPTURE_STATE_NEUTRAL && m_progressFaction == HORDE) || (m_captureState == CAPTURE_STATE_CONTEST && player->GetTeam() == HORDE))
+            else if ((uint32)m_captureTicks == CAPTURE_SLIDER_NEUTRAL - m_neutralPercent/2 - 1 && ((m_captureState == CAPTURE_STATE_NEUTRAL && m_progressFaction == HORDE) || (m_captureState == CAPTURE_STATE_CONTEST && player->GetTeam() == HORDE)))
             {
                 if (info->capturePoint.progressEventID2)
                 {
-                    if (!sScriptMgr.OnProcessEvent(info->capturePoint.progressEventID2, user, this, true))
+                    // send zone script
+                    if(m_zoneScript)
+                       m_zoneScript->ProcessEvent(this, (Player*)user, info->capturePoint.progressEventID2);
+                    // if zone script fails send to scriptMgr
+                    else if (!sScriptMgr.OnProcessEvent(info->capturePoint.progressEventID2, user, this, true))
                         GetMap()->ScriptsStart(sEventScripts, info->capturePoint.progressEventID2, user, this);
+
+                    // handle objective complete
+                    if (m_captureState != CAPTURE_STATE_CONTEST)
+                        sWorldPvPMgr.HandleObjectiveComplete(m_HordePlayersSet, info->capturePoint.progressEventID2);
 
                     // set capture state to horde
                     m_captureState = CAPTURE_STATE_PROGRESS;
@@ -1820,7 +1829,11 @@ void GameObject::Use(Unit* user)
             {
                 if (info->capturePoint.neutralEventID1)
                 {
-                    if (!sScriptMgr.OnProcessEvent(info->capturePoint.neutralEventID1, user, this, true))
+                    // send zone script
+                    if(m_zoneScript)
+                       m_zoneScript->ProcessEvent(this, (Player*)user, info->capturePoint.neutralEventID1);
+                    // if zone script fails send to scriptMgr
+                    else if (!sScriptMgr.OnProcessEvent(info->capturePoint.neutralEventID1, user, this, true))
                         GetMap()->ScriptsStart(sEventScripts, info->capturePoint.neutralEventID1, user, this);
 
                     m_captureState = CAPTURE_STATE_NEUTRAL;
@@ -1833,7 +1846,11 @@ void GameObject::Use(Unit* user)
             {
                 if (info->capturePoint.neutralEventID2)
                 {
-                    if (!sScriptMgr.OnProcessEvent(info->capturePoint.neutralEventID2, user, this, true))
+                    // send zone script
+                    if(m_zoneScript)
+                       m_zoneScript->ProcessEvent(this, (Player*)user, info->capturePoint.neutralEventID2);
+                    // if zone script fails send to scriptMgr
+                    else if (!sScriptMgr.OnProcessEvent(info->capturePoint.neutralEventID2, user, this, true))
                         GetMap()->ScriptsStart(sEventScripts, info->capturePoint.neutralEventID2, user, this);
 
                     m_captureState = CAPTURE_STATE_NEUTRAL;

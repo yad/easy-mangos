@@ -52,6 +52,8 @@
 #include "BattleGround.h"
 #include "BattleGroundAV.h"
 #include "BattleGroundMgr.h"
+#include "WorldPvP.h"
+#include "WorldPvPMgr.h"
 #include "ArenaTeam.h"
 #include "Chat.h"
 #include "Database/DatabaseImpl.h"
@@ -663,6 +665,10 @@ void Player::CleanupsBeforeDelete()
         TradeCancel(false);
         DuelComplete(DUEL_INTERUPTED);
     }
+
+    // notify zone scripts for player logout
+    sWorldPvPMgr.HandlePlayerLeaveZone(this, m_zoneUpdateId);
+
     Unit::CleanupsBeforeDelete();
 }
 
@@ -7065,6 +7071,18 @@ void Player::UpdateArea(uint32 newArea)
     UpdateAreaDependentAuras();
 }
 
+WorldPvP* Player::GetWorldPvP() const
+{
+    return sWorldPvPMgr.GetWorldPvPToZoneId(GetZoneId());
+}
+
+// Return if a players is capable of doing world pvp
+bool Player::IsWorldPvPActive()
+{
+    return isAlive() && !HasInvisibilityAura() && !HasStealthAura() && (IsPvP() || sWorld.IsPvPRealm()) &&
+        !HasMovementFlag(MOVEFLAG_FLYING) && !IsTaxiFlying() && !isGameMaster();
+}
+
 void Player::UpdateZone(uint32 newZone, uint32 newArea)
 {
     AreaTableEntry const* zone = GetAreaEntryByAreaID(newZone);
@@ -7073,9 +7091,9 @@ void Player::UpdateZone(uint32 newZone, uint32 newArea)
 
     if(m_zoneUpdateId != newZone)
     {
-        //Called when a player leave zone
-        if (InstanceData* mapInstance = GetInstanceData())
-            mapInstance->OnPlayerLeaveZone(this, m_zoneUpdateId);
+        // handle world pvp zones
+        sWorldPvPMgr.HandlePlayerLeaveZone(this, m_zoneUpdateId);
+        sWorldPvPMgr.HandlePlayerEnterZone(this, newZone);
 
         SendInitWorldStates(newZone, newArea);              // only if really enters to new zone, not just area change, works strange...
 
@@ -8815,6 +8833,50 @@ static WorldStatePair EY_world_states[] =
     { 0x0,   0x0 }
 };
 
+static WorldStatePair SI_world_states[] =                   // Silithus
+{
+    { 2313, 0x0 },                                          // 1 ally silityst gathered
+    { 2314, 0x0 },                                          // 2 horde silityst gathered
+    { 2317, 0x0 }                                           // 3 max silithyst
+};
+
+static WorldStatePair EP_world_states[] =
+{
+    { 0x97a, 0x0 },     // 10 2426
+    { 0x917, 0x0 },     // 11 2327
+    { 0x918, 0x0 },     // 12 2328
+    { 0x97b, 0x32 },     // 13 2427
+    { 0x97c, 0x32 },     // 14 2428
+    { 0x933, 0x1 },     // 15 2355
+    { 0x946, 0x0 },     // 16 2374
+    { 0x947, 0x0 },     // 17 2375
+    { 0x948, 0x0 },     // 18 2376
+    { 0x949, 0x0 },     // 19 2377
+    { 0x94a, 0x0 },     // 20 2378
+    { 0x94b, 0x0 },     // 21 2379
+    { 0x932, 0x0 },     // 22 2354
+    { 0x934, 0x0 },     // 23 2356
+    { 0x935, 0x0 },     // 24 2357
+    { 0x936, 0x0 },     // 25 2358
+    { 0x937, 0x0 },     // 26 2359
+    { 0x938, 0x0 },     // 27 2360
+    { 0x939, 0x1 },     // 28 2361
+    { 0x930, 0x1 },     // 29 2352
+    { 0x93a, 0x0 },     // 30 2362
+    { 0x93b, 0x0 },     // 31 2363
+    { 0x93c, 0x0 },     // 32 2364
+    { 0x93d, 0x0 },     // 33 2365
+    { 0x944, 0x0 },     // 34 2372
+    { 0x945, 0x0 },     // 35 2373
+    { 0x931, 0x1 },     // 36 2353
+    { 0x93e, 0x0 },     // 37 2366
+    { 0x931, 0x1 },     // 38 2367 ??  grey horde not in dbc! send for consistency's sake, and to match field count
+    { 0x940, 0x0 },     // 39 2368
+    { 0x941, 0x0 },     // 7 2369
+    { 0x942, 0x0 },     // 8 2370
+    { 0x943, 0x0 }      // 9 2371
+};
+
 static WorldStatePair HP_world_states[] =                   // Hellfire Peninsula
 {
     { 0x9ba, 0x1 },                                         // 2490 10
@@ -8896,11 +8958,50 @@ static WorldStatePair ZM_world_states[] =                   // Zangarmarsh
     { 0x0,   0x0 }
 };
 
+static WorldStatePair NA_world_states[] =
+{
+    { 2503, 0x0 },  // 10
+    { 2502, 0x0 },  // 11
+    { 2493, 0x0 },  // 12
+    { 2491, 0x0 },  // 13
+
+    { 2495, 0x0 },  // 14
+    { 2494, 0x0 },  // 15
+    { 2497, 0x0 },  // 16
+
+    { 2762, 0x0 },  // 17
+    { 2662, 0x0 },  // 18
+    { 2663, 0x0 },  // 19
+    { 2664, 0x0 },  // 20
+
+    { 2760, 0x0 },  // 21
+    { 2670, 0x0 },  // 22
+    { 2668, 0x0 },  // 23
+    { 2669, 0x0 },  // 24
+
+    { 2761, 0x0 },  // 25
+    { 2667, 0x0 },  // 26
+    { 2665, 0x0 },  // 27
+    { 2666, 0x0 },  // 28
+
+    { 2763, 0x0 },  // 29
+    { 2659, 0x0 },  // 30
+    { 2660, 0x0 },  // 31
+    { 2661, 0x0 },  // 32
+
+    { 2671, 0x0 },  // 33
+    { 2676, 0x0 },  // 34
+    { 2677, 0x0 },  // 35
+    { 2672, 0x0 },  // 36
+    { 2673, 0x0 }  // 37
+};
+
 void Player::SendInitWorldStates(uint32 zoneid, uint32 areaid)
 {
     // data depends on zoneid/mapid...
     BattleGround* bg = GetBattleGround();
     uint32 mapid = GetMapId();
+    WorldPvP* outdoorBg = sWorldPvPMgr.GetWorldPvPToZoneId(zoneid);
 
     DEBUG_LOG("Sending SMSG_INIT_WORLD_STATES to Map:%u, Zone: %u", mapid, zoneid);
 
@@ -8942,6 +9043,18 @@ void Player::SendInitWorldStates(uint32 zoneid, uint32 areaid)
         case 38:
         case 40:
         case 51:
+        case 139:                                           // Eastern plaguelands
+            if (outdoorBg && outdoorBg->GetTypeId() == WORLD_PVP_TYPE_EP)
+                outdoorBg->FillInitialWorldStates(data, count);
+            else
+                FillInitialWorldState(data, count, EP_world_states);
+            break;
+        case 1377:                                          // Silithus
+            if (outdoorBg && outdoorBg->GetTypeId() == WORLD_PVP_TYPE_SI)
+                outdoorBg->FillInitialWorldStates(data, count);
+            else
+                FillInitialWorldState(data, count, SI_world_states);
+            break;
         case 1519:
         case 1537:
         case 2257:
@@ -8971,13 +9084,28 @@ void Player::SendInitWorldStates(uint32 zoneid, uint32 areaid)
                 FillInitialWorldState(data,count, EY_world_states);
             break;
         case 3483:                                          // Hellfire Peninsula
-            FillInitialWorldState(data,count, HP_world_states);
+            if (outdoorBg && outdoorBg->GetTypeId() == WORLD_PVP_TYPE_HP)
+                outdoorBg->FillInitialWorldStates(data,count);
+            else
+                FillInitialWorldState(data,count, HP_world_states);
+            break;
+        case 3518:                                          // Nargrand - Halaa
+            if (outdoorBg && outdoorBg->GetTypeId() == WORLD_PVP_TYPE_NA)
+                outdoorBg->FillInitialWorldStates(data, count);
+            else
+                FillInitialWorldState(data, count, NA_world_states);
             break;
         case 3519:                                          // Terokkar Forest
-            FillInitialWorldState(data,count, TF_world_states);
+            if (outdoorBg && outdoorBg->GetTypeId() == WORLD_PVP_TYPE_TF)
+                outdoorBg->FillInitialWorldStates(data,count);
+            else
+                FillInitialWorldState(data,count, TF_world_states);
             break;
         case 3521:                                          // Zangarmarsh
-            FillInitialWorldState(data,count, ZM_world_states);
+            if (outdoorBg && outdoorBg->GetTypeId() == WORLD_PVP_TYPE_ZM)
+                outdoorBg->FillInitialWorldStates(data,count);
+            else
+                FillInitialWorldState(data,count, ZM_world_states);
             break;
         case 3698:                                          // Nagrand Arena
             if (bg && bg->GetTypeID(true) == BATTLEGROUND_NA)

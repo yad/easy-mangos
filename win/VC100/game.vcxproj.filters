@@ -34,9 +34,6 @@
     <Filter Include="playerbot">
       <UniqueIdentifier>{98239dcb-baf2-4c5b-b0da-5e6864c86bb8}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Warden">
-      <UniqueIdentifier>{dc755940-baa7-4ef4-b4ee-7c21ac97a8d8}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\game\AccountMgr.cpp">
@@ -1051,24 +1048,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\game\playerbot\PlayerbotWarlockAI.h">
       <Filter>Playerbot</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game\WardenBase.h">
-      <Filter>Warden</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game\WardenDataStorage.h">
-      <Filter>Warden</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game\WardenMac.h">
-      <Filter>Warden</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game\WardenModuleMac.h">
-      <Filter>Warden</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game\WardenWin.h">
-      <Filter>Warden</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game\WardenModuleWin.h">
-      <Filter>Warden</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

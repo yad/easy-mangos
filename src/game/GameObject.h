@@ -767,12 +767,13 @@ class MANGOS_DLL_SPEC GameObject : public WorldObject
         uint32      m_health;
 
         typedef std::set<ObjectGuid> GuidsSet;
+        typedef std::set<Player*> PlayersSet;
 
-        GuidsSet m_CapturePlayersSet;                       // players in the radius of the capture point
-        GuidsSet m_AlliancePlayersSet;                      // player sets for each faction
-        GuidsSet m_HordePlayersSet;
+        PlayersSet m_CapturePlayersSet;                     // players in the radius of the capture point
+        PlayersSet m_AlliancePlayersSet;                    // player sets for each faction
+        PlayersSet m_HordePlayersSet;
+
         GuidsSet m_SkillupSet;                              // players that already have skill-up at GO use
-
         uint32 m_useTimes;                                  // amount uses/charges triggered
 
         // collected only for GAMEOBJECT_TYPE_SUMMONING_RITUAL
@@ -782,6 +783,7 @@ class MANGOS_DLL_SPEC GameObject : public WorldObject
         GameObjectInfo const* m_goInfo;
         GameObjectDisplayInfoEntry const* m_displayInfo;
         int64 m_rotation;
+
     private:
         void SwitchDoorOrButton(bool activate, bool alternative = false);
         void SetRotationQuat(float qx, float qy, float qz, float qw);

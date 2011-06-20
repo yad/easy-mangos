@@ -950,6 +950,73 @@ enum MangosStrings
     // Use for not-in-offcial-sources patches
     //                                    10000-10999
 
+    LANG_OPVP_SI_CAPTURE_H              = 10001,
+    LANG_OPVP_SI_CAPTURE_A              = 10002,
+
+    LANG_OPVP_EP_CAPTURE_NPT_H          = 10003,
+    LANG_OPVP_EP_CAPTURE_NPT_A          = 10004,
+    LANG_OPVP_EP_CAPTURE_EWT_H          = 10005,
+    LANG_OPVP_EP_CAPTURE_EWT_A          = 10006,
+    LANG_OPVP_EP_CAPTURE_CGT_H          = 10007,
+    LANG_OPVP_EP_CAPTURE_CGT_A          = 10008,
+    LANG_OPVP_EP_CAPTURE_PWT_H          = 10009,
+    LANG_OPVP_EP_CAPTURE_PWT_A          = 10010,
+    LANG_OPVP_EP_LOOSE_NPT_H            = 10011,
+    LANG_OPVP_EP_LOOSE_NPT_A            = 10012,
+    LANG_OPVP_EP_LOOSE_EWT_H            = 10013,
+    LANG_OPVP_EP_LOOSE_EWT_A            = 10014,
+    LANG_OPVP_EP_LOOSE_CGT_H            = 10015,
+    LANG_OPVP_EP_LOOSE_CGT_A            = 10016,
+    LANG_OPVP_EP_LOOSE_PWT_H            = 10017,
+    LANG_OPVP_EP_LOOSE_PWT_A            = 10018,
+
+    //// opvp hp
+    //LANG_OPVP_HP_CAPTURE_OVERLOOK_H     = 10001,
+    //LANG_OPVP_HP_CAPTURE_OVERLOOK_A     = 10002,
+    //LANG_OPVP_HP_CAPTURE_STADIUM_H      = 10003,
+    //LANG_OPVP_HP_CAPTURE_STADIUM_A      = 10004,
+    //LANG_OPVP_HP_CAPTURE_BROKENHILL_H   = 10005,
+    //LANG_OPVP_HP_CAPTURE_BROKENHILL_A   = 10006,
+    //LANG_OPVP_HP_LOOSE_OVERLOOK_H       = 10007,
+    //LANG_OPVP_HP_LOOSE_OVERLOOK_A       = 10008,
+    //LANG_OPVP_HP_LOOSE_STADIUM_H        = 10009,
+    //LANG_OPVP_HP_LOOSE_STADIUM_A        = 10010,
+    //LANG_OPVP_HP_LOOSE_BROKENHILL_H     = 10011,
+    //LANG_OPVP_HP_LOOSE_BROKENHILL_A     = 10012,
+
+    //// opvp zm
+    //LANG_OPVP_ZM_CAPTURE_WEST_H         = 10013,
+    //LANG_OPVP_ZM_CAPTURE_WEST_A         = 10014,
+    //LANG_OPVP_ZM_CAPTURE_EAST_H         = 10015,
+    //LANG_OPVP_ZM_CAPTURE_EAST_A         = 10016,
+    //LANG_OPVP_ZM_CAPTURE_GY_H           = 10017,
+    //LANG_OPVP_ZM_CAPTURE_GY_A           = 10018,
+    //LANG_OPVP_ZM_LOOSE_WEST_H           = 10019,
+    //LANG_OPVP_ZM_LOOSE_WEST_A           = 10020,
+    //LANG_OPVP_ZM_LOOSE_EAST_H           = 10021,
+    //LANG_OPVP_ZM_LOOSE_EAST_A           = 10022,
+    //LANG_OPVP_ZM_LOOSE_GY_H             = 10023,
+    //LANG_OPVP_ZM_LOOSE_GY_A             = 10024,
+
+    //// opvp tf
+    //LANG_OPVP_TF_CAPTURE_H              = 10029,
+    //LANG_OPVP_TF_CAPTURE_A              = 10030,
+    //LANG_OPVP_TF_LOOSE_H                = 10031,
+    //LANG_OPVP_TF_LOOSE_A                = 10032,
+
+    //// opvp na
+    //LANG_OPVP_NA_CAPTURE_H              = 10025,
+    //LANG_OPVP_NA_CAPTURE_A              = 10026,
+    //LANG_OPVP_NA_LOOSE_H                = 10027,
+    //LANG_OPVP_NA_LOOSE_A                = 10028,
+
+    //
+    //// opvp gh
+    //LANG_OPVP_GH_CAPTURE_H              = 10051,
+    //LANG_OPVP_GH_CAPTURE_A              = 10052,
+    //LANG_OPVP_GH_LOOSE_H                = 10053,
+    //LANG_OPVP_GH_LOOSE_A                = 10054,
+
     // Use for custom patches             11000-11999
 
     // NOT RESERVED IDS                   12000-1999999999

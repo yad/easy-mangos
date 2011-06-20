@@ -42,6 +42,7 @@
 #include "Vehicle.h"
 #include "BattleGround.h"
 #include "InstanceData.h"
+#include "WorldPvP.h"
 #include "MapPersistentStateMgr.h"
 #include "GridNotifiersImpl.h"
 #include "CellImpl.h"
@@ -1094,6 +1095,13 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
             he->CombatStopWithPets(true);
 
             he->DuelComplete(DUEL_INTERUPTED);
+        }
+
+        // handle player kill in outdoor pvp
+        if (player_tap && this != pVictim)
+        {
+            if (WorldPvP* pWorldBg = player_tap->GetWorldPvP())
+                pWorldBg->HandlePlayerKillInsideArea(player_tap, pVictim);
         }
 
         // battleground things (do this at the end, so the death state flag will be properly set to handle in the bg->handlekill)
