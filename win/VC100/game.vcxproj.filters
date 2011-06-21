@@ -34,6 +34,9 @@
     <Filter Include="playerbot">
       <UniqueIdentifier>{98239dcb-baf2-4c5b-b0da-5e6864c86bb8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="OutdoorPVP">
+      <UniqueIdentifier>{673a6c62-366e-43d3-8f11-c734a4d42ed2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\game\AccountMgr.cpp">
@@ -556,9 +559,23 @@
     <ClCompile Include="..\..\src\game\GuildMgr.cpp">
       <Filter>Object</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\game\MailHandler.cpp" />
     <ClCompile Include="..\..\src\game\PlayerBot\PlayerbotAIHelpers.cpp">
       <Filter>Playerbot</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\game\MailHandler.cpp">
+      <Filter>World/Handlers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\game\WorldPvP.cpp">
+      <Filter>OutdoorPVP</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\game\WorldPvPEP.cpp">
+      <Filter>OutdoorPVP</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\game\WorldPvPMgr.cpp">
+      <Filter>OutdoorPVP</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\game\WorldPvPSI.cpp">
+      <Filter>OutdoorPVP</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -1048,6 +1065,21 @@
     </ClInclude>
     <ClInclude Include="..\..\src\game\playerbot\PlayerbotWarlockAI.h">
       <Filter>Playerbot</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\game\ZoneScript.h">
+      <Filter>OutdoorPVP</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\game\WorldPvP.h">
+      <Filter>OutdoorPVP</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\game\WorldPvPEP.h">
+      <Filter>OutdoorPVP</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\game\WorldPvPMgr.h">
+      <Filter>OutdoorPVP</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\game\WorldPvPSI.h">
+      <Filter>OutdoorPVP</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
