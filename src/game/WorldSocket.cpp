@@ -851,8 +851,6 @@ int WorldSocket::HandleAuthSession(WorldPacket& recvPacket)
     if (locale >= MAX_LOCALE)
         locale = LOCALE_enUS;
 
-    std::string os = fields[10].GetString();
-
     delete result;
 
     // Re-check account ban (same check as in realmd)
