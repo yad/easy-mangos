@@ -21,7 +21,7 @@ INSERT INTO `mangos_string` (`entry`, `content_default`) VALUES
 (10015,'The Horde lost the Crown Guard Tower!'),
 (10016,'The Alliance lost the Crown Guard Tower!'),
 (10017,'The Horde lost the Plaguewood Tower!'),
-(10018,'The Alliance lost the Plaguewood Tower!');
+(10018,'The Alliance lost the Plaguewood Tower!'),
 
 -- hellfire peninsula
 (10019,'The Horde has taken The Overlook!'),
