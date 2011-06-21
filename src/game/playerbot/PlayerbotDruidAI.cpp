@@ -193,12 +193,13 @@ bool PlayerbotDruidAI::DoCombatManeuver(Unit *pTarget, bool cac)
     Player* m_bot = GetPlayerBot();
     Player* m_master = ai->GetLeader();
 
+    if(ChangeForm())
+        return true;
+
     switch (m_bot->getRole())
     {
         case DruidFeralCombat:
         {
-            if(ChangeForm())
-                return true;
             if (m_bot->HasAura(CAT_FORM))
             {
                 static const uint32 SpellDruidFeralCat[] = {SAVAGE_ROAR, MANGLE_CAT, RAKE, SHRED, RIP,
@@ -261,13 +262,14 @@ bool PlayerbotDruidAI::DoCombatManeuver(Unit *pTarget, bool cac)
             if (ai->Cast(MOONFIRE, pTarget))
                 return true;
 
-            //TODO : Colère jusqu'à ce que la technique Eclipse se déclenchent et là pendant dix seconde (temps du buff eclipse) "Feux stellaire" en boucle
-            static const uint32 SpellDruidBalance[] = {STARFALL, WRATH, STARFIRE};
+            static const uint32 SpellDruidBalance[] = {STARFALL, WRATH};
             static uint32 elt = sizeof(SpellDruidBalance)/sizeof(uint32);
 
             for (uint32 i = 1; i <= elt; ++i)
             {
                 uint32 spellId = SpellDruidBalance[(i+LastSpellDruidBalance)%elt];
+                if (m_bot->HasAura(48518) && STARFIRE) //Eclipse (Lunar)
+                    spellId = STARFIRE;
                 if (ai->CastSpell(spellId, pTarget))
                 {
                     LastSpellDruidBalance = (i+LastSpellDruidBalance)%elt;
@@ -284,6 +286,27 @@ bool PlayerbotDruidAI::ChangeForm()
 {
     PlayerbotAI* ai = GetAI();
     Player* m_bot = GetPlayerBot();
+
+    switch (m_bot->getRole())
+    {
+        case DruidRestoration:
+        {
+            if (ai->Cast(TREE_OF_LIFE, m_bot))
+                return true;
+            break;
+        }
+        case DruidBalance:
+        {
+            if (ai->Cast(MOONKIN_FORM, m_bot))
+                return true;
+            break;
+        }
+        //case DruidFeralCombat:
+        default:
+            break;
+    }
+
+
     uint8 WarProtection = 0, DruidFeral = 0, DruidFeralBear = 0;
     if (m_bot->GetGroup())
     {
@@ -333,10 +356,10 @@ void PlayerbotDruidAI::DoNonCombatActions()
     Player* m_bot = GetPlayerBot();
     Player* m_master = ai->GetLeader();
 
-    if (m_bot->HasAura(CAT_FORM))
-        m_bot->RemoveAurasDueToSpell(CAT_FORM);
-    if (m_bot->HasAura(BEAR_FORM))
-        m_bot->RemoveAurasDueToSpell(BEAR_FORM);
+    m_bot->RemoveAurasDueToSpell(CAT_FORM_1);
+    m_bot->RemoveAurasDueToSpell(BEAR_FORM_1);
+    m_bot->RemoveAurasDueToSpell(TREE_OF_LIFE_1);
+    m_bot->RemoveAurasDueToSpell(MOONKIN_FORM_1);
 
     if (ReviveTarget())
         return;

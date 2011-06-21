@@ -434,7 +434,7 @@ Player* PlayerbotAI::FindGroupMainTank()
             case WarriorProtection:
                 return ref->getSource();
             case DruidFeralCombat:
-                if (ref->getSource()->HasAura(5487))
+                if (!mainTank)
                     mainTank = ref->getSource();
                 break;
             case PaladinProtection:
