@@ -170,6 +170,9 @@ void PlayerbotAI::SetLeader(Player* pl)
 
 void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
 {
+    if (!GetLeader() || !GetLeader()->IsInWorld() || !GetLeader()->GetSession() || GetLeader()->GetSession()->PlayerLogout())
+        return;
+
     switch (packet.GetOpcode())
     {
         case SMSG_DUEL_WINNER:
