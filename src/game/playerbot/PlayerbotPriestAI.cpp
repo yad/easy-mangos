@@ -100,7 +100,7 @@ bool PlayerbotPriestAI::DoProtectSelfAction()
     static uint32 elt = sizeof(spells) / sizeof(uint32);
 
     for (uint32 i = 0; i < elt; i++)
-        if (ai->CastAura(spells[i], m_bot))
+        if (ai->Cast(spells[i]))
             return true;
 
     return false;
@@ -112,14 +112,14 @@ bool PlayerbotPriestAI::HealTarget(Unit* target)
     Player *m_bot = GetPlayerBot();
     uint8 hp = target->GetHealthPercent();
 
-    if (target->isInCombat() && hp < 80 && !target->HasAura(WEAKENED_SOUL) && !target->HasAura(POWER_WORD_SHIELD) && ai->CastSpell(POWER_WORD_SHIELD, target))
+    if (target->isInCombat() && hp < 80 && ai->Cast(POWER_WORD_SHIELD, target))
         return true;
 
-    if (hp < 40 && ai->CastSpell(FLASH_HEAL, target))
+    if (hp < 40 && ai->Cast(FLASH_HEAL, target))
         return true;
-    else if (hp < 60 && ai->CastSpell(GREATER_HEAL, target))
+    else if (hp < 60 && ai->Cast(GREATER_HEAL, target))
         return true;
-    else if (hp < 80 && !target->HasAuraFromUnit(RENEW, m_bot) && ai->CastSpell(RENEW, target))
+    else if (hp < 80 && ai->Cast(RENEW, target, true))
         return true;
     
     return false;
@@ -148,7 +148,7 @@ bool PlayerbotPriestAI::DoCombatManeuver(Unit *pTarget, bool cac)
             if (tank->isAlive() && tank->IsInSameRaidWith(m_bot) && tank->GetHealthPercent() < 80)
             {
                 // Cast binding heal if target and caster have low health
-                if (m_bot != tank && m_bot->GetHealthPercent() < 60 && ai->CastSpell(BINDING_HEAL, tank))
+                if (m_bot != tank && m_bot->GetHealthPercent() < 60 && ai->Cast(BINDING_HEAL, tank))
                     return true;
                 else if (HealTarget(tank))
                     return true;
@@ -170,10 +170,10 @@ bool PlayerbotPriestAI::DoCombatManeuver(Unit *pTarget, bool cac)
                 if (g_member->GetHealthPercent() < 60)
                 {
                     membersWithVeryLessHp++;
-                    if (membersWithVeryLessHp > 2 && ai->CastSpell(CIRCLE_OF_HEALING, g_member))
+                    if (membersWithVeryLessHp > 2 && ai->Cast(CIRCLE_OF_HEALING, g_member))
                         return true;
                 }
-                else if (membersWithLessHp > 2 && ai->CastSpell(PRAYER_OF_HEALING, g_member))
+                else if (membersWithLessHp > 2 && ai->Cast(PRAYER_OF_HEALING, g_member))
                     return true;
             }
 
@@ -191,7 +191,7 @@ bool PlayerbotPriestAI::DoCombatManeuver(Unit *pTarget, bool cac)
             if (g_member->GetHealthPercent() < 80)
             {
                 // Cast binding heal if target and caster have low health
-                if (m_bot != g_member && m_bot->GetHealthPercent() < 60 && ai->CastSpell(BINDING_HEAL, g_member))
+                if (m_bot != g_member && m_bot->GetHealthPercent() < 60 && ai->Cast(BINDING_HEAL, g_member))
                     return true;
                 else if (HealTarget(g_member))
                     return true;
@@ -204,8 +204,8 @@ bool PlayerbotPriestAI::DoCombatManeuver(Unit *pTarget, bool cac)
     case PriestShadow:
         static const uint32 SpellShadow[] = {SHADOW_WORD_PAIN, DEVOURING_PLAGUE, VAMPIRIC_TOUCH, MIND_BLAST};
         static const uint32 elt = sizeof(SpellShadow)/sizeof(uint32);
-        char *SpellFirstTarget = "11110";
-        char *SpellAllTargets = "10100";
+        char *SpellFirstTarget = "1111";
+        char *SpellAllTargets = "1010";
         uint32 numberTargets = 0;
         uint32 numberTargetsWithin5f = 0;
 
@@ -222,7 +222,7 @@ bool PlayerbotPriestAI::DoCombatManeuver(Unit *pTarget, bool cac)
                 if ((*itr)->IsWithinDist(m_bot, 36.0f))
                 {
                     numberTargets++;
-                    if ((*itr)->GetHealthPercent() <= 35 && ai->CastSpell(SHADOW_WORD_DEATH, (*itr)))
+                    if ((*itr)->GetHealthPercent() <= 35 && ai->Cast(SHADOW_WORD_DEATH, (*itr)))
                         return true;
                 }
                 if ((*itr)->IsWithinDist(m_bot, 5.0f))
@@ -236,21 +236,21 @@ bool PlayerbotPriestAI::DoCombatManeuver(Unit *pTarget, bool cac)
         {
             if (m_bot->HasAura(SHADOWFORM))
                 m_bot->RemoveAurasDueToSpell(SHADOWFORM);
-            if (ai->CastSpell(HOLY_NOVA))
+            if (ai->Cast(HOLY_NOVA))
                 return true;
         }
 
-        if (!m_bot->HasAura(SHADOWFORM) && ai->SelfBuff(SHADOWFORM))
+        if (ai->Cast(SHADOWFORM))
             return true;
 
-        if (numberTargets >= 5 && !pTarget->HasAuraFromUnit(MIND_SEAR, m_bot) && ai->CastSpell(MIND_SEAR, pTarget))
+        if (numberTargets >= 5 && ai->Cast(MIND_SEAR, pTarget, true))
             return true;
 
         // Casting spell cycle
         for (uint32 i = 0; i < elt; ++i)
         {
             // Cycle for main target
-            if (SpellFirstTarget[i] == '1' && !pTarget->HasAuraFromUnit(SpellShadow[i], m_bot) && ai->CastSpell(SpellShadow[i], pTarget))
+            if (SpellFirstTarget[i] == '1' && ai->Cast(SpellShadow[i], pTarget, true))
                 return true;
 
             // Cycle for others targets
@@ -265,7 +265,7 @@ bool PlayerbotPriestAI::DoCombatManeuver(Unit *pTarget, bool cac)
                         continue;
 
                     for (Unit::AttackerSet::const_iterator itr = g_member->getAttackers().begin(); itr != g_member->getAttackers().end(); itr++)
-                         if (!(*itr)->HasAuraFromUnit(SpellShadow[i], m_bot) && ai->CastSpell(SpellShadow[i], (*itr)))
+                         if (ai->Cast(SpellShadow[i], (*itr), true))
                              return true;
 
                 }while (ref = (ref) ? ref->next() : NULL);
@@ -273,7 +273,7 @@ bool PlayerbotPriestAI::DoCombatManeuver(Unit *pTarget, bool cac)
         }
 
         // If all targets are affected by damage over time, cast mind flay on main target
-        if (!pTarget->HasAuraFromUnit(MIND_FLAY, m_bot) && ai->CastSpell(MIND_FLAY, pTarget))
+        if (ai->Cast(MIND_FLAY, pTarget, true))
             return true;
 
         break;
@@ -291,9 +291,9 @@ void PlayerbotPriestAI::DoNonCombatActions()
 
     if (m_bot->getRole() != PriestHoly)
     {
-        if (!m_bot->HasAura(SHADOWFORM) && ai->SelfBuff(SHADOWFORM))
+        if (ai->Cast(SHADOWFORM))
             return;
-        if (!m_bot->HasAura(VAMPIRIC_EMBRACE) && ai->SelfBuff(VAMPIRIC_EMBRACE))
+        if (ai->Cast(VAMPIRIC_EMBRACE))
             return;
     }
 
@@ -320,7 +320,7 @@ void PlayerbotPriestAI::DoNonCombatActions()
     }
 
     // selfbuff goes first
-    if (ai->SelfBuff(INNER_FIRE))
+    if (ai->Cast(INNER_FIRE))
         return;
 
     // buff and heal group
@@ -330,7 +330,7 @@ void PlayerbotPriestAI::DoNonCombatActions()
         Player *g_member = (ref) ? ref->getSource() : m_bot;
 
         if (!g_member->isAlive())
-            if (ai->CastSpell(RESURRECTION, g_member))
+            if (ai->Cast(RESURRECTION, g_member))
                 return;
 
         if (HealTarget(g_member))
@@ -345,10 +345,10 @@ void PlayerbotPriestAI::DoNonCombatActions()
     // Buff master with group buffs
     if (m_group && m_master->isAlive())
     {
-        if ((!m_bot->HasAura(PRAYER_OF_FORTITUDE) || !m_master->HasAura(PRAYER_OF_FORTITUDE)) && ai->Buff(PRAYER_OF_FORTITUDE, m_master))
+        if (ai->Cast(PRAYER_OF_FORTITUDE, m_master) || ai->Cast(PRAYER_OF_FORTITUDE))
             return;
 
-        if ((!m_bot->HasAura(PRAYER_OF_SPIRIT) || !m_master->HasAura(PRAYER_OF_SPIRIT)) && ai->Buff(PRAYER_OF_SPIRIT, m_master))
+        if (ai->Cast(PRAYER_OF_SPIRIT, m_master) || ai->Cast(PRAYER_OF_SPIRIT))
             return;
     }
 
@@ -362,14 +362,14 @@ bool PlayerbotPriestAI::BuffPlayer(Player* target)
 
     if (!PRAYER_OF_FORTITUDE)
     {
-        if (pet && pet->isAlive() && ai->Buff(POWER_WORD_FORTITUDE, pet))
+        if (pet && pet->isAlive() && ai->Cast(POWER_WORD_FORTITUDE, pet))
             return true;
 
-        if (target->isAlive() && ai->Buff(POWER_WORD_FORTITUDE, target))
+        if (target->isAlive() && ai->Cast(POWER_WORD_FORTITUDE, target))
             return true;
     }
 
-    if (!PRAYER_OF_SPIRIT && (target->getClass() == CLASS_DRUID || target->getPowerType() == POWER_MANA) && target->isAlive() && ai->Buff(DIVINE_SPIRIT, target))
+    if (!PRAYER_OF_SPIRIT && (target->getClass() == CLASS_DRUID || target->getPowerType() == POWER_MANA) && target->isAlive() && ai->Cast(DIVINE_SPIRIT, target))
         return true;
 
     return false;
