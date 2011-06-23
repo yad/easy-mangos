@@ -93,7 +93,7 @@ bool PlayerbotPriestAI::DoProtectSelfAction()
     PlayerbotAI *ai = GetAI();
     Player *m_bot = GetPlayerBot();
     
-    if (m_bot->GetHealthPercent() < 40 && ai->CastSpell(DESPERATE_PRAYER))
+    if (m_bot->GetHealthPercent() < 40 && ai->Cast(DESPERATE_PRAYER))
         return true;
     
     static const uint32 spells[] = {DISPERSION, PAIN_SUPPRESSION, POWER_WORD_SHIELD};
@@ -117,9 +117,9 @@ bool PlayerbotPriestAI::HealTarget(Unit* target)
 
     if (hp < 40 && ai->Cast(FLASH_HEAL, target))
         return true;
-    else if (hp < 60 && ai->Cast(GREATER_HEAL, target))
+    if (hp < 60 && ai->Cast(GREATER_HEAL, target))
         return true;
-    else if (hp < 80 && ai->Cast(RENEW, target, true))
+    if (hp < 80 && ai->Cast(RENEW, target, true))
         return true;
     
     return false;
