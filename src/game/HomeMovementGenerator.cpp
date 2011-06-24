@@ -48,7 +48,7 @@ void HomeMovementGenerator<Creature>::_setTargetLocation(Creature & owner)
     CreatureTraveller traveller(owner);
     i_destinationHolder.SetDestination(traveller, x, y, z, false);
 
-    PathInfo path(&owner, x, y, z, false, true);
+    PathInfo path(&owner, x, y, z, false, false);
     PointPath pointPath = path.getFullPath();
 
     float speed = traveller.Speed() * 0.001f; // in ms
