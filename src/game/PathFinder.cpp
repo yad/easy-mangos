@@ -39,7 +39,7 @@ PathInfo::PathInfo(const Unit* owner, const float destX, const float destY, cons
     PathNode startPoint(x, y, z);
     setStartPosition(startPoint);
 
-    DEBUG_FILTER_LOG(LOG_FILTER_PATHFINDING, "++ PathInfo::PathInfo for %u \n", m_sourceUnit->GetGUID());
+    DEBUG_FILTER_LOG(LOG_FILTER_PATHFINDING, "++ PathInfo::PathInfo for %u \n", m_sourceUnit->GetGUIDLow());
 
     uint32 mapId = m_sourceUnit->GetMapId();
     if (MMAP::MMapFactory::IsPathfindingEnabled(mapId))
@@ -65,7 +65,7 @@ PathInfo::PathInfo(const Unit* owner, const float destX, const float destY, cons
 
 PathInfo::~PathInfo()
 {
-    DEBUG_FILTER_LOG(LOG_FILTER_PATHFINDING, "++ PathInfo::~PathInfo() for %u \n", m_sourceUnit->GetGUID());
+    DEBUG_FILTER_LOG(LOG_FILTER_PATHFINDING, "++ PathInfo::~PathInfo() for %u \n", m_sourceUnit->GetGUIDLow());
 }
 
 bool PathInfo::Update(const float destX, const float destY, const float destZ,
@@ -84,7 +84,7 @@ bool PathInfo::Update(const float destX, const float destY, const float destZ,
     m_useStraightPath = useStraightPath;
     m_forceDestination = forceDest;
 
-    DEBUG_FILTER_LOG(LOG_FILTER_PATHFINDING, "++ PathInfo::Update() for %u \n", m_sourceUnit->GetGUID());
+    DEBUG_FILTER_LOG(LOG_FILTER_PATHFINDING, "++ PathInfo::Update() for %u \n", m_sourceUnit->GetGUIDLow());
 
     // make sure navMesh works - we can run on map w/o mmap
     if (!m_navMesh || !m_navMeshQuery || !HaveTiles(newDest) ||
@@ -340,7 +340,7 @@ void PathInfo::BuildPolyPath(PathNode startPos, PathNode endPos)
         if (DT_SUCCESS != m_navMeshQuery->closestPointOnPoly(suffixStartPoly, endPoint, suffixEndPoint))
         {
             // suffixStartPoly is invalid somehow, or the navmesh is broken => error state
-            sLog.outError("%u's Path Build failed: invalid polyRef in path", m_sourceUnit->GetGUID());
+            sLog.outError("%u's Path Build failed: invalid polyRef in path", m_sourceUnit->GetGUIDLow());
 
             BuildShortcut();
             m_type = PATHFIND_NOPATH;
@@ -364,7 +364,7 @@ void PathInfo::BuildPolyPath(PathNode startPos, PathNode endPos)
             // this is probably an error state, but we'll leave it
             // and hopefully recover on the next Update
             // we still need to copy our preffix
-            sLog.outError("%u's Path Build failed: 0 length path", m_sourceUnit->GetGUID());
+            sLog.outError("%u's Path Build failed: 0 length path", m_sourceUnit->GetGUIDLow());
         }
 
         DEBUG_FILTER_LOG(LOG_FILTER_PATHFINDING, "++  m_polyLength=%u prefixPolyLength=%u suffixPolyLength=%u \n",m_polyLength, prefixPolyLength, suffixPolyLength);
@@ -396,7 +396,7 @@ void PathInfo::BuildPolyPath(PathNode startPos, PathNode endPos)
         if (!m_polyLength || dtResult != DT_SUCCESS)
         {
             // only happens if we passed bad data to findPath(), or navmesh is messed up
-            sLog.outError("%u's Path Build failed: 0 length path", m_sourceUnit->GetGUID());
+            sLog.outError("%u's Path Build failed: 0 length path", m_sourceUnit->GetGUIDLow());
             BuildShortcut();
             m_type = PATHFIND_NOPATH;
             return;
