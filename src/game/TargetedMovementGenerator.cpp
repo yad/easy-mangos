@@ -222,7 +222,7 @@ bool TargetedMovementGeneratorMedium<T,D>::Update(T &owner, const uint32 & time_
             PathNode end_point = i_path->getEndPosition();
             next_point = i_path->getNextPosition();
 
-            needNewDest = i_destinationHolder.HasArrived() && !inRange(next_point, i_path->getActualEndPosition(), dist, dist);
+            needNewDest = i_destinationHolder.HasArrived() && !i_path->inRange(next_point, i_path->getActualEndPosition(), dist, dist);
             if(!needNewDest)
             {
                 // GetClosePoint() will always return a point on the ground, so we need to

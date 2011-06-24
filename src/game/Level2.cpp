@@ -5378,7 +5378,7 @@ bool ChatHandler::HandleMmapLocCommand(char* /*args*/)
     float x, y, z;
     player->GetPosition(x, y, z);
     float location[VERTEX_SIZE] = {y, z, x};
-    float extents[VERTEX_SIZE] = {2.f,4.f,2.f};
+    float extents[VERTEX_SIZE] = {3.0f, 5.0f, 3.0f};
 
     int32 tilex = int32((y - min[0]) / SIZE_OF_GRIDS);
     int32 tiley = int32((x - min[2]) / SIZE_OF_GRIDS);
