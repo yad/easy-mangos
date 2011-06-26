@@ -127,15 +127,11 @@ bool PlayerbotPaladinAI::HealTarget(Unit *target)
 bool PlayerbotPaladinAI::DoCombatManeuver(Unit *pTarget, bool cac)
 {
     Unit* pVictim = pTarget->getVictim();
-
     PlayerbotAI *ai = GetAI();
-    Player * m_bot = GetPlayerBot();
-    Player* m_master = ai->GetLeader();
-
-    // damage spells
+    Player *m_bot = GetPlayerBot();
+    Player *m_master = ai->GetLeader();
     Group *m_group = m_bot->GetGroup();
     float dist = m_bot->GetDistance(pTarget);
-
 
     //Shield master if low hp.
     uint32 masterHP = m_master->GetHealth() * 100 / m_master->GetMaxHealth();
@@ -191,11 +187,41 @@ bool PlayerbotPaladinAI::DoCombatManeuver(Unit *pTarget, bool cac)
             return true;
     }
 
+    /*
+    // [Chjuci] : En Construction
+    switch (m_bot->getRole())
+    {
+    case PaladinCombat:
+        // inquisition, tempete divine, jugement(% vie/mana), si proc instant exorcisme, consécration
+        
+        1- exorcisme   59578
+        2- inquisition
+        3- tempete divine
+        4- jugement
+        
+
+        if (m_bot->HasAura(AURA_ART_OF_WAR) && ai->Cast(EXORCISM, pTarget)) // Exorcisme instantané seulement
+            return true;
+
+        if (ai->Cast(CRUSADER_STRIKE, pTarget))
+            return true;
+
+        if (ai->Cast(DIVINE_STORM, pTarget))
+            return true;
+
+        if (ai->Cast(JUDGEMENT_OF_LIGHT, pTarget, NO_CONDITION))
+            return true;
+
+        break;
+    }
+    */
+    
     if (ai->GetHealthPercent() <= 40 || m_master->GetHealth() <= m_master->GetMaxHealth() * 0.4)
         SpellSequence = Healing;
     else
         SpellSequence = Combat;
 
+    
     switch (SpellSequence)
     {
         case Combat:
@@ -357,6 +383,7 @@ bool PlayerbotPaladinAI::DoCombatManeuver(Unit *pTarget, bool cac)
 
     if (DIVINE_SACRIFICE > 0 && ai->GetHealthPercent() > 50 && pVictim != m_bot && !m_bot->HasAura(DIVINE_SACRIFICE, EFFECT_INDEX_0))
         ai->CastSpell(DIVINE_SACRIFICE, m_bot);
+
     return false;
 }
 

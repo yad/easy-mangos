@@ -119,7 +119,7 @@ bool PlayerbotPriestAI::HealTarget(Unit* target)
         return true;
     if (hp < 60 && ai->Cast(GREATER_HEAL, target))
         return true;
-    if (hp < 80 && ai->Cast(RENEW, target, true))
+    if (hp < 80 && ai->Cast(RENEW, target, ONE_AURA_BY_CASTER))
         return true;
     
     return false;
@@ -243,14 +243,14 @@ bool PlayerbotPriestAI::DoCombatManeuver(Unit *pTarget, bool cac)
         if (ai->Cast(SHADOWFORM))
             return true;
 
-        if (numberTargets >= 5 && ai->Cast(MIND_SEAR, pTarget, true))
+        if (numberTargets >= 5 && ai->Cast(MIND_SEAR, pTarget, ONE_AURA_BY_CASTER))
             return true;
 
         // Casting spell cycle
         for (uint32 i = 0; i < elt; ++i)
         {
             // Cycle for main target
-            if (SpellFirstTarget[i] == '1' && ai->Cast(SpellShadow[i], pTarget, true))
+            if (SpellFirstTarget[i] == '1' && ai->Cast(SpellShadow[i], pTarget, ONE_AURA_BY_CASTER))
                 return true;
 
             // Cycle for others targets
@@ -265,7 +265,7 @@ bool PlayerbotPriestAI::DoCombatManeuver(Unit *pTarget, bool cac)
                         continue;
 
                     for (Unit::AttackerSet::const_iterator itr = g_member->getAttackers().begin(); itr != g_member->getAttackers().end(); itr++)
-                         if (ai->Cast(SpellShadow[i], (*itr), true))
+                         if (ai->Cast(SpellShadow[i], (*itr), ONE_AURA_BY_CASTER))
                              return true;
 
                 }while (ref = (ref) ? ref->next() : NULL);
@@ -273,7 +273,7 @@ bool PlayerbotPriestAI::DoCombatManeuver(Unit *pTarget, bool cac)
         }
 
         // If all targets are affected by damage over time, cast mind flay on main target
-        if (ai->Cast(MIND_FLAY, pTarget, true))
+        if (ai->Cast(MIND_FLAY, pTarget, ONE_AURA_BY_CASTER))
             return true;
 
         break;

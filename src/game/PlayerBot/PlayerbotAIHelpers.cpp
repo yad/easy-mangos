@@ -1238,20 +1238,26 @@ bool PlayerbotAI::HasAuraFromUnit(uint32 spellId, Unit *target, Unit *caster)
     return false;
 }
 
-bool PlayerbotAI::Cast(uint32 spellId, Unit *target, bool OneAuraByCaster)
+bool PlayerbotAI::Cast(uint32 spellId, Unit *target, CastCondition condition)
 {
     if (!target)
         target = m_bot;
 
-    if (OneAuraByCaster)
+    switch (condition)
     {
+    case ONE_AURA_BY_CASTER:
         if (!HasAuraFromUnit(spellId, target, m_bot))
             return CastSpell(spellId, target);
-    }
-    else
-    {
+        break;
+
+    case IF_HAS_NOT_AURA:
         if (!HasAura(spellId, target))
             return CastSpell(spellId, target);
+        break;
+
+    case NO_CONDITION:
+        return CastSpell(spellId, target);
+        break;
     }
 
     return false;

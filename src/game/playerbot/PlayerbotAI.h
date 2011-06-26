@@ -77,6 +77,13 @@ enum BotCombatType
     BOTCOMBAT_CAC
 };
 
+enum CastCondition
+{
+    IF_HAS_NOT_AURA,        // Cast a Spell only if there is not aura of this spell on the target
+    NO_CONDITION,           // Cast a Spell even if there is already aura of this spell on the target
+    ONE_AURA_BY_CASTER      // Cast a Spell only if there is not already aura of this spell from the current caster on the target
+};
+
 class MANGOS_DLL_SPEC PlayerbotAI
 {
 public:
@@ -149,7 +156,7 @@ public:
     Item* FindItem(uint32 ItemId);
     Item* FindConsumable(uint32 displayId) const;
 
-    bool Cast(uint32 spellId, Unit *target = NULL, bool OneAuraByCaster = false);
+    bool Cast(uint32 spellId, Unit *target = NULL, CastCondition condition = IF_HAS_NOT_AURA);
     bool CastAura(uint32 spellId, Unit* target);
     bool CastSpell(uint32 spellId, Unit* target = NULL);
     bool CastPetAura(uint32 spellId, Unit* target);
