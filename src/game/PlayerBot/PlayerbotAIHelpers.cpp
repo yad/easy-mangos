@@ -1238,26 +1238,63 @@ bool PlayerbotAI::HasAuraFromUnit(uint32 spellId, Unit *target, Unit *caster)
     return false;
 }
 
-bool PlayerbotAI::Cast(uint32 spellId, Unit *target, CastCondition condition)
+bool PlayerbotAI::RespectCondition(uint32 spellId, Unit *target, CastCondition condition)
+{
+    switch (condition)
+    {
+    case IF_TARGET_HAS_NOT_AURA:
+        if (!HasAura(spellId, target))
+            return true;
+        break;
+    case IF_TARGET_HAS_AURA:
+        if (HasAura(spellId, target))
+            return true;
+        break;
+    case IF_TARGET_HAS_AURA_FROM_CURRENT_CASTER:
+        if (HasAuraFromUnit(spellId, target, m_bot))
+            return true;
+        break;
+    case IF_TARGET_HAS_NOT_AURA_FROM_CURRENT_CASTER:
+        if (!HasAuraFromUnit(spellId, target, m_bot))
+            return true;
+        break;
+    case IF_CASTER_HAS_AURA:
+        if (HasAura(spellId, m_bot))
+            return true;
+        break;
+    case IF_CASTER_HAS_NOT_AURA:
+        if (!HasAura(spellId, m_bot))
+            return true;
+        break;
+    case IF_CASTER_HAS_AURA_FROM_CURRENT_CASTER:
+        if (HasAuraFromUnit(spellId, m_bot, m_bot))
+            return true;
+        break;
+    case IF_CASTER_HAS_NOT_AURA_FROM_CURRENT_CASTER:
+        if (!HasAuraFromUnit(spellId, m_bot, m_bot))
+            return true;
+        break;
+    case NO_CONDITION:
+        return true;
+    }
+
+    return false;
+}
+
+bool PlayerbotAI::Cast(uint32 spellId, Unit *target, CastCondition condition, uint32 spellIdForSecondCondition, CastCondition SecondCondition)
 {
     if (!target)
         target = m_bot;
 
-    switch (condition)
+    if (SecondCondition && spellIdForSecondCondition)
     {
-    case ONE_AURA_BY_CASTER:
-        if (!HasAuraFromUnit(spellId, target, m_bot))
+        if (RespectCondition(spellId, target, condition) && RespectCondition(spellIdForSecondCondition, target, SecondCondition))
             return CastSpell(spellId, target);
-        break;
-
-    case IF_HAS_NOT_AURA:
-        if (!HasAura(spellId, target))
+    }
+    else
+    {
+        if (RespectCondition(spellId, target, condition))
             return CastSpell(spellId, target);
-        break;
-
-    case NO_CONDITION:
-        return CastSpell(spellId, target);
-        break;
     }
 
     return false;

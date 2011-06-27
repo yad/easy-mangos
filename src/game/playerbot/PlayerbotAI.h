@@ -79,9 +79,21 @@ enum BotCombatType
 
 enum CastCondition
 {
-    IF_HAS_NOT_AURA,        // Cast a Spell only if there is not aura of this spell on the target
-    NO_CONDITION,           // Cast a Spell even if there is already aura of this spell on the target
-    ONE_AURA_BY_CASTER      // Cast a Spell only if there is not already aura of this spell from the current caster on the target
+    NO_CONDITION,
+
+    // Condition on Target
+    IF_TARGET_HAS_AURA,
+    IF_TARGET_HAS_NOT_AURA,
+
+    IF_TARGET_HAS_AURA_FROM_CURRENT_CASTER,
+    IF_TARGET_HAS_NOT_AURA_FROM_CURRENT_CASTER,
+
+    // Condition on Caster
+    IF_CASTER_HAS_AURA,
+    IF_CASTER_HAS_NOT_AURA,
+
+    IF_CASTER_HAS_AURA_FROM_CURRENT_CASTER,
+    IF_CASTER_HAS_NOT_AURA_FROM_CURRENT_CASTER
 };
 
 class MANGOS_DLL_SPEC PlayerbotAI
@@ -156,7 +168,7 @@ public:
     Item* FindItem(uint32 ItemId);
     Item* FindConsumable(uint32 displayId) const;
 
-    bool Cast(uint32 spellId, Unit *target = NULL, CastCondition condition = IF_HAS_NOT_AURA);
+    bool Cast(uint32 spellId, Unit *target = NULL, CastCondition condition = IF_TARGET_HAS_NOT_AURA, uint32 spellIdForSecondCondition = 0, CastCondition SecondCondition = NO_CONDITION);
     bool CastAura(uint32 spellId, Unit* target);
     bool CastSpell(uint32 spellId, Unit* target = NULL);
     bool CastPetAura(uint32 spellId, Unit* target);
@@ -166,6 +178,7 @@ public:
     Spell* GetCurrentSpell() const;
     bool HasAura(uint32 spellId, const Unit* unit) const;
     bool HasAuraFromUnit(uint32 spellId, Unit *target, Unit *caster);
+    bool RespectCondition(uint32 spellId, Unit *target, CastCondition condition);
 
     void UseItem(Item *item, uint32 targetFlag, ObjectGuid targetGUID);
     void UseItem(Item *item, uint8 targetInventorySlot);
