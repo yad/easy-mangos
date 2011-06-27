@@ -209,6 +209,22 @@ bool PlayerbotPriestAI::DoCombatManeuver(Unit *pTarget, bool cac)
         uint32 numberTargets = 0;
         uint32 numberTargetsWithin5f = 0;
 
+        /*
+        [Chjuci] : Petit exemple de l'utilisation de la nouvelle méthode Cast()
+
+        La ligne suivante va faire en sorte que le bot lance le sort MIND_BLAST(attaque mentale) à condition qu'il y ai 
+        l'aura du sort POWER_INFUSION(infusion de puissance) sur le lanceur de sort.
+
+        ai->Cast(MIND_BLAST, pTarget, NO_CONDITION, POWER_INFUSION, IF_CASTER_HAS_AURA);
+
+        En d'autres termes, la ligne ci dessus ne lancera le sort que si on aura exécuté une ligne semblable à la suivante au préalable :
+        ai->Cast(POWER_INFUSION);
+
+        PS: par défaut le 2e argument (target) est le lanceur de sort(m_bot)
+            par défaut le 3e argument (condition numéro 1) est IF_TARGET_HAS_NOT_AURA qui est la condition qu'on utilise le + souvent
+        */
+
+
         // Count number of targets
         do
         {
