@@ -19,8 +19,6 @@
 #include "MotionMaster.h"
 #include "CreatureAISelector.h"
 #include "Creature.h"
-#include "Traveller.h"
-
 #include "ConfusedMovementGenerator.h"
 #include "FleeingMovementGenerator.h"
 #include "HomeMovementGenerator.h"
@@ -29,6 +27,7 @@
 #include "TargetedMovementGenerator.h"
 #include "WaypointMovementGenerator.h"
 #include "RandomMovementGenerator.h"
+#include "movement/MoveSpline.h"
 
 #include <cassert>
 
@@ -299,14 +298,14 @@ void MotionMaster::MoveFollow(Unit* target, float dist, float angle)
         Mutate(new FollowMovementGenerator<Creature>(*target,dist,angle));
 }
 
-void MotionMaster::MovePoint(uint32 id, float x, float y, float z, bool usePathfinding)
+void MotionMaster::MovePoint(uint32 id, float x, float y, float z)
 {
     DEBUG_FILTER_LOG(LOG_FILTER_AI_AND_MOVEGENSS, "%s targeted point (Id: %u X: %f Y: %f Z: %f)", m_owner->GetGuidStr().c_str(), id, x, y, z );
 
     if (m_owner->GetTypeId() == TYPEID_PLAYER)
-        Mutate(new PointMovementGenerator<Player>(id,x,y,z,usePathfinding));
+        Mutate(new PointMovementGenerator<Player>(id,x,y,z));
     else
-        Mutate(new PointMovementGenerator<Creature>(id,x,y,z,usePathfinding));
+        Mutate(new PointMovementGenerator<Creature>(id,x,y,z));
 }
 
 void MotionMaster::MoveSeekAssistance(float x, float y, float z)
@@ -448,10 +447,14 @@ MovementGeneratorType MotionMaster::GetCurrentMovementGeneratorType() const
 
 bool MotionMaster::GetDestination(float &x, float &y, float &z)
 {
-    if (empty())
+    if (m_owner->movespline->Finalized())
         return false;
 
-    return top()->GetDestination(x,y,z);
+    const G3D::Vector3& dest = m_owner->movespline->FinalDestination();
+    x = dest.x;
+    y = dest.y;
+    z = dest.z;
+    return true;
 }
 
 void MotionMaster::UpdateFinalDistanceToTarget(float fDistance)

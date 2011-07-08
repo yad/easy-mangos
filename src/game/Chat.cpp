@@ -109,6 +109,7 @@ ChatCommand * ChatHandler::getCommandTable()
         { "alliance",       SEC_ADMINISTRATOR,  false, &ChatHandler::HandleAuctionAllianceCommand,     "", NULL },
         { "goblin",         SEC_ADMINISTRATOR,  false, &ChatHandler::HandleAuctionGoblinCommand,       "", NULL },
         { "horde",          SEC_ADMINISTRATOR,  false, &ChatHandler::HandleAuctionHordeCommand,        "", NULL },
+        { "item",           SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleAuctionItemCommand,         "", NULL },
         { "",               SEC_ADMINISTRATOR,  false, &ChatHandler::HandleAuctionCommand,             "", NULL },
         { NULL,             0,                  false, NULL,                                           "", NULL }
     };
@@ -760,6 +761,7 @@ ChatCommand * ChatHandler::getCommandTable()
         { "additem",        SEC_ADMINISTRATOR,  false, &ChatHandler::HandleAddItemCommand,             "", NULL },
         { "additemset",     SEC_ADMINISTRATOR,  false, &ChatHandler::HandleAddItemSetCommand,          "", NULL },
         { "bank",           SEC_ADMINISTRATOR,  false, &ChatHandler::HandleBankCommand,                "", NULL },
+        { "mailbox",        SEC_ADMINISTRATOR,  false, &ChatHandler::HandleMailBoxCommand,             "", NULL },
         { "wchange",        SEC_ADMINISTRATOR,  false, &ChatHandler::HandleChangeWeatherCommand,       "", NULL },
         { "ticket",         SEC_GAMEMASTER,     true,  &ChatHandler::HandleTicketCommand,              "", NULL },
         { "delticket",      SEC_GAMEMASTER,     true,  &ChatHandler::HandleDelTicketCommand,           "", NULL },

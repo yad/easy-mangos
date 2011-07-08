@@ -41,6 +41,7 @@
 #include "CellImpl.h"
 #include "Weather.h"
 #include "PointMovementGenerator.h"
+#include "PathFinder.h"
 #include "TargetedMovementGenerator.h"
 #include "SkillDiscovery.h"
 #include "SkillExtraItems.h"
@@ -4111,11 +4112,11 @@ bool ChatHandler::HandleNpcInfoCommand(char* /*args*/)
             break;
 
     if (diff < MAX_DIFFICULTY)
-        PSendSysMessage(LANG_NPCINFO_CHAR_DIFFICULTY,  target->GetGUIDLow(), faction, npcflags,
+        PSendSysMessage(LANG_NPCINFO_CHAR_DIFFICULTY, target->GetGuidStr().c_str(), faction, npcflags,
             Entry, target->GetCreatureInfo()->Entry, diff,
             displayid, nativeid);
     else
-        PSendSysMessage(LANG_NPCINFO_CHAR,  target->GetGUIDLow(), faction, npcflags, Entry, displayid, nativeid);
+        PSendSysMessage(LANG_NPCINFO_CHAR, target->GetGuidStr().c_str(), faction, npcflags, Entry, displayid, nativeid);
 
     PSendSysMessage(LANG_NPCINFO_LEVEL, target->getLevel());
     PSendSysMessage(LANG_NPCINFO_HEALTH,target->GetCreateHealth(), target->GetMaxHealth(), target->GetHealth());
@@ -4495,10 +4496,107 @@ bool ChatHandler::HandleAuctionCommand(char* /*args*/)
     return true;
 }
 
+bool ChatHandler::HandleAuctionItemCommand(char* args)
+{
+    // format: (alliance|horde|goblin) item[:count] price [buyout] [short|long|verylong]
+    char* typeStr = ExtractLiteralArg(&args);
+    if (!typeStr)
+        return false;
+
+    uint32 houseid;
+    if (strncmp(typeStr, "alliance", strlen(typeStr)) == 0)
+        houseid = 1;
+    else if (strncmp(typeStr, "horde", strlen(typeStr)) == 0)
+        houseid = 6;
+    else if (strncmp(typeStr, "goblin", strlen(typeStr)) == 0)
+        houseid = 7;
+    else
+        return false;
+
+    // parse item str
+    char* itemStr = ExtractArg(&args);
+    if (!itemStr)
+        return false;
+
+    uint32 item_id = 0;
+    uint32 item_count = 1;
+    if (sscanf(itemStr, "%u:%u", &item_id, &item_count) != 2)
+        if (sscanf(itemStr, "%u", &item_id) != 1)
+            return false;
+
+    uint32 price;
+    if (!ExtractUInt32(&args, price))
+        return false;
+
+    uint32 buyout;
+    if (!ExtractOptUInt32(&args, buyout, 0))
+        return false;
+
+    uint32 etime = 4*MIN_AUCTION_TIME;
+    if (char* timeStr = ExtractLiteralArg(&args))
+    {
+        if (strncmp(timeStr, "short", strlen(timeStr)) == 0)
+            etime = 1*MIN_AUCTION_TIME;
+        else if (strncmp(timeStr, "long", strlen(timeStr)) == 0)
+            etime = 2*MIN_AUCTION_TIME;
+        else if (strncmp(timeStr, "verylong", strlen(timeStr)) == 0)
+            etime = 4*MIN_AUCTION_TIME;
+        else
+            return false;
+    }
+
+    AuctionHouseEntry const* auctionHouseEntry = sAuctionHouseStore.LookupEntry(houseid);
+    AuctionHouseObject* auctionHouse = sAuctionMgr.GetAuctionsMap(auctionHouseEntry);
+
+    if (!item_id)
+    {
+        PSendSysMessage(LANG_COMMAND_ITEMIDINVALID, item_id);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    ItemPrototype const* item_proto = ObjectMgr::GetItemPrototype(item_id);
+    if (!item_proto)
+    {
+        PSendSysMessage(LANG_COMMAND_ITEMIDINVALID, item_id);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    if (item_count < 1 || (item_proto->MaxCount > 0 && item_count > uint32(item_proto->MaxCount)))
+    {
+        PSendSysMessage(LANG_COMMAND_INVALID_ITEM_COUNT, item_count, item_id);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    Player* pl = m_session ? m_session->GetPlayer() : NULL;
+
+    do
+    {
+        uint32 item_stack = item_count > item_proto->GetMaxStackSize() ? item_proto->GetMaxStackSize() : item_count;
+        item_count -= item_stack;
+
+        Item* newItem = Item::CreateItem(item_id, item_stack);
+        MANGOS_ASSERT(newItem);
+
+        auctionHouse->AddAuction(auctionHouseEntry, newItem, etime, price, buyout);
+
+    } while (item_count);
+
+    return true;
+}
+
 bool ChatHandler::HandleBankCommand(char* /*args*/)
 {
     m_session->SendShowBank(m_session->GetPlayer()->GetObjectGuid());
 
+    return true;
+}
+
+bool ChatHandler::HandleMailBoxCommand(char* /*args*/)
+{
+    m_session->SendShowMailBox(m_session->GetPlayer()->GetObjectGuid());
     return true;
 }
 
@@ -5918,6 +6016,8 @@ bool ChatHandler::HandleMovegensCommand(char* /*args*/)
     PSendSysMessage(LANG_MOVEGENS_LIST,(unit->GetTypeId()==TYPEID_PLAYER ? "Player" : "Creature" ),unit->GetGUIDLow());
 
     MotionMaster* mm = unit->GetMotionMaster();
+    float x,y,z;
+    mm->GetDestination(x,y,z);
     for(MotionMaster::const_iterator itr = mm->begin(); itr != mm->end(); ++itr)
     {
         switch((*itr)->GetMovementGeneratorType())
@@ -5961,8 +6061,6 @@ bool ChatHandler::HandleMovegensCommand(char* /*args*/)
             case HOME_MOTION_TYPE:
                 if(unit->GetTypeId()==TYPEID_UNIT)
                 {
-                    float x,y,z;
-                    (*itr)->GetDestination(x,y,z);
                     PSendSysMessage(LANG_MOVEGENS_HOME_CREATURE,x,y,z);
                 }
                 else
@@ -5971,8 +6069,6 @@ bool ChatHandler::HandleMovegensCommand(char* /*args*/)
             case FLIGHT_MOTION_TYPE:   SendSysMessage(LANG_MOVEGENS_FLIGHT);  break;
             case POINT_MOTION_TYPE:
             {
-                float x,y,z;
-                (*itr)->GetDestination(x,y,z);
                 PSendSysMessage(LANG_MOVEGENS_POINT,x,y,z);
                 break;
             }
@@ -6191,12 +6287,6 @@ bool ChatHandler::HandleComeToMeCommand(char *args)
         SetSentErrorMessage(true);
         return false;
     }
-
-    uint32 newFlags;
-    if (!ExtractUInt32(&args, newFlags))
-        return false;
-
-    caster->SetSplineFlags(SplineFlags(newFlags));
 
     Player* pl = m_session->GetPlayer();
 

@@ -120,7 +120,11 @@ struct SpellModifier
     SpellModifier() : charges(0), lastAffected(NULL) {}
 
     SpellModifier(SpellModOp _op, SpellModType _type, int32 _value, uint32 _spellId, uint64 _mask, uint32 _mask2 = 0, int16 _charges = 0)
-        : op(_op), type(_type), charges(_charges), value(_value), mask(_mask), mask2(_mask2), spellId(_spellId), lastAffected(NULL)
+        : op(_op), type(_type), charges(_charges), value(_value), mask(_mask, _mask2), spellId(_spellId), lastAffected(NULL)
+    {}
+
+    SpellModifier(SpellModOp _op, SpellModType _type, int32 _value, uint32 _spellId, ClassFamilyMask _mask, int16 _charges = 0)
+        : op(_op), type(_type), charges(_charges), value(_value), mask(_mask), spellId(_spellId), lastAffected(NULL)
     {}
 
     SpellModifier(SpellModOp _op, SpellModType _type, int32 _value, SpellEntry const* spellEntry, SpellEffectIndex eff, int16 _charges = 0);
@@ -133,8 +137,7 @@ struct SpellModifier
     SpellModType type : 8;
     int16 charges     : 16;
     int32 value;
-    uint64 mask;
-    uint32 mask2;
+    ClassFamilyMask mask;
     uint32 spellId;
     Spell const* lastAffected;
 };
@@ -521,6 +524,10 @@ enum PlayerFieldByteFlags
 enum PlayerFieldByte2Flags
 {
     PLAYER_FIELD_BYTE2_NONE              = 0x00,
+    PLAYER_FIELD_BYTE2_DETECT_AMORE_0    = 0x02,            // SPELL_AURA_DETECT_AMORE, not used as value and maybe not relcted to, but used in code as base for mask apply
+    PLAYER_FIELD_BYTE2_DETECT_AMORE_1    = 0x04,            // SPELL_AURA_DETECT_AMORE value 1
+    PLAYER_FIELD_BYTE2_DETECT_AMORE_2    = 0x08,            // SPELL_AURA_DETECT_AMORE value 2
+    PLAYER_FIELD_BYTE2_DETECT_AMORE_3    = 0x10,            // SPELL_AURA_DETECT_AMORE value 3
     PLAYER_FIELD_BYTE2_STEALTH           = 0x20,
     PLAYER_FIELD_BYTE2_INVISIBILITY_GLOW = 0x40
 };
@@ -707,7 +714,7 @@ enum EquipmentSetUpdateState
 
 struct EquipmentSet
 {
-    EquipmentSet() : Guid(0), state(EQUIPMENT_SET_NEW)
+    EquipmentSet() : Guid(0), IgnoreMask(0), state(EQUIPMENT_SET_NEW)
     {
         for(int i = 0; i < EQUIPMENT_SLOT_END; ++i)
             Items[i] = 0;
@@ -716,6 +723,7 @@ struct EquipmentSet
     uint64 Guid;
     std::string Name;
     std::string IconName;
+    uint32 IgnoreMask;
     uint32 Items[EQUIPMENT_SLOT_END];
     EquipmentSetUpdateState state;
 };
@@ -1065,7 +1073,7 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         bool Create( uint32 guidlow, const std::string& name, uint8 race, uint8 class_, uint8 gender, uint8 skin, uint8 face, uint8 hairStyle, uint8 hairColor, uint8 facialHair, uint8 outfitId );
 
-        void Update( uint32 update_diff, uint32 time );
+        void Update(uint32 update_diff, uint32 time) override;
 
         static bool BuildEnumData( QueryResult * result,  WorldPacket * p_data );
 
@@ -1214,18 +1222,18 @@ class MANGOS_DLL_SPEC Player : public Unit
             return _CanStoreItem( bag, slot, dest, pItem->GetEntry(), count, pItem, swap, NULL );
 
         }
-        InventoryResult CanStoreItems( Item **pItem,int count) const;
-        InventoryResult CanEquipNewItem( uint8 slot, uint16 &dest, uint32 item, bool swap ) const;
-        InventoryResult CanEquipItem( uint8 slot, uint16 &dest, Item *pItem, bool swap, bool not_loading = true ) const;
+        InventoryResult CanStoreItems(Item **pItem,int count) const;
+        InventoryResult CanEquipNewItem(uint8 slot, uint16 &dest, uint32 item, bool swap) const;
+        InventoryResult CanEquipItem(uint8 slot, uint16 &dest, Item *pItem, bool swap, bool direct_action = true) const;
 
         InventoryResult CanEquipUniqueItem( Item * pItem, uint8 except_slot = NULL_SLOT, uint32 limit_count = 1 ) const;
         InventoryResult CanEquipUniqueItem( ItemPrototype const* itemProto, uint8 except_slot = NULL_SLOT, uint32 limit_count = 1 ) const;
         InventoryResult CanUnequipItems( uint32 item, uint32 count ) const;
         InventoryResult CanUnequipItem( uint16 src, bool swap ) const;
         InventoryResult CanBankItem( uint8 bag, uint8 slot, ItemPosCountVec& dest, Item *pItem, bool swap, bool not_loading = true ) const;
-        InventoryResult CanUseItem( Item *pItem, bool not_loading = true ) const;
-        bool HasItemTotemCategory( uint32 TotemCategory ) const;
-        InventoryResult CanUseItem( ItemPrototype const *pItem ) const;
+        InventoryResult CanUseItem(Item *pItem, bool direct_action = true) const;
+        bool HasItemTotemCategory(uint32 TotemCategory) const;
+        InventoryResult CanUseItem(ItemPrototype const *pItem) const;
         InventoryResult CanUseAmmo( uint32 item ) const;
         Item* StoreNewItem( ItemPosCountVec const& pos, uint32 item, bool update,int32 randomPropertyId = 0 );
         Item* StoreItem( ItemPosCountVec const& pos, Item *pItem, bool update );
@@ -1237,6 +1245,8 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         void AutoStoreLoot(uint32 loot_id, LootStore const& store, bool broadcast = false, uint8 bag = NULL_BAG, uint8 slot = NULL_SLOT);
         void AutoStoreLoot(Loot& loot, bool broadcast = false, uint8 bag = NULL_BAG, uint8 slot = NULL_SLOT);
+
+        Item* ConvertItem(Item* item, uint32 newItemId);
 
         InventoryResult _CanTakeMoreSimilarItems(uint32 entry, uint32 count, Item* pItem, uint32* no_space_count = NULL) const;
         InventoryResult _CanStoreItem( uint8 bag, uint8 slot, ItemPosCountVec& dest, uint32 entry, uint32 count, Item *pItem = NULL, bool swap = false, uint32* no_space_count = NULL ) const;
@@ -1253,8 +1263,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         {
             return StoreItem( dest, pItem, update);
         }
-        Item* BankItem( uint16 pos, Item *pItem, bool update );
-        void RemoveItem( uint8 bag, uint8 slot, bool update );
+        Item* BankItem(uint16 pos, Item *pItem, bool update);
+        void RemoveItem(uint8 bag, uint8 slot, bool update);// see ApplyItemOnStoreSpell notes
         void MoveItemFromInventory(uint8 bag, uint8 slot, bool update);
                                                             // in trade, auction, guild bank, mail....
         void MoveItemToInventory(ItemPosCountVec const& dest, Item* pItem, bool update, bool in_characterInventoryDB = false);
@@ -1576,7 +1586,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         bool HasSpell(uint32 spell) const;
         bool HasActiveSpell(uint32 spell) const;            // show in spellbook
         TrainerSpellState GetTrainerSpellState(TrainerSpell const* trainer_spell) const;
-        bool IsSpellFitByClassAndRace( uint32 spell_id ) const;
+        bool IsSpellFitByClassAndRace(uint32 spell_id, uint32* pReqlevel = NULL) const;
         bool IsNeedCastPassiveLikeSpellAtLearn(SpellEntry const* spellInfo) const;
         bool IsImmuneToSpellEffect(SpellEntry const* spellInfo, SpellEffectIndex index) const;
 
@@ -1717,6 +1727,7 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         /** todo: -maybe move UpdateDuelFlag+DuelComplete to independent DuelHandler.. **/
         DuelInfo *duel;
+        bool IsInDuelWith(Player const* player) const { return duel && duel->opponent == player && duel->startTime != 0; }
         void UpdateDuelFlag(time_t currTime);
         void CheckDuelDistance(time_t currTime);
         void DuelComplete(DuelCompleteType type);
@@ -2011,6 +2022,9 @@ class MANGOS_DLL_SPEC Player : public Unit
         void UpdateEquipSpellsAtFormChange();
         void CastItemCombatSpell(Unit* Target, WeaponAttackType attType);
         void CastItemUseSpell(Item *item,SpellCastTargets const& targets,uint8 cast_count, uint32 glyphIndex);
+
+        void ApplyItemOnStoreSpell(Item *item, bool apply);
+        void DestroyItemWithOnStoreSpell(Item* item);
 
         void SendEquipmentSetList();
         void SetEquipmentSet(uint32 index, EquipmentSet eqset);

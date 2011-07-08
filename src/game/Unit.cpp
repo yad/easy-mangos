@@ -45,11 +45,10 @@
 #include "MapPersistentStateMgr.h"
 #include "GridNotifiersImpl.h"
 #include "CellImpl.h"
-#include "Path.h"
-#include "Traveller.h"
-#include "PathFinder.h"
 #include "VMapFactory.h"
 #include "MovementGenerator.h"
+#include "movement/MoveSplineInit.h"
+#include "movement/MoveSpline.h"
 
 #include <math.h>
 #include <stdarg.h>
@@ -185,7 +184,8 @@ void GlobalCooldownMgr::CancelGlobalCooldown(SpellEntry const* spellInfo)
 Unit::Unit() :
     i_motionMaster(this), m_ThreatManager(this), m_HostileRefManager(this),
     m_charmInfo(NULL),
-    m_vehicleInfo(NULL)
+    m_vehicleInfo(NULL),
+    movespline(new Movement::MoveSpline())
 {
     m_objectType |= TYPEMASK_UNIT;
     m_objectTypeId = TYPEID_UNIT;
@@ -280,6 +280,7 @@ Unit::~Unit()
 
     delete m_charmInfo;
     delete m_vehicleInfo;
+    delete movespline;
 
     // those should be already removed at "RemoveFromWorld()" call
     MANGOS_ASSERT(m_gameObj.size() == 0);
@@ -346,7 +347,7 @@ void Unit::Update( uint32 update_diff, uint32 p_time )
     ModifyAuraState(AURA_STATE_HEALTHLESS_20_PERCENT, GetHealth() < GetMaxHealth()*0.20f);
     ModifyAuraState(AURA_STATE_HEALTHLESS_35_PERCENT, GetHealth() < GetMaxHealth()*0.35f);
     ModifyAuraState(AURA_STATE_HEALTH_ABOVE_75_PERCENT, GetHealth() > GetMaxHealth()*0.75f);
-
+    UpdateSplineMovement(p_time);
     i_motionMaster.UpdateMotion(p_time);
 }
 
@@ -361,83 +362,13 @@ bool Unit::haveOffhandWeapon() const
         return false;
 }
 
-void Unit::SendMonsterMove(float NewPosX, float NewPosY, float NewPosZ, SplineType type, SplineFlags flags, uint32 Time, Player* player, ...)
-{
-    va_list vargs;
-    va_start(vargs,player);
-
-    float moveTime = (float)Time;
-
-    WorldPacket data( SMSG_MONSTER_MOVE, (41 + GetPackGUID().size()) );
-    data << GetPackGUID();
-    data << uint8(0);                                       // new in 3.1 bool, used to toggle MOVEFLAG2_UNK4 = 0x0040 on client side
-    data << GetPositionX() << GetPositionY() << GetPositionZ();
-    data << uint32(WorldTimer::getMSTime());
-
-    data << uint8(type);                                    // unknown
-    switch(type)
-    {
-        case SPLINETYPE_NORMAL:                             // normal packet
-            break;
-        case SPLINETYPE_STOP:                               // stop packet (raw pos?)
-            va_end(vargs);
-            SendMessageToSet( &data, true );
-            return;
-        case SPLINETYPE_FACINGSPOT:                         // facing spot, not used currently
-        {
-            data << float(va_arg(vargs,double));
-            data << float(va_arg(vargs,double));
-            data << float(va_arg(vargs,double));
-            break;
-        }
-        case SPLINETYPE_FACINGTARGET:
-            data << uint64(va_arg(vargs,uint64));           // ObjectGuid in fact
-            break;
-        case SPLINETYPE_FACINGANGLE:
-            data << float(va_arg(vargs,double));            // facing angle
-            break;
-    }
-
-    data << uint32(flags);                                  // splineflags
-    data << uint32(moveTime);                               // Time in between points
-    data << uint32(1);                                      // 1 single waypoint
-    data << NewPosX << NewPosY << NewPosZ;                  // the single waypoint Point B
-
-    va_end(vargs);
-
-    if(player)
-        player->GetSession()->SendPacket(&data);
-    else
-        SendMessageToSet( &data, true );
-}
-
-void Unit::SendMonsterMoveWithSpeed(float x, float y, float z, uint32 transitTime, Player* player)
-{
-    if (!transitTime)
-    {
-        if(GetTypeId()==TYPEID_PLAYER)
-        {
-            Traveller<Player> traveller(*(Player*)this);
-            transitTime = traveller.GetTotalTravelTimeTo(x, y, z);
-        }
-        else
-        {
-            Traveller<Creature> traveller(*(Creature*)this);
-            transitTime = traveller.GetTotalTravelTimeTo(x, y, z);
-        }
-    }
-    //float orientation = (float)atan2((double)dy, (double)dx);
-    SplineFlags flags = GetTypeId() == TYPEID_PLAYER ? SPLINEFLAG_WALKMODE : ((Creature*)this)->GetSplineFlags();
-    SendMonsterMove(x, y, z, SPLINETYPE_NORMAL, flags, transitTime, player);
-}
-
-void Unit::SendHeartBeat(bool toSelf)
+void Unit::SendHeartBeat()
 {
     m_movementInfo.UpdateTime(WorldTimer::getMSTime());
     WorldPacket data(MSG_MOVE_HEARTBEAT, 64);
     data << GetPackGUID();
     data << m_movementInfo;
-    SendMessageToSet(&data, toSelf);
+    SendMessageToSet(&data, true);
 }
 
 void Unit::resetAttackTimer(WeaponAttackType type)
@@ -487,11 +418,6 @@ void Unit::RemoveSpellsCausingAura(AuraType auraType, SpellAuraHolder* except)
         RemoveAurasDueToSpell((*iter)->GetId(), except);
         iter = m_modAuras[auraType].begin();
     }
-}
-
-bool Unit::HasAuraType(AuraType auraType) const
-{
-    return (!m_modAuras[auraType].empty());
 }
 
 /* Called by DealDamage for auras that have a chance to be dispelled on damage taken. */
@@ -596,6 +522,9 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
                 ((Player*)this)->KilledMonster(normalInfo, pVictim->GetObjectGuid());
         }
 
+        if (InstanceData* mapInstance = pVictim->GetInstanceData())
+            mapInstance->OnCreatureDeath(((Creature*)pVictim));
+
         DEBUG_FILTER_LOG(LOG_FILTER_DAMAGE, "DealDamage critter, critter dies");
 
         return damage;
@@ -608,7 +537,7 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
 
     // duel ends when player has 1 or less hp
     bool duel_hasEnded = false;
-    if(pVictim->GetTypeId() == TYPEID_PLAYER && ((Player*)pVictim)->duel && damage >= (health-1))
+    if (pVictim->GetTypeId() == TYPEID_PLAYER && ((Player*)pVictim)->duel && damage >= (health-1))
     {
         // prevent kill only if killed in duel and killed by opponent or opponent controlled creature
         if(((Player*)pVictim)->duel->opponent==this || ((Player*)pVictim)->duel->opponent->GetObjectGuid() == GetOwnerGuid())
@@ -1432,7 +1361,7 @@ void Unit::CalculateMeleeDamage(Unit *pVictim, uint32 damage, CalcDamageInfo *da
         case RANGED_ATTACK:
             damageInfo->procAttacker = PROC_FLAG_SUCCESSFUL_RANGED_HIT;
             damageInfo->procVictim   = PROC_FLAG_TAKEN_RANGED_HIT;
-            damageInfo->HitInfo = HITINFO_UNK2;             // test (dev note: test what? HitInfo flag possibly not confirmed.)
+            damageInfo->HitInfo = HITINFO_UNK3;             // test (dev note: test what? HitInfo flag possibly not confirmed.)
             break;
         default:
             break;
@@ -2125,7 +2054,7 @@ void Unit::CalculateDamageAbsorbAndResist(Unit *pCaster, SpellSchoolMask schoolM
                     continue;
                 }
                 // Reflective Shield
-                if (spellProto->SpellFamilyFlags == 0x1 && canReflect)
+                if (spellProto->IsFitToFamilyMask(UI64LIT(0x0000000000000001)) && canReflect)
                 {
                     if (pCaster == this)
                         break;
@@ -3698,42 +3627,42 @@ bool Unit::IsNonMeleeSpellCasted(bool withDelayed, bool skipChanneled, bool skip
     // Maybe later some special spells will be excluded too.
 
     // generic spells are casted when they are not finished and not delayed
-    if ( m_currentSpells[CURRENT_GENERIC_SPELL] &&
+    if (m_currentSpells[CURRENT_GENERIC_SPELL] &&
         (m_currentSpells[CURRENT_GENERIC_SPELL]->getState() != SPELL_STATE_FINISHED) &&
-        (withDelayed || m_currentSpells[CURRENT_GENERIC_SPELL]->getState() != SPELL_STATE_DELAYED) )
-        return(true);
+        (withDelayed || m_currentSpells[CURRENT_GENERIC_SPELL]->getState() != SPELL_STATE_DELAYED))
+        return true;
 
     // channeled spells may be delayed, but they are still considered casted
-    else if ( !skipChanneled && m_currentSpells[CURRENT_CHANNELED_SPELL] &&
-        (m_currentSpells[CURRENT_CHANNELED_SPELL]->getState() != SPELL_STATE_FINISHED) )
-        return(true);
+    else if (!skipChanneled && m_currentSpells[CURRENT_CHANNELED_SPELL] &&
+        (m_currentSpells[CURRENT_CHANNELED_SPELL]->getState() != SPELL_STATE_FINISHED))
+        return true;
 
     // autorepeat spells may be finished or delayed, but they are still considered casted
-    else if ( !skipAutorepeat && m_currentSpells[CURRENT_AUTOREPEAT_SPELL] )
-        return(true);
+    else if (!skipAutorepeat && m_currentSpells[CURRENT_AUTOREPEAT_SPELL])
+        return true;
 
-    return(false);
+    return false;
 }
 
 void Unit::InterruptNonMeleeSpells(bool withDelayed, uint32 spell_id)
 {
     // generic spells are interrupted if they are not finished or delayed
-    if (m_currentSpells[CURRENT_GENERIC_SPELL] && (!spell_id || m_currentSpells[CURRENT_GENERIC_SPELL]->m_spellInfo->Id==spell_id))
+    if (m_currentSpells[CURRENT_GENERIC_SPELL] && (!spell_id || m_currentSpells[CURRENT_GENERIC_SPELL]->m_spellInfo->Id == spell_id))
         InterruptSpell(CURRENT_GENERIC_SPELL,withDelayed);
 
     // autorepeat spells are interrupted if they are not finished or delayed
-    if (m_currentSpells[CURRENT_AUTOREPEAT_SPELL] && (!spell_id || m_currentSpells[CURRENT_AUTOREPEAT_SPELL]->m_spellInfo->Id==spell_id))
+    if (m_currentSpells[CURRENT_AUTOREPEAT_SPELL] && (!spell_id || m_currentSpells[CURRENT_AUTOREPEAT_SPELL]->m_spellInfo->Id == spell_id))
         InterruptSpell(CURRENT_AUTOREPEAT_SPELL,withDelayed);
 
     // channeled spells are interrupted if they are not finished, even if they are delayed
-    if (m_currentSpells[CURRENT_CHANNELED_SPELL] && (!spell_id || m_currentSpells[CURRENT_CHANNELED_SPELL]->m_spellInfo->Id==spell_id))
+    if (m_currentSpells[CURRENT_CHANNELED_SPELL] && (!spell_id || m_currentSpells[CURRENT_CHANNELED_SPELL]->m_spellInfo->Id == spell_id))
         InterruptSpell(CURRENT_CHANNELED_SPELL,true);
 }
 
 Spell* Unit::FindCurrentSpellBySpellId(uint32 spell_id) const
 {
     for (uint32 i = 0; i < CURRENT_MAX_SPELL; ++i)
-        if(m_currentSpells[i] && m_currentSpells[i]->m_spellInfo->Id==spell_id)
+        if (m_currentSpells[i] && m_currentSpells[i]->m_spellInfo->Id == spell_id)
             return m_currentSpells[i];
     return NULL;
 }
@@ -3743,29 +3672,21 @@ void Unit::SetInFront(Unit const* target)
     SetOrientation(GetAngle(target));
 }
 
-void Unit::SetFacingTo(float ori, bool bToSelf /*= false*/)
+void Unit::SetFacingTo(float ori)
 {
-    // update orientation at server
-    SetOrientation(ori);
-
-    // and client
-    SendHeartBeat(bToSelf);
+    Movement::MoveSplineInit init(*this);
+    init.SetFacing(ori);
+    init.Launch();
 }
 
-// Consider move this to Creature:: since only creature appear to be able to use this
 void Unit::SetFacingToObject(WorldObject* pObject)
 {
-    if (GetTypeId() != TYPEID_UNIT)
-        return;
-
     // never face when already moving
     if (!IsStopped())
         return;
 
     // TODO: figure out under what conditions creature will move towards object instead of facing it where it currently is.
-
-    SetOrientation(GetAngle(pObject));
-    SendMonsterMove(GetPositionX(), GetPositionY(), GetPositionZ(), SPLINETYPE_FACINGTARGET, ((Creature*)this)->GetSplineFlags(), 0, NULL, pObject->GetObjectGuid().GetRawValue());
+    SetFacingTo(GetAngle(pObject));
 }
 
 bool Unit::isInAccessablePlaceFor(Creature const* c) const
@@ -4917,6 +4838,24 @@ void Unit::_ApplyAllAuraMods()
     }
 }
 
+bool Unit::HasAuraType(AuraType auraType) const
+{
+    return !GetAurasByType(auraType).empty();
+}
+
+bool Unit::HasAffectedAura(AuraType auraType, SpellEntry const* spellProto) const
+{
+    Unit::AuraList const& auras = GetAurasByType(auraType);
+
+    for (Unit::AuraList::const_iterator itr = auras.begin(); itr != auras.end(); ++itr)
+    {
+        if ((*itr)->isAffectedOnSpell(spellProto))
+            return true;
+    }
+
+    return false;
+}
+
 Aura* Unit::GetAura(uint32 spellId, SpellEffectIndex effindex)
 {
     SpellAuraHolderBounds bounds = GetSpellAuraHolderBounds(spellId);
@@ -5260,10 +5199,10 @@ void Unit::SendAttackStateUpdate(CalcDamageInfo *damageInfo)
     if(damageInfo->HitInfo & HITINFO_BLOCK)
         data << uint32(damageInfo->blocked_amount);
 
-    if(damageInfo->HitInfo & HITINFO_UNK3)
+    if(damageInfo->HitInfo & HITINFO_UNK22)
         data << uint32(0);                                  // count of some sort?
 
-    if(damageInfo->HitInfo & HITINFO_UNK1)
+    if(damageInfo->HitInfo & HITINFO_UNK0)
     {
         data << uint32(0);
         data << float(0);
@@ -5362,15 +5301,15 @@ FactionTemplateEntry const* Unit::getFactionTemplateEntry() const
 bool Unit::IsHostileTo(Unit const* unit) const
 {
     // always non-hostile to self
-    if(unit==this)
+    if (unit == this)
         return false;
 
     // always non-hostile to GM in GM mode
-    if(unit->GetTypeId()==TYPEID_PLAYER && ((Player const*)unit)->isGameMaster())
+    if (unit->GetTypeId() == TYPEID_PLAYER && ((Player const*)unit)->isGameMaster())
         return false;
 
     // always hostile to enemy
-    if(getVictim()==unit || unit->getVictim()==this)
+    if (getVictim() == unit || unit->getVictim() == this)
         return true;
 
     // test pet/charm masters instead pers/charmeds
@@ -5378,49 +5317,49 @@ bool Unit::IsHostileTo(Unit const* unit) const
     Unit const* targetOwner = unit->GetCharmerOrOwner();
 
     // always hostile to owner's enemy
-    if(testerOwner && (testerOwner->getVictim()==unit || unit->getVictim()==testerOwner))
+    if (testerOwner && (testerOwner->getVictim() == unit || unit->getVictim() == testerOwner))
         return true;
 
     // always hostile to enemy owner
-    if(targetOwner && (getVictim()==targetOwner || targetOwner->getVictim()==this))
+    if (targetOwner && (getVictim() == targetOwner || targetOwner->getVictim() == this))
         return true;
 
     // always hostile to owner of owner's enemy
-    if(testerOwner && targetOwner && (testerOwner->getVictim()==targetOwner || targetOwner->getVictim()==testerOwner))
+    if (testerOwner && targetOwner && (testerOwner->getVictim() == targetOwner || targetOwner->getVictim() == testerOwner))
         return true;
 
     Unit const* tester = testerOwner ? testerOwner : this;
     Unit const* target = targetOwner ? targetOwner : unit;
 
     // always non-hostile to target with common owner, or to owner/pet
-    if(tester==target)
+    if (tester == target)
         return false;
 
     // special cases (Duel, etc)
-    if(tester->GetTypeId()==TYPEID_PLAYER && target->GetTypeId()==TYPEID_PLAYER)
+    if (tester->GetTypeId() == TYPEID_PLAYER && target->GetTypeId() == TYPEID_PLAYER)
     {
         Player const* pTester = (Player const*)tester;
         Player const* pTarget = (Player const*)target;
 
         // Duel
-        if(pTester->duel && pTester->duel->opponent == pTarget && pTester->duel->startTime != 0)
+        if (pTester->IsInDuelWith(pTarget))
             return true;
 
         // Group
-        if(pTester->GetGroup() && pTester->GetGroup()==pTarget->GetGroup())
+        if (pTester->GetGroup() && pTester->GetGroup() == pTarget->GetGroup())
             return false;
 
         // Sanctuary
-        if(pTarget->HasByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_SANCTUARY) && pTester->HasByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_SANCTUARY))
+        if (pTarget->HasByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_SANCTUARY) && pTester->HasByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_SANCTUARY))
             return false;
 
         // PvP FFA state
-        if(pTester->IsFFAPvP() && pTarget->IsFFAPvP())
+        if (pTester->IsFFAPvP() && pTarget->IsFFAPvP())
             return true;
 
         //= PvP states
         // Green/Blue (can't attack)
-        if(pTester->GetTeam()==pTarget->GetTeam())
+        if (pTester->GetTeam() == pTarget->GetTeam())
             return false;
 
         // Red (can attack) if true, Blue/Yellow (can't attack) in another case
@@ -5474,15 +5413,15 @@ bool Unit::IsHostileTo(Unit const* unit) const
 bool Unit::IsFriendlyTo(Unit const* unit) const
 {
     // always friendly to self
-    if(unit==this)
+    if (unit == this)
         return true;
 
     // always friendly to GM in GM mode
-    if(unit->GetTypeId()==TYPEID_PLAYER && ((Player const*)unit)->isGameMaster())
+    if (unit->GetTypeId() == TYPEID_PLAYER && ((Player const*)unit)->isGameMaster())
         return true;
 
     // always non-friendly to enemy
-    if(getVictim()==unit || unit->getVictim()==this)
+    if (getVictim() == unit || unit->getVictim() == this)
         return false;
 
     // test pet/charm masters instead pers/charmeds
@@ -5490,49 +5429,49 @@ bool Unit::IsFriendlyTo(Unit const* unit) const
     Unit const* targetOwner = unit->GetCharmerOrOwner();
 
     // always non-friendly to owner's enemy
-    if(testerOwner && (testerOwner->getVictim()==unit || unit->getVictim()==testerOwner))
+    if (testerOwner && (testerOwner->getVictim() == unit || unit->getVictim() == testerOwner))
         return false;
 
     // always non-friendly to enemy owner
-    if(targetOwner && (getVictim()==targetOwner || targetOwner->getVictim()==this))
+    if (targetOwner && (getVictim() == targetOwner || targetOwner->getVictim() == this))
         return false;
 
     // always non-friendly to owner of owner's enemy
-    if(testerOwner && targetOwner && (testerOwner->getVictim()==targetOwner || targetOwner->getVictim()==testerOwner))
+    if (testerOwner && targetOwner && (testerOwner->getVictim() == targetOwner || targetOwner->getVictim() == testerOwner))
         return false;
 
     Unit const* tester = testerOwner ? testerOwner : this;
     Unit const* target = targetOwner ? targetOwner : unit;
 
     // always friendly to target with common owner, or to owner/pet
-    if(tester==target)
+    if (tester == target)
         return true;
 
     // special cases (Duel)
-    if(tester->GetTypeId()==TYPEID_PLAYER && target->GetTypeId()==TYPEID_PLAYER)
+    if (tester->GetTypeId() == TYPEID_PLAYER && target->GetTypeId() == TYPEID_PLAYER)
     {
         Player const* pTester = (Player const*)tester;
         Player const* pTarget = (Player const*)target;
 
         // Duel
-        if(pTester->duel && pTester->duel->opponent == target && pTester->duel->startTime != 0)
+        if (pTester->IsInDuelWith(pTarget))
             return false;
 
         // Group
-        if(pTester->GetGroup() && pTester->GetGroup()==pTarget->GetGroup())
+        if (pTester->GetGroup() && pTester->GetGroup() == pTarget->GetGroup())
             return true;
 
         // Sanctuary
-        if(pTarget->HasByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_SANCTUARY) && pTester->HasByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_SANCTUARY))
+        if (pTarget->HasByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_SANCTUARY) && pTester->HasByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_SANCTUARY))
             return true;
 
         // PvP FFA state
-        if(pTester->IsFFAPvP() && pTarget->IsFFAPvP())
+        if (pTester->IsFFAPvP() && pTarget->IsFFAPvP())
             return false;
 
         //= PvP states
         // Green/Blue (non-attackable)
-        if(pTester->GetTeam()==pTarget->GetTeam())
+        if (pTester->GetTeam() == pTarget->GetTeam())
             return true;
 
         // Blue (friendly/non-attackable) if not PVP, or Yellow/Red in another case (attackable)
@@ -5882,6 +5821,15 @@ Player* Unit::GetCharmerOrOwnerPlayerOrPlayerItself()
         return ObjectAccessor::FindPlayer(guid);
 
     return GetTypeId()==TYPEID_PLAYER ? (Player*)this : NULL;
+}
+
+Player const* Unit::GetCharmerOrOwnerPlayerOrPlayerItself() const
+{
+    ObjectGuid guid = GetCharmerOrOwnerGuid();
+    if (guid.IsPlayer())
+        return ObjectAccessor::FindPlayer(guid);
+
+    return GetTypeId() == TYPEID_PLAYER ? (Player const*)this : NULL;
 }
 
 Pet* Unit::GetPet() const
@@ -6436,13 +6384,26 @@ uint32 Unit::SpellDamageBonusDone(Unit *pVictim, SpellEntry const *spellProto, u
         }
         case SPELLFAMILY_PRIEST:
         {
-            // Glyph of Smite
-            if (spellProto->SpellFamilyFlags & UI64LIT(0x00000080))
+            // Smite
+            if (spellProto->IsFitToFamilyMask(UI64LIT(0x0000000000000080)))
             {
                 // Holy Fire
                 if (pVictim->GetAura(SPELL_AURA_PERIODIC_DAMAGE, SPELLFAMILY_PRIEST, UI64LIT(0x00100000)))
+                    // Glyph of Smite
                     if (Aura *aur = GetAura(55692, EFFECT_INDEX_0))
                         DoneTotalMod *= (aur->GetModifier()->m_amount+100.0f) / 100.0f;
+            }
+            // Shadow word: Death
+            else if (spellProto->IsFitToFamilyMask(UI64LIT(0x0000000200000000)))
+            {
+                // Glyph of Shadow word: Death
+                if (SpellAuraHolder const* glyph = GetSpellAuraHolder(55682))
+                {
+                    Aura const* hpPct = glyph->GetAuraByEffectIndex(EFFECT_INDEX_0);
+                    Aura const* dmPct = glyph->GetAuraByEffectIndex(EFFECT_INDEX_1);
+                    if (hpPct && dmPct && pVictim->GetHealth() * 100 <= pVictim->GetMaxHealth() * hpPct->GetModifier()->m_amount)
+                        DoneTotalMod *= (dmPct->GetModifier()->m_amount + 100.0f) / 100.0f;
+                }
             }
             break;
         }
@@ -6733,9 +6694,21 @@ bool Unit::IsSpellCrit(Unit *pVictim, SpellEntry const *spellProto, SpellSchoolM
                 // Custom crit by class
                 switch(spellProto->SpellFamilyName)
                 {
+                    case SPELLFAMILY_MAGE:
+                    {
+                        // Fire Blast
+                        if (spellProto->IsFitToFamilyMask(UI64LIT(0x0000000000000002)) && spellProto->SpellIconID == 12)
+                        {
+                            // Glyph of Fire Blast
+                            if (pVictim->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_STUNNED) || pVictim->isInRoots())
+                                if (Aura* aura = GetAura(56369, EFFECT_INDEX_0))
+                                    crit_chance += aura->GetModifier()->m_amount;
+                        }
+                        break;
+                    }
                     case SPELLFAMILY_PRIEST:
                         // Flash Heal
-                        if (spellProto->SpellFamilyFlags & UI64LIT(0x0000000000000800))
+                        if (spellProto->IsFitToFamilyMask(UI64LIT(0x0000000000000800)))
                         {
                             if (pVictim->GetHealth() > pVictim->GetMaxHealth()/2)
                                 break;
@@ -6754,7 +6727,7 @@ bool Unit::IsSpellCrit(Unit *pVictim, SpellEntry const *spellProto, SpellSchoolM
                         break;
                     case SPELLFAMILY_DRUID:
                         // Improved Insect Swarm (Starfire part)
-                        if (spellProto->SpellFamilyFlags & UI64LIT(0x0000000000000004))
+                        if (spellProto->IsFitToFamilyMask(UI64LIT(0x0000000000000004)))
                         {
                             // search for Moonfire on target
                             if (pVictim->GetAura(SPELL_AURA_PERIODIC_DAMAGE, SPELLFAMILY_DRUID, UI64LIT(0x000000000000002), 0, GetObjectGuid()))
@@ -6788,7 +6761,7 @@ bool Unit::IsSpellCrit(Unit *pVictim, SpellEntry const *spellProto, SpellSchoolM
                         break;
                     case SPELLFAMILY_SHAMAN:
                         // Lava Burst
-                        if (spellProto->SpellFamilyFlags & UI64LIT(0x0000100000000000))
+                        if (spellProto->IsFitToFamilyMask(UI64LIT(0x0000100000000000)))
                         {
                             // Flame Shock
                             if (pVictim->GetAura(SPELL_AURA_PERIODIC_DAMAGE, SPELLFAMILY_SHAMAN, UI64LIT(0x0000000010000000), 0, GetObjectGuid()))
@@ -7701,18 +7674,20 @@ void Unit::SetInCombatWith(Unit* enemy)
     Unit* eOwner = enemy->GetCharmerOrOwnerOrSelf();
     if (eOwner->IsPvP())
     {
-        SetInCombatState(true,enemy);
+        SetInCombatState(true, enemy);
         return;
     }
 
     //check for duel
     if (eOwner->GetTypeId() == TYPEID_PLAYER && ((Player*)eOwner)->duel)
     {
-        Unit const* myOwner = GetCharmerOrOwnerOrSelf();
-        if(((Player const*)eOwner)->duel->opponent == myOwner)
+        if (Player const* myOwner = GetCharmerOrOwnerPlayerOrPlayerItself())
         {
-            SetInCombatState(true,enemy);
-            return;
+            if (myOwner->IsInDuelWith((Player const*)eOwner))
+            {
+                SetInCombatState(true,enemy);
+                return;
+            }
         }
     }
 
@@ -8160,19 +8135,17 @@ void Unit::UpdateWalkMode(Unit* source, bool self)
         CallForAllControlledUnits(UpdateWalkModeHelper(source), CONTROLLED_PET|CONTROLLED_GUARDIANS|CONTROLLED_CHARM|CONTROLLED_MINIPET);
     else if (self)
     {
-        bool on = source->GetTypeId() == TYPEID_PLAYER
-            ? ((Player*)source)->HasMovementFlag(MOVEFLAG_WALK_MODE)
-            : ((Creature*)source)->HasSplineFlag(SPLINEFLAG_WALKMODE);
+        bool on = source->m_movementInfo.HasMovementFlag(MOVEFLAG_WALK_MODE);
 
         if (on)
         {
             if (((Creature*)this)->IsPet() && hasUnitState(UNIT_STAT_FOLLOW))
-                ((Creature*)this)->AddSplineFlag(SPLINEFLAG_WALKMODE);
+                ((Creature*)this)->SetWalk(true);
         }
         else
         {
             if (((Creature*)this)->IsPet())
-                ((Creature*)this)->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+                ((Creature*)this)->SetWalk(false);
         }
     }
     else
@@ -8207,7 +8180,7 @@ void Unit::UpdateSpeed(UnitMoveType mtype, bool forced, float ratio)
     switch(mtype)
     {
         case MOVE_WALK:
-            return;
+            break;
         case MOVE_RUN:
         {
             if (IsMounted()) // Use on mount auras
@@ -8418,20 +8391,7 @@ void Unit::SetDeathState(DeathState s)
         RemoveMiniPet();
         UnsummonAllTotems();
 
-        // after removing a Fearaura (in RemoveAllAurasOnDeath)
-        // Unit::SetFeared is called and makes that creatures attack player again
-        if (GetTypeId() == TYPEID_UNIT)
-        {
-            clearUnitState(UNIT_STAT_MOVING);
-
-            GetMap()->CreatureRelocation((Creature*)this, GetPositionX(), GetPositionY(), GetPositionZ(), GetOrientation());
-            SendMonsterMove(GetPositionX(), GetPositionY(), GetPositionZ(), SPLINETYPE_NORMAL, SPLINEFLAG_WALKMODE, 0);
-        }
-        else
-        {
-            if (!IsStopped())
-                StopMoving();
-        }
+        StopMoving();
 
         ModifyAuraState(AURA_STATE_HEALTHLESS_20_PERCENT, false);
         ModifyAuraState(AURA_STATE_HEALTHLESS_35_PERCENT, false);
@@ -8641,7 +8601,7 @@ bool Unit::SelectHostileTarget()
         {
             SetInFront(target);
             ((Creature*)this)->AI()->AttackStart(target);
-            
+
             // check if currently selected target is reachable
             // NOTE: path alrteady generated from AttackStart()
             if(!GetMotionMaster()->operator->()->IsReachable())
@@ -8667,7 +8627,6 @@ bool Unit::SelectHostileTarget()
 
                 return false;
             }
-       
         }
         return true;
     }
@@ -8885,9 +8844,9 @@ void Unit::IncrDiminishing(DiminishingGroup group)
     m_Diminishing.push_back(DiminishingReturn(group,WorldTimer::getMSTime(),DIMINISHING_LEVEL_2));
 }
 
-void Unit::ApplyDiminishingToDuration(DiminishingGroup group, int32 &duration,Unit* caster,DiminishingLevels Level, int32 limitduration)
+void Unit::ApplyDiminishingToDuration(DiminishingGroup group, int32 &duration,Unit* caster,DiminishingLevels Level, int32 limitduration, bool isReflected)
 {
-    if(duration == -1 || group == DIMINISHING_NONE || caster->IsFriendlyTo(this) )
+    if(duration == -1 || group == DIMINISHING_NONE || (!isReflected && caster->IsFriendlyTo(this)) )
         return;
 
     // Duration of crowd control abilities on pvp target is limited by 10 sec. (2.2.0)
@@ -9424,7 +9383,7 @@ void Unit::CleanupsBeforeDelete()
         else
             getHostileRefManager().deleteReferences();
         RemoveAllAuras(AURA_REMOVE_BY_DELETE);
-        GetMotionMaster()->Clear(false);                    // remove different non-standard movement generators.
+        GetMotionMaster()->Clear(false,true);         // remove all movement generators.           
     }
     WorldObject::CleanupsBeforeDelete();
 }
@@ -9816,9 +9775,9 @@ void Unit::ProcDamageAndSpellFor( bool isVictim, Unit * pTarget, uint32 procFlag
             {
                 if (spellProcEvent)
                 {
-                    if (spellProcEvent->spellFamilyMask[i] || spellProcEvent->spellFamilyMask2[i])
+                    if (spellProcEvent->spellFamilyMask[i])
                     {
-                        if (!procSpell->IsFitToFamilyMask(spellProcEvent->spellFamilyMask[i], spellProcEvent->spellFamilyMask2[i]))
+                        if (!procSpell->IsFitToFamilyMask(spellProcEvent->spellFamilyMask[i]))
                             continue;
                     }
                     // don't check dbc FamilyFlags if schoolMask exists
@@ -9957,12 +9916,9 @@ void Unit::StopMoving()
     if (!IsInWorld())
         return;
 
-    // send explicit stop packet
-    // player expected for correct work SPLINEFLAG_WALKMODE
-    SendMonsterMove(GetPositionX(), GetPositionY(), GetPositionZ(), SPLINETYPE_STOP, GetTypeId() == TYPEID_PLAYER ? SPLINEFLAG_WALKMODE : SPLINEFLAG_NONE, 0);
-
-    // update position and orientation for near players
-    SendHeartBeat(false);
+    Movement::MoveSplineInit init(*this);
+    init.SetFacing(GetOrientation());
+    init.Launch();
 }
 
 void Unit::SetFeared(bool apply, ObjectGuid casterGuid, uint32 spellID, uint32 time)
@@ -10404,7 +10360,7 @@ void Unit::SetContestedPvP(Player *attackedPlayer)
 {
     Player* player = GetCharmerOrOwnerPlayerOrPlayerItself();
 
-    if (!player || (attackedPlayer && (attackedPlayer == player || (player->duel && player->duel->opponent == attackedPlayer))))
+    if (!player || (attackedPlayer && (attackedPlayer == player || player->IsInDuelWith(attackedPlayer))))
         return;
 
     player->SetContestedPvPTimer(30000);
@@ -10505,7 +10461,7 @@ void Unit::NearTeleportTo( float x, float y, float z, float orientation, bool ca
 
         GetMap()->CreatureRelocation((Creature*)this, x, y, z, orientation);
 
-        SendHeartBeat(false);
+        SendHeartBeat();
 
         // finished relocation, movegen can different from top before creature relocation,
         // but apply Reset expected to be safe in any case
@@ -10515,85 +10471,13 @@ void Unit::NearTeleportTo( float x, float y, float z, float orientation, bool ca
     }
 }
 
-void Unit::MonsterMove(float x, float y, float z, uint32 transitTime)
+void Unit::MonsterMoveWithSpeed(float x, float y, float z, float speed)
 {
-    SplineFlags flags = GetTypeId() == TYPEID_PLAYER ? SPLINEFLAG_WALKMODE : ((Creature*)this)->GetSplineFlags();
-    SendMonsterMove(x, y, z, SPLINETYPE_NORMAL, flags, transitTime);
-
-    if (GetTypeId() != TYPEID_PLAYER)
-    {
-        Creature* c = (Creature*)this;
-        // Creature relocation acts like instant movement generator, so current generator expects interrupt/reset calls to react properly
-        if (!c->GetMotionMaster()->empty())
-            if (MovementGenerator *movgen = c->GetMotionMaster()->top())
-                movgen->Interrupt(*c);
-
-        GetMap()->CreatureRelocation((Creature*)this, x, y, z, 0.0f);
-
-        // finished relocation, movegen can different from top before creature relocation,
-        // but apply Reset expected to be safe in any case
-        if (!c->GetMotionMaster()->empty())
-            if (MovementGenerator *movgen = c->GetMotionMaster()->top())
-                movgen->Reset(*c);
-    }
+    Movement::MoveSplineInit init(*this);
+    init.MoveTo(x,y,z);
+    init.SetVelocity(speed);
+    init.Launch();
 }
-
-void Unit::MonsterMoveWithSpeed(float x, float y, float z, uint32 transitTime)
-{
-    SendMonsterMoveWithSpeed(x, y, z, transitTime );
-
-    if (GetTypeId() != TYPEID_PLAYER)
-    {
-        Creature* c = (Creature*)this;
-        // Creature relocation acts like instant movement generator, so current generator expects interrupt/reset calls to react properly
-        if (!c->GetMotionMaster()->empty())
-            if (MovementGenerator *movgen = c->GetMotionMaster()->top())
-                movgen->Interrupt(*c);
-
-        GetMap()->CreatureRelocation((Creature*)this, x, y, z, 0.0f);
-
-        // finished relocation, movegen can different from top before creature relocation,
-        // but apply Reset expected to be safe in any case
-        if (!c->GetMotionMaster()->empty())
-            if (MovementGenerator *movgen = c->GetMotionMaster()->top())
-                movgen->Reset(*c);
-    }
-}
-
-void Unit::MonsterMoveByPath(float x, float y, float z, uint32 speed, bool smoothPath, bool forceDest)
-{
-    PathInfo path(this, x, y, z, !smoothPath, forceDest);
-    PointPath pointPath = path.getFullPath();
-
-    uint32 traveltime = uint32(pointPath.GetTotalLength()/float(speed));
-    MonsterMoveByPath(pointPath, 1, pointPath.size(), traveltime);
-}
-
-template<typename PathElem, typename PathNode>
-void Unit::MonsterMoveByPath(Path<PathElem,PathNode> const& path, uint32 start, uint32 end, uint32 transitTime)
-{
-    SplineFlags flags = GetTypeId() == TYPEID_PLAYER ? SPLINEFLAG_WALKMODE : ((Creature*)this)->GetSplineFlags();
-    SendMonsterMoveByPath(path, start, end, flags, transitTime);
-
-    if (GetTypeId() != TYPEID_PLAYER)
-    {
-        Creature* c = (Creature*)this;
-        // Creature relocation acts like instant movement generator, so current generator expects interrupt/reset calls to react properly
-        if (!c->GetMotionMaster()->empty())
-            if (MovementGenerator *movgen = c->GetMotionMaster()->top())
-                movgen->Interrupt(*c);
-
-        GetMap()->CreatureRelocation((Creature*)this, path[end-1].x, path[end-1].y, path[end-1].z, 0.0f);
-
-        // finished relocation, movegen can different from top before creature relocation,
-        // but apply Reset expected to be safe in any case
-        if (!c->GetMotionMaster()->empty())
-            if (MovementGenerator *movgen = c->GetMotionMaster()->top())
-                movgen->Reset(*c);
-    }
-}
-
-template void Unit::MonsterMoveByPath<PathNode>(const Path<PathNode> &, uint32, uint32, uint32);
 
 struct SetPvPHelper
 {
@@ -10849,86 +10733,28 @@ SpellAuraHolder* Unit::GetSpellAuraHolder (uint32 spellid, ObjectGuid casterGuid
     return NULL;
 }
 
-template<typename Elem, typename Node>
-void Unit::SendMonsterMoveByPath(Path<Elem,Node> const& path, uint32 start, uint32 end, SplineFlags flags, uint32 traveltime)
-{
-    uint32 pathSize = end - start;
-
-    if (pathSize < 1)
-    {
-        SendMonsterMove(GetPositionX(), GetPositionY(), GetPositionZ(), SPLINETYPE_STOP, flags, 0);
-        return;
-    }
-
-    if (pathSize == 1)
-    {
-        SendMonsterMove(path[start].x, path[start].y, path[start].z, SPLINETYPE_NORMAL, flags, traveltime);
-        return;
-    }
-
-    uint32 packSize = (flags & SplineFlags(SPLINEFLAG_FLYING | SPLINEFLAG_CATMULLROM)) ? pathSize*4*3 : 4*3 + (pathSize-1)*4;
-    WorldPacket data( SMSG_MONSTER_MOVE, (GetPackGUID().size()+1+4+4+4+4+1+4+4+4+packSize) );
-    data << GetPackGUID();
-    data << uint8(0);
-    data << GetPositionX();
-    data << GetPositionY();
-    data << GetPositionZ();
-    data << uint32(WorldTimer::getMSTime());
-    data << uint8(SPLINETYPE_NORMAL);
-    data << uint32(flags);
-    data << uint32(traveltime);
-    data << uint32(pathSize);
-
-    if (flags & SplineFlags(SPLINEFLAG_FLYING | SPLINEFLAG_CATMULLROM))
-    {
-        // sending a taxi flight path
-        for (uint32 i = start; i < end; ++i)
-        {
-            data << float(path[i].x);
-            data << float(path[i].y);
-            data << float(path[i].z);
-        }
-    }
-    else
-    {
-        // sending a series of points
-
-        // destination
-        data << path[end-1].x;
-        data << path[end-1].y;
-        data << path[end-1].z;
-
-        // all other points are relative to the center of the path
-        float mid_X = (GetPositionX() + path[end-1].x) * 0.5f;
-        float mid_Y = (GetPositionY() + path[end-1].y) * 0.5f;
-        float mid_Z = (GetPositionZ() + path[end-1].z) * 0.5f;
-
-        for (uint32 i = start; i < end - 1; ++i)
-            data.appendPackXYZ(mid_X - path[i].x, mid_Y - path[i].y, mid_Z - path[i].z);
-    }
-
-    SendMessageToSet(&data, true);
-}
-
-template void Unit::SendMonsterMoveByPath<PathNode>(const Path<PathNode> &, uint32, uint32, SplineFlags, uint32);
-template void Unit::SendMonsterMoveByPath<TaxiPathNodePtr, const TaxiPathNodeEntry>(const Path<TaxiPathNodePtr, const TaxiPathNodeEntry> &, uint32, uint32, SplineFlags, uint32);
-
 bool Unit::IsAllowedDamageInArea(Unit* pVictim) const
 {
     // can damage self anywhere
     if (pVictim == this)
         return true;
 
-    // non player controlled unit can damage anywhere
-    if (!IsCharmerOrOwnerPlayerOrPlayerItself())
-        return true;
-
     // can damage own pet anywhere
     if (pVictim->GetOwnerGuid() == GetObjectGuid())
         return true;
 
+    // non player controlled unit can damage anywhere
+    Player const* pOwner = GetCharmerOrOwnerPlayerOrPlayerItself();
+    if (!pOwner)
+        return true;
+
     // can damage non player controlled victim anywhere
-    if (!pVictim->IsCharmerOrOwnerPlayerOrPlayerItself())
+    Player const* vOwner = pVictim->GetCharmerOrOwnerPlayerOrPlayerItself();
+    if (!vOwner)
+        return true;
+
+    // can damage opponent in duel
+    if (pOwner->IsInDuelWith(vOwner))
         return true;
 
     // can't damage player controlled unit by player controlled unit in sanctuary
@@ -11022,5 +10848,33 @@ void Unit::SetVehicleId(uint32 entry)
         data << GetPackGUID();
         data << uint32(entry);
         SendMessageToSet(&data, true);
+    }
+}
+
+void Unit::UpdateSplineMovement(uint32 t_diff)
+{
+    enum{
+        POSITION_UPDATE_DELAY = 400,
+    };
+
+    if (movespline->Finalized())
+        return;
+
+    movespline->updateState(t_diff);
+    bool arrived = movespline->Finalized();
+
+    if (arrived)
+        m_movementInfo.RemoveMovementFlag(MovementFlags(MOVEFLAG_SPLINE_ENABLED|MOVEFLAG_FORWARD));
+
+    m_movesplineTimer.Update(t_diff);
+    if (m_movesplineTimer.Passed() || arrived)
+    {
+        m_movesplineTimer.Reset(POSITION_UPDATE_DELAY);
+        Movement::Location loc = movespline->ComputePosition();
+
+        if (GetTypeId() == TYPEID_PLAYER)
+            ((Player*)this)->SetPosition(loc.x,loc.y,loc.z,loc.orientation);
+        else
+            GetMap()->CreatureRelocation((Creature*)this,loc.x,loc.y,loc.z,loc.orientation);
     }
 }

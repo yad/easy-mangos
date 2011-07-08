@@ -147,6 +147,8 @@ struct CreatureInfo
         return vehicleId ? HIGHGUID_VEHICLE : HIGHGUID_UNIT;
     }
 
+    ObjectGuid GetObjectGuid(uint32 lowguid) const { return ObjectGuid(GetHighGuid(), Entry, lowguid); }
+
     SkillType GetRequiredLootSkill() const
     {
         if(type_flags & CREATURE_TYPEFLAGS_HERBLOOT)
@@ -202,8 +204,7 @@ struct CreatureData
     uint8 spawnMask;
 
     // helper function
-    HighGuid GetHighGuid() const;
-    ObjectGuid GetObjectGuid(uint32 lowguid) const { return ObjectGuid(GetHighGuid(), id, lowguid); }
+    ObjectGuid GetObjectGuid(uint32 lowguid) const;
 };
 
 // from `creature_addon` and `creature_template_addon`tables
@@ -457,7 +458,7 @@ class MANGOS_DLL_SPEC Creature : public Unit
 
         char const* GetSubName() const { return GetCreatureInfo()->SubName; }
 
-        void Update(uint32 update_diff, uint32 time);       // overwrite Unit::Update
+        void Update(uint32 update_diff, uint32 time) override;  // overwrite Unit::Update
 
         virtual void RegenerateAll(uint32 update_diff);
         void GetRespawnCoord(float &x, float &y, float &z, float* ori = NULL, float* dist =NULL) const;
@@ -515,31 +516,10 @@ class MANGOS_DLL_SPEC Creature : public Unit
 
         CreatureAI* AI() { return i_AI; }
 
-        void AddSplineFlag(SplineFlags f)
-        {
-            bool need_walk_sync = (f & SPLINEFLAG_WALKMODE) != (m_splineFlags & SPLINEFLAG_WALKMODE);
-            m_splineFlags = SplineFlags(m_splineFlags | f);
-            if (need_walk_sync)
-                UpdateWalkMode(this, false);
-        }
-        void RemoveSplineFlag(SplineFlags f)
-        {
-            bool need_walk_sync = (f & SPLINEFLAG_WALKMODE) != (m_splineFlags & SPLINEFLAG_WALKMODE);
-            m_splineFlags = SplineFlags(m_splineFlags & ~f);
-            if (need_walk_sync)
-                UpdateWalkMode(this, false);
-        }
-        bool HasSplineFlag(SplineFlags f) const { return m_splineFlags & f; }
-        SplineFlags GetSplineFlags() const { return m_splineFlags; }
-        void SetSplineFlags(SplineFlags f)
-        {
-            bool need_walk_sync = (f & SPLINEFLAG_WALKMODE) != (m_splineFlags & SPLINEFLAG_WALKMODE);
-            m_splineFlags = f;                              // need set before
-            if (need_walk_sync)
-                UpdateWalkMode(this, false);
-        }
-
-        void SendMonsterMoveWithSpeedToCurrentDestination(Player* player = NULL);
+        void SetWalk(bool enable);
+        void SetLevitate(bool enable);
+        bool IsLevitating() const { return m_movementInfo.HasMovementFlag(MOVEFLAG_LEVITATING);}
+        bool IsWalking() const { return m_movementInfo.HasMovementFlag(MOVEFLAG_WALK_MODE);}
 
         uint32 GetShieldBlockValue() const                  // dunno mob block value
         {
@@ -761,7 +741,6 @@ class MANGOS_DLL_SPEC Creature : public Unit
     private:
         GridReference<Creature> m_gridRef;
         CreatureInfo const* m_creatureInfo;                 // in difficulty mode > 0 can different from ObjMgr::GetCreatureTemplate(GetEntry())
-        SplineFlags m_splineFlags;
 };
 
 class AssistDelayEvent : public BasicEvent

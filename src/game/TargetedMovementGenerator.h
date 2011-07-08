@@ -20,10 +20,8 @@
 #define MANGOS_TARGETEDMOVEMENTGENERATOR_H
 
 #include "MovementGenerator.h"
-#include "DestinationHolder.h"
-#include "Traveller.h"
 #include "FollowerReference.h"
-#include "PathFinder.h"
+#include "Timer.h"
 
 class MANGOS_DLL_SPEC TargetedMovementGeneratorBase
 {
@@ -39,33 +37,17 @@ class MANGOS_DLL_SPEC TargetedMovementGeneratorMedium
 : public MovementGeneratorMedium< T, D >, public TargetedMovementGeneratorBase
 {
     protected:
-        TargetedMovementGeneratorMedium()
-            : TargetedMovementGeneratorBase(), i_offset(0), i_angle(0), i_recalculateTravel(false),
-                i_path(NULL), m_pathPointsSent(0) {}
-        TargetedMovementGeneratorMedium(Unit &target)
-            : TargetedMovementGeneratorBase(target), i_offset(0), i_angle(0), i_recalculateTravel(false),
-                i_path(NULL), m_pathPointsSent(0) {}
-        TargetedMovementGeneratorMedium(Unit &target, float offset, float angle)
-            : TargetedMovementGeneratorBase(target), i_offset(offset), i_angle(angle), i_recalculateTravel(false),
-                i_path(NULL), m_pathPointsSent(0) {}
-        ~TargetedMovementGeneratorMedium() { delete i_path; }
+        TargetedMovementGeneratorMedium(Unit &target, float offset, float angle) :
+            TargetedMovementGeneratorBase(target), i_offset(offset), i_angle(angle),
+            i_recalculateTravel(false), i_targetReached(false), i_recheckDistance(0)
+        {
+        }
+        ~TargetedMovementGeneratorMedium() {}
 
     public:
         bool Update(T &, const uint32 &);
 
         Unit* GetTarget() const { return i_target.getTarget(); }
-
-        bool GetDestination(float &x, float &y, float &z) const
-        {
-            if(!i_destinationHolder.HasDestination()) return false;
-            i_destinationHolder.GetDestination(x,y,z);
-            return true;
-        }
-
-        bool IsReachable() const
-        {
-            return (i_path) ? (i_path->getPathType() & PATHFIND_NORMAL) : true;
-        }
 
         void unitSpeedChanged() { i_recalculateTravel=true; }
         void UpdateFinalDistance(float fDistance);
@@ -73,13 +55,11 @@ class MANGOS_DLL_SPEC TargetedMovementGeneratorMedium
     protected:
         void _setTargetLocation(T &);
 
+        ShortTimeTracker i_recheckDistance;
         float i_offset;
         float i_angle;
-        DestinationHolder< Traveller<T> > i_destinationHolder;
-        bool i_recalculateTravel;
-
-        PathInfo* i_path;
-        uint32 m_pathPointsSent;
+        bool i_recalculateTravel : 1;
+        bool i_targetReached : 1;
 };
 
 template<class T>

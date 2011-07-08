@@ -145,6 +145,8 @@ enum UnitStandStateType
     UNIT_STAND_STATE_CUSTOM            = 9                  // Depends on model animation. Submerge, freeze, hide, hibernate, rest
 };
 
+#define MAX_UNIT_STAND_STATE             10
+
 // byte flags value (UNIT_FIELD_BYTES_1,2)
 enum UnitStandFlags
 {
@@ -220,10 +222,10 @@ enum VictimState
 enum HitInfo
 {
     HITINFO_NORMALSWING         = 0x00000000,
-    HITINFO_UNK1                = 0x00000001,               // req correct packet structure
+    HITINFO_UNK0                = 0x00000001,               // req correct packet structure
     HITINFO_NORMALSWING2        = 0x00000002,
     HITINFO_LEFTSWING           = 0x00000004,
-    HITINFO_UNK2                = 0x00000008,
+    HITINFO_UNK3                = 0x00000008,
     HITINFO_MISS                = 0x00000010,
     HITINFO_ABSORB              = 0x00000020,               // absorbed damage
     HITINFO_ABSORB2             = 0x00000040,               // absorbed damage
@@ -243,7 +245,7 @@ enum HitInfo
     // 0x00100000
     HITINFO_SWINGNOHITSOUND     = 0x00200000,               // guessed
     // 0x00400000
-    HITINFO_UNK3                = 0x00800000
+    HITINFO_UNK22               = 0x00800000
 };
 
 //i would like to remove this: (it is defined in item.h
@@ -406,9 +408,7 @@ enum UnitState
     UNIT_STAT_FOLLOW_MOVE     = 0x00010000,
     UNIT_STAT_FLEEING         = 0x00020000,                     // FleeMovementGenerator/TimedFleeingMovementGenerator active/onstack
     UNIT_STAT_FLEEING_MOVE    = 0x00040000,
-
     UNIT_STAT_IGNORE_PATHFINDING    = 0x00080000,               // do not use pathfinding in any MovementGenerator
-
     // masks (only for check)
 
     // can't move currently
@@ -803,6 +803,10 @@ inline ByteBuffer& operator>> (ByteBuffer& buf, MovementInfo& mi)
     return buf;
 }
 
+namespace Movement{
+    class MoveSpline;
+}
+
 enum DiminishingLevels
 {
     DIMINISHING_LEVEL_1             = 0,
@@ -1149,11 +1153,11 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
 
         DiminishingLevels GetDiminishing(DiminishingGroup  group);
         void IncrDiminishing(DiminishingGroup group);
-        void ApplyDiminishingToDuration(DiminishingGroup  group, int32 &duration,Unit* caster, DiminishingLevels Level, int32 limitduration);
+        void ApplyDiminishingToDuration(DiminishingGroup  group, int32 &duration,Unit* caster, DiminishingLevels Level, int32 limitduration, bool isReflected);
         void ApplyDiminishingAura(DiminishingGroup  group, bool apply);
         void ClearDiminishings() { m_Diminishing.clear(); }
 
-        virtual void Update( uint32 update_diff, uint32 time );
+        void Update(uint32 update_diff, uint32 time) override;
 
         void setAttackTimer(WeaponAttackType type, uint32 time) { m_attackTimer[type] = time; }
         void resetAttackTimer(WeaponAttackType type = BASE_ATTACK);
@@ -1411,6 +1415,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         }
 
         bool HasAuraType(AuraType auraType) const;
+        bool HasAffectedAura(AuraType auraType, SpellEntry const* spellProto) const;
         bool HasAura(uint32 spellId, SpellEffectIndex effIndex) const;
         bool HasAura(uint32 spellId) const
         {
@@ -1458,28 +1463,19 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         void SendSpellMiss(Unit *target, uint32 spellID, SpellMissInfo missInfo);
 
         void NearTeleportTo(float x, float y, float z, float orientation, bool casting = false);
-
-        void MonsterMove(float x, float y, float z, uint32 transitTime);
-        void MonsterMoveWithSpeed(float x, float y, float z, uint32 transitTime = 0);
-
-        void MonsterMoveByPath(float x, float y, float z, uint32 speed, bool smoothPath = true, bool forceDest = false);
-        template<typename PathElem, typename PathNode>
-        void MonsterMoveByPath(Path<PathElem,PathNode> const& path, uint32 start, uint32 end, uint32 transitTime = 0);
-
+        void MonsterMoveWithSpeed(float x, float y, float z, float speed);
         // recommend use MonsterMove/MonsterMoveWithSpeed for most case that correctly work with movegens
         // if used additional args in ... part then floats must explicitly casted to double
-        void SendMonsterMove(float x, float y, float z, SplineType type, SplineFlags flags, uint32 Time, Player* player = NULL, ...);
-        void SendMonsterMoveWithSpeed(float x, float y, float z, uint32 transitTime = 0, Player* player = NULL);
+        void SendHeartBeat();
 
-        template<typename PathElem, typename PathNode>
-        void SendMonsterMoveByPath(Path<PathElem,PathNode> const& path, uint32 start, uint32 end, SplineFlags flags, uint32 traveltime);
+        void SetInFront(Unit const* target);
+        void SetFacingTo(float ori);
+        void SetFacingToObject(WorldObject* pObject);
 
         void SendHighestThreatUpdate(HostileReference* pHostileReference);
         void SendThreatClear();
         void SendThreatRemove(HostileReference* pHostileReference);
         void SendThreatUpdate();
-
-        void SendHeartBeat(bool toSelf);
 
         virtual void MoveOutOfRange(Player &) {  };
 
@@ -1536,6 +1532,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         }
         bool IsCharmerOrOwnerPlayerOrPlayerItself() const;
         Player* GetCharmerOrOwnerPlayerOrPlayerItself();
+        Player const* GetCharmerOrOwnerPlayerOrPlayerItself() const;
         float GetCombatDistance( const Unit* target ) const;
 
         void SetPet(Pet* pet);
@@ -1700,10 +1697,6 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         float GetTotalAttackPowerValue(WeaponAttackType attType) const;
         float GetWeaponDamageRange(WeaponAttackType attType ,WeaponDamageRange type) const;
         void SetBaseWeaponDamage(WeaponAttackType attType ,WeaponDamageRange damageRange, float value) { m_weaponDamage[attType][damageRange] = value; }
-
-        void SetInFront(Unit const* target);
-        void SetFacingTo(float ori, bool bToSelf = false);
-        void SetFacingToObject(WorldObject* pObject);
 
         // Visibility system
         UnitVisibility GetVisibility() const { return m_Visibility; }
@@ -1956,6 +1949,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
 
         // Movement info
         MovementInfo m_movementInfo;
+        Movement::MoveSpline * movespline;
 
         void ScheduleAINotify(uint32 delay);
         bool IsAINotifyScheduled() const { return m_AINotifyScheduled;}
@@ -2014,6 +2008,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         VehicleInfo* m_vehicleInfo;
     private:
         void CleanupDeletedAuras();
+        void UpdateSplineMovement(uint32 t_diff);
 
         // player or player's pet
         float GetCombatRatingReduction(CombatRating cr) const;
@@ -2031,6 +2026,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         UnitVisibility m_Visibility;
         Position m_last_notified_position;
         bool m_AINotifyScheduled;
+        ShortTimeTracker m_movesplineTimer;
 
         Diminishing m_Diminishing;
         // Manage all Units threatening us
