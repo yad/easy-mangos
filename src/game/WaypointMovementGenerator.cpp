@@ -358,4 +358,3 @@ bool FlightPathMovementGenerator::GetResetPosition(Player&, float& x, float& y, 
     x = node.x; y = node.y; z = node.z;
     return true;
 }
-
