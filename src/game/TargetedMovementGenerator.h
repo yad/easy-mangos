@@ -22,7 +22,7 @@
 #include "MovementGenerator.h"
 #include "FollowerReference.h"
 #include "PathFinder.h"
-#include "Timer.h"
+#include "Unit.h"
 
 class MANGOS_DLL_SPEC TargetedMovementGeneratorBase
 {

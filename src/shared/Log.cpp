@@ -49,6 +49,8 @@ LogFilterData logFilterData[LOG_FILTER_COUNT] =
     { "spell_cast",          "LogFilter_SpellCast",          false },
     { "db_stricted_check",   "LogFilter_DbStrictedCheck",    true  },
     { "pathfinding",         "LogFilter_Pathfinding",        true },
+    { "ahbot_seller",        "LogFilter_AhbotSeller",        true  },
+    { "ahbot_buyer",         "LogFilter_AhbotBuyer",         true  },
 };
 
 enum LogType
