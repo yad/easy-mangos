@@ -19,14 +19,14 @@
 #ifndef MANGOS_PATH_FINDER_H
 #define MANGOS_PATH_FINDER_H
 
-#include "Movement/MoveSplineInitArgs.h"
-
 #include "MoveMapSharedDefines.h"
 #include "../recastnavigation/Detour/Include/DetourNavMesh.h"
 #include "../recastnavigation/Detour/Include/DetourNavMeshQuery.h"
 
+#include "Movement/MoveSplineInitArgs.h"
 
-using namespace Movement;
+using Movement::Vector3;
+using Movement::PointsArray;
 
 class Unit;
 

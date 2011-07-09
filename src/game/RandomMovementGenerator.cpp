@@ -43,12 +43,12 @@ void RandomMovementGenerator<Creature>::_setRandomLocation(Creature &creature)
     Movement::MoveSplineInit init(creature);
     init.MoveTo(destX, destY, destZ, true);
     init.SetWalk(true);
-    int32 traveltime = init.Launch();
+    init.Launch();
 
     if (creature.CanFly())
-        i_nextMoveTime.Reset(traveltime);
+        i_nextMoveTime.Reset(0);
     else
-        i_nextMoveTime.Reset(traveltime + urand(500, 10000));
+        i_nextMoveTime.Reset(urand(500, 10000));
 }
 
 template<>
