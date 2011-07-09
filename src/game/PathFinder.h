@@ -19,10 +19,14 @@
 #ifndef MANGOS_PATH_FINDER_H
 #define MANGOS_PATH_FINDER_H
 
-#include "Path.h"
+#include "Movement/MoveSplineInitArgs.h"
+
 #include "MoveMapSharedDefines.h"
 #include "../recastnavigation/Detour/Include/DetourNavMesh.h"
 #include "../recastnavigation/Detour/Include/DetourNavMeshQuery.h"
+
+
+using namespace Movement;
 
 class Unit;
 
@@ -51,44 +55,35 @@ enum PathType
 class PathInfo
 {
     public:
-        PathInfo(Unit const* owner, float destX, float destY, float destZ,
-                 bool useStraightPath = false, bool forceDest = false);
+        PathInfo(Unit const* owner);
         ~PathInfo();
 
-        // return value : true if new path was calculated
-        bool Update(float destX, float destY, float destZ,
-                    bool useStraightPath = false, bool forceDest = false);
+        // return: true if new path was calculated
+        // false otherwise (no change needed)
+        bool calculate(float destX, float destY, float destZ,
+                       bool useStraightPath = false, bool forceDest = false);
 
-        void getStartPosition(float &x, float &y, float &z) { x = m_startPosition.x; y = m_startPosition.y; z = m_startPosition.z; }
-        void getNextPosition(float &x, float &y, float &z) { x = m_nextPosition.x; y = m_nextPosition.y; z = m_nextPosition.z; }
-        void getEndPosition(float &x, float &y, float &z) { x = m_endPosition.x; y = m_endPosition.y; z = m_endPosition.z; }
-        void getActualEndPosition(float &x, float &y, float &z) { x = m_actualEndPosition.x; y = m_actualEndPosition.y; z = m_actualEndPosition.z; }
+        Vector3 getStartPosition()      const { return m_startPosition; }
+        Vector3 getEndPosition()        const { return m_endPosition; }
+        Vector3 getActualEndPosition()  const { return m_actualEndPosition; }
 
-        PathNode getStartPosition() const { return m_startPosition; }
-        PathNode getNextPosition() const { return m_nextPosition; }
-        PathNode getEndPosition() const { return m_endPosition; }
-        PathNode getActualEndPosition() const { return m_actualEndPosition; }
-
-        PointPath& getFullPath() { return m_pathPoints; }
+        PointsArray& getPath() { return m_pathPoints; }
         PathType getPathType() const { return m_type; }
 
-        bool inRange(const PathNode &p1, const PathNode &p2, float r, float h) const;
-        float dist3DSqr(const PathNode &p1, const PathNode &p2) const;
     private:
 
-        dtPolyRef       m_pathPolyRefs[MAX_PATH_LENGTH];   // array of detour polygon references
-        uint32          m_polyLength;                      // number of polygons in the path
+        dtPolyRef      m_pathPolyRefs[MAX_PATH_LENGTH];   // array of detour polygon references
+        uint32         m_polyLength;                      // number of polygons in the path
 
-        PointPath       m_pathPoints;       // our actual (x,y,z) path to the target
-        PathType        m_type;             // tells what kind of path this is
+        PointsArray    m_pathPoints;       // our actual (x,y,z) path to the target
+        PathType       m_type;             // tells what kind of path this is
 
-        bool            m_useStraightPath;  // type of path will be generated
-        bool            m_forceDestination; // when set, we will always arrive at given point
+        bool           m_useStraightPath;  // type of path will be generated
+        bool           m_forceDestination; // when set, we will always arrive at given point
 
-        PathNode        m_startPosition;    // {x, y, z} of current location
-        PathNode        m_nextPosition;     // {x, y, z} of next location on the path
-        PathNode        m_endPosition;      // {x, y, z} of the destination
-        PathNode        m_actualEndPosition;  // {x, y, z} of the closest possible point to given destination
+        Vector3        m_startPosition;    // {x, y, z} of current location
+        Vector3        m_endPosition;      // {x, y, z} of the destination
+        Vector3        m_actualEndPosition;// {x, y, z} of the closest possible point to given destination
 
         const Unit* const       m_sourceUnit;       // the unit that is moving
         const dtNavMesh*        m_navMesh;          // the nav mesh
@@ -96,10 +91,9 @@ class PathInfo
 
         dtQueryFilter m_filter;                     // use single filter for all movements, update it when needed
 
-        void setNextPosition(PathNode point) { m_nextPosition = point; }
-        void setStartPosition(PathNode point) { m_startPosition = point; }
-        void setEndPosition(PathNode point) { m_actualEndPosition = point; m_endPosition = point; }
-        void setActualEndPosition(PathNode point) { m_actualEndPosition = point; }
+        void setStartPosition(Vector3 point) { m_startPosition = point; }
+        void setEndPosition(Vector3 point) { m_actualEndPosition = point; m_endPosition = point; }
+        void setActualEndPosition(Vector3 point) { m_actualEndPosition = point; }
 
         void clear()
         {
@@ -107,13 +101,15 @@ class PathInfo
             m_pathPoints.clear();
         }
 
+        bool inRange(const Vector3 &p1, const Vector3 &p2, float r, float h) const;
+        float dist3DSqr(const Vector3 &p1, const Vector3 &p2) const;
         bool inRangeYZX(const float* v1, const float* v2, float r, float h) const;
 
         dtPolyRef getPathPolyByPosition(const dtPolyRef *polyPath, uint32 polyPathSize, const float* point, float *distance = NULL);
         dtPolyRef getPolyByLocation(const float* point, float *distance);
-        bool HaveTiles(const PathNode &p) const;
+        bool HaveTiles(const Vector3 &p) const;
 
-        void BuildPolyPath(const PathNode &startPos, const PathNode &endPos);
+        void BuildPolyPath(const Vector3 &startPos, const Vector3 &endPos);
         void BuildPointPath(const float *startPoint, const float *endPoint);
         void BuildShortcut();
 

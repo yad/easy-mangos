@@ -25,20 +25,11 @@
 #include "../recastnavigation/Detour/Include/DetourCommon.h"
 
 ////////////////// PathInfo //////////////////
-PathInfo::PathInfo(const Unit* owner, float destX, float destY, float destZ,
-                   bool useStraightPath, bool forceDest) :
+PathInfo::PathInfo(const Unit* owner) :
     m_polyLength(0), m_type(PATHFIND_BLANK),
-    m_useStraightPath(useStraightPath), m_forceDestination(forceDest),
+    m_useStraightPath(false), m_forceDestination(false),
     m_sourceUnit(owner), m_navMesh(NULL), m_navMeshQuery(NULL)
 {
-    PathNode endPoint(destX, destY, destZ);
-    setEndPosition(endPoint);
-
-    float x,y,z;
-    m_sourceUnit->GetPosition(x, y, z);
-    PathNode startPoint(x, y, z);
-    setStartPosition(startPoint);
-
     DEBUG_FILTER_LOG(LOG_FILTER_PATHFINDING, "++ PathInfo::PathInfo for %u \n", m_sourceUnit->GetGUIDLow());
 
     uint32 mapId = m_sourceUnit->GetMapId();
@@ -51,16 +42,7 @@ PathInfo::PathInfo(const Unit* owner, float destX, float destY, float destZ,
 
     createFilter();
 
-    if (m_navMesh && m_navMeshQuery && HaveTiles(endPoint) &&
-            !m_sourceUnit->hasUnitState(UNIT_STAT_IGNORE_PATHFINDING))
-    {
-        BuildPolyPath(startPoint, endPoint);
-    }
-    else
-    {
-        BuildShortcut();
-        m_type = PathType(PATHFIND_NORMAL | PATHFIND_NOT_USING_PATH);
-    }
+    m_pathPoints.clear();
 }
 
 PathInfo::~PathInfo()
@@ -68,26 +50,25 @@ PathInfo::~PathInfo()
     DEBUG_FILTER_LOG(LOG_FILTER_PATHFINDING, "++ PathInfo::~PathInfo() for %u \n", m_sourceUnit->GetGUIDLow());
 }
 
-bool PathInfo::Update(float destX, float destY, float destZ,
-                      bool useStraightPath, bool forceDest)
+bool PathInfo::calculate(float destX, float destY, float destZ,
+                         bool useStraightPath, bool forceDest)
 {
-    PathNode newDest(destX, destY, destZ);
-    PathNode oldDest = getEndPosition();
-    setEndPosition(newDest);
+    Vector3 oldDest = getEndPosition();
+    Vector3 dest(destX, destY, destZ);
+    setEndPosition(dest);
 
     float x, y, z;
     m_sourceUnit->GetPosition(x, y, z);
-    PathNode newStart(x, y, z);
-    PathNode oldStart = getStartPosition();
-    setStartPosition(newStart);
+    Vector3 start(x, y, z);
+    setStartPosition(start);
 
     m_useStraightPath = useStraightPath;
     m_forceDestination = forceDest;
 
-    DEBUG_FILTER_LOG(LOG_FILTER_PATHFINDING, "++ PathInfo::Update() for %u \n", m_sourceUnit->GetGUIDLow());
+    DEBUG_FILTER_LOG(LOG_FILTER_PATHFINDING, "++ PathInfo::calculate() for %u \n", m_sourceUnit->GetGUIDLow());
 
     // make sure navMesh works - we can run on map w/o mmap
-    if (!m_navMesh || !m_navMeshQuery || !HaveTiles(newDest) ||
+    if (!m_navMesh || !m_navMeshQuery || !HaveTiles(dest) ||
             m_sourceUnit->hasUnitState(UNIT_STAT_IGNORE_PATHFINDING))
     {
         BuildShortcut();
@@ -100,21 +81,19 @@ bool PathInfo::Update(float destX, float destY, float destZ,
     // check if destination moved - if not we can optimize something here
     // we are following old, precalculated path?
     float dist = m_sourceUnit->GetObjectBoundingRadius();
-    if (inRange(oldDest, newDest, dist, dist) && m_pathPoints.size() > 2)
+    if (inRange(oldDest, dest, dist, dist) && m_pathPoints.size() > 2)
     {
         // our target is not moving - we just coming closer
         // we are moving on precalculated path - enjoy the ride
-        DEBUG_FILTER_LOG(LOG_FILTER_PATHFINDING, "++ PathInfo::Update:: precalculated path\n");
+        DEBUG_FILTER_LOG(LOG_FILTER_PATHFINDING, "++ PathInfo::calculate:: precalculated path\n");
 
-        m_pathPoints.crop(1, 0);
-        setNextPosition(m_pathPoints[1]);
-
+        m_pathPoints.erase(m_pathPoints.begin());
         return false;
     }
     else
     {
         // target moved, so we need to update the poly path
-        BuildPolyPath(newStart, newDest);
+        BuildPolyPath(start, dest);
         return true;
     }
 }
@@ -188,7 +167,7 @@ dtPolyRef PathInfo::getPolyByLocation(const float* point, float *distance)
     return INVALID_POLYREF;
 }
 
-void PathInfo::BuildPolyPath(const PathNode &startPos, const PathNode &endPos)
+void PathInfo::BuildPolyPath(const Vector3 &startPos, const Vector3 &endPos)
 {
     // *** getting start/end poly logic ***
 
@@ -222,7 +201,7 @@ void PathInfo::BuildPolyPath(const PathNode &startPos, const PathNode &endPos)
         {
             Creature* owner = (Creature*)m_sourceUnit;
 
-            PathNode p = (distToStartPoly > 7.0f) ? startPos : endPos;
+            Vector3 p = (distToStartPoly > 7.0f) ? startPos : endPos;
             if (m_sourceUnit->GetTerrain()->IsUnderWater(p.x, p.y, p.z))
             {
                 DEBUG_FILTER_LOG(LOG_FILTER_PATHFINDING, "++ BuildPolyPath :: underWater case\n");
@@ -250,7 +229,7 @@ void PathInfo::BuildPolyPath(const PathNode &startPos, const PathNode &endPos)
             if (DT_SUCCESS == m_navMeshQuery->closestPointOnPoly(endPoly, endPoint, closestPoint))
             {
                 dtVcopy(endPoint, closestPoint);
-                setActualEndPosition(PathNode(endPoint[2],endPoint[0],endPoint[1]));
+                setActualEndPosition(Vector3(endPoint[2],endPoint[0],endPoint[1]));
             }
 
             m_type = PATHFIND_INCOMPLETE;
@@ -463,10 +442,9 @@ void PathInfo::BuildPointPath(const float *startPoint, const float *endPoint)
 
     m_pathPoints.resize(pointCount);
     for (uint32 i = 0; i < pointCount; ++i)
-        m_pathPoints.set(i, PathNode(pathPoints[i*VERTEX_SIZE+2], pathPoints[i*VERTEX_SIZE], pathPoints[i*VERTEX_SIZE+1]));
+        m_pathPoints[i] = Vector3(pathPoints[i*VERTEX_SIZE+2], pathPoints[i*VERTEX_SIZE], pathPoints[i*VERTEX_SIZE+1]);
 
     // first point is always our current location - we need the next one
-    setNextPosition(m_pathPoints[1]);
     setActualEndPosition(m_pathPoints[pointCount-1]);
 
     // force the given destination, if needed
@@ -478,7 +456,7 @@ void PathInfo::BuildPointPath(const float *startPoint, const float *endPoint)
             0.3f * dist3DSqr(getStartPosition(), getEndPosition()))
         {
             setActualEndPosition(getEndPosition());
-            m_pathPoints.set(m_pathPoints.size()-1, getEndPosition());
+            m_pathPoints[m_pathPoints.size()-1] = getEndPosition();
         }
         else
         {
@@ -502,10 +480,9 @@ void PathInfo::BuildShortcut()
     m_pathPoints.resize(2);
 
     // set start and a default next position
-    m_pathPoints.set(0, getStartPosition());
-    m_pathPoints.set(1, getActualEndPosition());
+    m_pathPoints[0] = getStartPosition();
+    m_pathPoints[1] = getActualEndPosition();
 
-    setNextPosition(getActualEndPosition());
     m_type = PATHFIND_SHORTCUT;
 }
 
@@ -570,7 +547,7 @@ NavTerrain PathInfo::getNavTerrain(float x, float y, float z)
     }
 }
 
-bool PathInfo::HaveTiles(const PathNode &p) const
+bool PathInfo::HaveTiles(const Vector3 &p) const
 {
     int tx, ty;
     float point[VERTEX_SIZE] = {p.y, p.z, p.x};
@@ -797,18 +774,13 @@ bool PathInfo::inRangeYZX(const float* v1, const float* v2, float r, float h) co
     return (dx*dx + dz*dz) < r*r && fabsf(dy) < h;
 }
 
-bool PathInfo::inRange(const PathNode &p1, const PathNode &p2, float r, float h) const
+bool PathInfo::inRange(const Vector3 &p1, const Vector3 &p2, float r, float h) const
 {
-    const float dx = p2.x - p1.x;
-    const float dy = p2.y - p1.y;
-    const float dz = p2.z - p1.z;
-    return (dx*dx + dy*dy) < r*r && fabsf(dz) < h;
+    Vector3 d = p1-p2;
+    return (d.x*d.x + d.y*d.y) < r*r && fabsf(d.z) < h;
 }
 
-float PathInfo::dist3DSqr(const PathNode &p1, const PathNode &p2) const
+float PathInfo::dist3DSqr(const Vector3 &p1, const Vector3 &p2) const
 {
-    const float dx = p2.x - p1.x;
-    const float dy = p2.y - p1.y;
-    const float dz = p2.z - p1.z;
-    return (dx*dx + dy*dy + dz*dz);
+    return (p1-p2).squaredLength();
 }

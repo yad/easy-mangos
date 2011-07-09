@@ -181,7 +181,7 @@ void WaypointMovementGenerator<Creature>::StartMove(Creature &creature)
 
     const WaypointNode &node = i_path->at(i_currentNode);
     Movement::MoveSplineInit init(creature);
-    init.MoveTo(node.x, node.y, node.z);
+    init.MoveTo(node.x, node.y, node.z, true);
 
     if (node.orientation != 100 && node.delay != 0)
         init.SetFacing(node.orientation);

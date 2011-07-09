@@ -5320,19 +5320,19 @@ bool ChatHandler::HandleMmapPathCommand(char* args)
     player->GetPosition(x, y, z);
 
     // path
-    PathInfo path(target, x, y, z, useStraightPath);
-    PointPath pointPath = path.getFullPath();
+    PathInfo path(target);
+    path.calculate(x, y, z, useStraightPath);
+
+    PointsArray pointPath = path.getPath();
     PSendSysMessage("%s's path to %s:", target->GetName(), player->GetName());
     PSendSysMessage("Building %s", useStraightPath ? "StraightPath" : "SmoothPath");
     PSendSysMessage("length %i type %u", pointPath.size(), path.getPathType());
 
-    PathNode start = path.getStartPosition();
-    PathNode next = path.getNextPosition();
-    PathNode end = path.getEndPosition();
-    PathNode actualEnd = path.getActualEndPosition();
+    Vector3 start = path.getStartPosition();
+    Vector3 end = path.getEndPosition();
+    Vector3 actualEnd = path.getActualEndPosition();
 
     PSendSysMessage("start      (%.3f, %.3f, %.3f)", start.x, start.y, start.z);
-    PSendSysMessage("next       (%.3f, %.3f, %.3f)", next.x, next.y, next.z);
     PSendSysMessage("end        (%.3f, %.3f, %.3f)", end.x, end.y, end.z);
     PSendSysMessage("actual end (%.3f, %.3f, %.3f)", actualEnd.x, actualEnd.y, actualEnd.z);
 
