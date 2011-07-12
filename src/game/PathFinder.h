@@ -23,7 +23,7 @@
 #include "../recastnavigation/Detour/Include/DetourNavMesh.h"
 #include "../recastnavigation/Detour/Include/DetourNavMeshQuery.h"
 
-#include "Movement/MoveSplineInitArgs.h"
+#include "movement/MoveSplineInitArgs.h"
 
 using Movement::Vector3;
 using Movement::PointsArray;
