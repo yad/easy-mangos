@@ -16975,6 +16975,11 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder *holder )
 
     _LoadEquipmentSets(holder->GetResult(PLAYER_LOGIN_QUERY_LOADEQUIPMENTSETS));
 
+    if (!GetGroup() || !GetGroup()->isLFDGroup())
+    {
+        sLFGMgr.RemoveMemberFromLFDGroup(GetGroup(),GetObjectGuid());
+    }
+
     return true;
 }
 
@@ -17859,8 +17864,6 @@ void Player::_LoadGroup(QueryResult *result)
                 sLFGMgr.LoadLFDGroupPropertiesForPlayer(this);
         }
     }
-    if (!GetGroup())
-        sLFGMgr.RemoveMemberFromLFDGroup(NULL,GetObjectGuid());
 }
 
 void Player::_LoadBoundInstances(QueryResult *result)
