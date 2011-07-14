@@ -1105,7 +1105,7 @@ bool PlayerbotAI::SetInFront(const Unit* obj)
     y = m_bot->m_movementInfo.GetPos()->y;
     z = m_bot->m_movementInfo.GetPos()->z;
     m_bot->m_movementInfo.ChangePosition(x,y,z,ori);
-    m_bot->SendHeartBeat(false);
+    m_bot->SendHeartBeat();
     return true;
 }
 

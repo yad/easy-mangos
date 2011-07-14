@@ -19,10 +19,14 @@
 #ifndef MANGOS_PATH_FINDER_H
 #define MANGOS_PATH_FINDER_H
 
-#include "Path.h"
 #include "MoveMapSharedDefines.h"
 #include "../recastnavigation/Detour/Include/DetourNavMesh.h"
 #include "../recastnavigation/Detour/Include/DetourNavMeshQuery.h"
+
+#include "movement/MoveSplineInitArgs.h"
+
+using Movement::Vector3;
+using Movement::PointsArray;
 
 class Unit;
 
@@ -51,42 +55,35 @@ enum PathType
 class PathInfo
 {
     public:
-        PathInfo(Unit const* owner, const float destX, const float destY, const float destZ,
-                 bool useStraightPath = false, bool forceDest = false);
+        PathInfo(Unit const* owner);
         ~PathInfo();
 
-        // return value : true if new path was calculated
-        bool Update(const float destX, const float destY, const float destZ,
-                    bool useStraightPath = false, bool forceDest = false);
+        // return: true if new path was calculated
+        // false otherwise (no change needed)
+        bool calculate(float destX, float destY, float destZ,
+                       bool useStraightPath = false, bool forceDest = false);
 
-        inline void getStartPosition(float &x, float &y, float &z) { x = m_startPosition.x; y = m_startPosition.y; z = m_startPosition.z; }
-        inline void getNextPosition(float &x, float &y, float &z) { x = m_nextPosition.x; y = m_nextPosition.y; z = m_nextPosition.z; }
-        inline void getEndPosition(float &x, float &y, float &z) { x = m_endPosition.x; y = m_endPosition.y; z = m_endPosition.z; }
-        inline void getActualEndPosition(float &x, float &y, float &z) { x = m_actualEndPosition.x; y = m_actualEndPosition.y; z = m_actualEndPosition.z; }
+        Vector3 getStartPosition()      const { return m_startPosition; }
+        Vector3 getEndPosition()        const { return m_endPosition; }
+        Vector3 getActualEndPosition()  const { return m_actualEndPosition; }
 
-        inline PathNode getStartPosition() const { return m_startPosition; }
-        inline PathNode getNextPosition() const { return m_nextPosition; }
-        inline PathNode getEndPosition() const { return m_endPosition; }
-        inline PathNode getActualEndPosition() const { return m_actualEndPosition; }
-
-        inline PointPath& getFullPath() { return m_pathPoints; }
-        inline PathType getPathType() const { return m_type; }
+        PointsArray& getPath() { return m_pathPoints; }
+        PathType getPathType() const { return m_type; }
 
     private:
 
-        dtPolyRef       m_pathPolyRefs[MAX_PATH_LENGTH];   // array of detour polygon references
-        uint32          m_polyLength;                      // number of polygons in the path
+        dtPolyRef      m_pathPolyRefs[MAX_PATH_LENGTH];   // array of detour polygon references
+        uint32         m_polyLength;                      // number of polygons in the path
 
-        PointPath       m_pathPoints;       // our actual (x,y,z) path to the target
-        PathType        m_type;             // tells what kind of path this is
+        PointsArray    m_pathPoints;       // our actual (x,y,z) path to the target
+        PathType       m_type;             // tells what kind of path this is
 
-        bool            m_useStraightPath;  // type of path will be generated
-        bool            m_forceDestination; // when set, we will always arrive at given point
+        bool           m_useStraightPath;  // type of path will be generated
+        bool           m_forceDestination; // when set, we will always arrive at given point
 
-        PathNode        m_startPosition;    // {x, y, z} of current location
-        PathNode        m_nextPosition;     // {x, y, z} of next location on the path
-        PathNode        m_endPosition;      // {x, y, z} of the destination
-        PathNode        m_actualEndPosition;  // {x, y, z} of the closest possible point to given destination
+        Vector3        m_startPosition;    // {x, y, z} of current location
+        Vector3        m_endPosition;      // {x, y, z} of the destination
+        Vector3        m_actualEndPosition;// {x, y, z} of the closest possible point to given destination
 
         const Unit* const       m_sourceUnit;       // the unit that is moving
         const dtNavMesh*        m_navMesh;          // the nav mesh
@@ -94,23 +91,26 @@ class PathInfo
 
         dtQueryFilter m_filter;                     // use single filter for all movements, update it when needed
 
-        inline void setNextPosition(PathNode point) { m_nextPosition = point; }
-        inline void setStartPosition(PathNode point) { m_startPosition = point; }
-        inline void setEndPosition(PathNode point) { m_actualEndPosition = point; m_endPosition = point; }
-        inline void setActualEndPosition(PathNode point) { m_actualEndPosition = point; }
+        void setStartPosition(Vector3 point) { m_startPosition = point; }
+        void setEndPosition(Vector3 point) { m_actualEndPosition = point; m_endPosition = point; }
+        void setActualEndPosition(Vector3 point) { m_actualEndPosition = point; }
 
-        inline void clear()
+        void clear()
         {
             m_polyLength = 0;
             m_pathPoints.clear();
         }
 
-        dtPolyRef getPathPolyByPosition(dtPolyRef *polyPath, uint32 polyPathSize, const float* point, float *distance = NULL);
-        dtPolyRef getPolyByLocation(const float* point, float *distance);
-        bool HaveTiles(const PathNode p) const;
+        bool inRange(const Vector3 &p1, const Vector3 &p2, float r, float h) const;
+        float dist3DSqr(const Vector3 &p1, const Vector3 &p2) const;
+        bool inRangeYZX(const float* v1, const float* v2, float r, float h) const;
 
-        void BuildPolyPath(PathNode startPos, PathNode endPos);
-        void BuildPointPath(float *startPoint, float *endPoint);
+        dtPolyRef getPathPolyByPosition(const dtPolyRef *polyPath, uint32 polyPathSize, const float* point, float *distance = NULL);
+        dtPolyRef getPolyByLocation(const float* point, float *distance);
+        bool HaveTiles(const Vector3 &p) const;
+
+        void BuildPolyPath(const Vector3 &startPos, const Vector3 &endPos);
+        void BuildPointPath(const float *startPoint, const float *endPoint);
         void BuildShortcut();
 
         NavTerrain getNavTerrain(float x, float y, float z);
@@ -118,32 +118,15 @@ class PathInfo
         void updateFilter();
 
         // smooth path functions
-        uint32 fixupCorridor(dtPolyRef* path, const uint32 npath, const uint32 maxPath,
-                             const dtPolyRef* visited, const uint32 nvisited);
-        bool getSteerTarget(const float* startPos, const float* endPos, const float minTargetDist,
-                            const dtPolyRef* path, const uint32 pathSize, float* steerPos,
+        uint32 fixupCorridor(dtPolyRef* path, uint32 npath, uint32 maxPath,
+                             const dtPolyRef* visited, uint32 nvisited);
+        bool getSteerTarget(const float* startPos, const float* endPos, float minTargetDist,
+                            const dtPolyRef* path, uint32 pathSize, float* steerPos,
                             unsigned char& steerPosFlag, dtPolyRef& steerPosRef);
         dtStatus findSmoothPath(const float* startPos, const float* endPos,
-                              const dtPolyRef* polyPath, const uint32 polyPathSize,
+                              const dtPolyRef* polyPath, uint32 polyPathSize,
                               float* smoothPath, int* smoothPathSize, bool &usedOffmesh,
-                              const uint32 smoothPathMaxSize);
+                              uint32 smoothPathMaxSize);
 };
-
-inline bool inRangeYZX(const float* v1, const float* v2, const float r, const float h)
-{
-    const float dx = v2[0] - v1[0];
-    const float dy = v2[1] - v1[1]; // elevation
-    const float dz = v2[2] - v1[2];
-    return (dx*dx + dz*dz) < r*r && fabsf(dy) < h;
-}
-
-inline bool inRange(const PathNode p1, const PathNode p2,
-                    const float r, const float h)
-{
-    const float dx = p2.x - p1.x;
-    const float dy = p2.y - p1.y;
-    const float dz = p2.z - p1.z;
-    return (dx*dx + dy*dy) < r*r && fabsf(dz) < h;
-}
 
 #endif

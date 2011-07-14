@@ -41,8 +41,8 @@ class MANGOS_DLL_SPEC TargetedMovementGeneratorMedium
         TargetedMovementGeneratorMedium(Unit &target, float offset, float angle) :
             TargetedMovementGeneratorBase(target), i_offset(offset), i_angle(angle),
             i_recalculateTravel(false), i_targetReached(false), i_recheckDistance(0),
-                i_path(NULL), i_x(target.GetPositionX()), i_y(target.GetPositionY()),
-                i_z(target.GetPositionZ())
+            i_path(NULL), i_x(target.GetPositionX()), i_y(target.GetPositionY()),
+            i_z(target.GetPositionZ())
         {
         }
         ~TargetedMovementGeneratorMedium() { delete i_path; }
@@ -52,7 +52,10 @@ class MANGOS_DLL_SPEC TargetedMovementGeneratorMedium
 
         bool GetDestination(float &x, float &y, float &z) const
         {
-            if(!i_destinationHolder.HasDestination()) return false;
+            //if(!i_destinationHolder.HasDestination())
+            if (owner.movespline->Finalized())
+                return false;
+
             i_destinationHolder.GetDestination(x,y,z);
             return true;
         }

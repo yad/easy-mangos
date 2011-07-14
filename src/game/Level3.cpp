@@ -41,6 +41,7 @@
 #include "CellImpl.h"
 #include "Weather.h"
 #include "PointMovementGenerator.h"
+#include "PathFinder.h"
 #include "TargetedMovementGenerator.h"
 #include "SkillDiscovery.h"
 #include "SkillExtraItems.h"
@@ -7746,7 +7747,8 @@ bool ChatHandler::HandleMmapTestArea(char* args)
         m_session->GetPlayer()->GetPosition(gx,gy,gz);
         for (std::list<Creature*>::iterator itr = creatureList.begin(); itr != creatureList.end(); ++itr)
         {
-            PathInfo((*itr), gx, gy, gz);
+            PathInfo path(*itr);
+            path.calculate(gx, gy, gz);
             ++paths;
         }
 
