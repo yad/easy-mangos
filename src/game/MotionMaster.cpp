@@ -523,7 +523,7 @@ bool MotionMaster::HasArrived()
     if (top()->GetMovementGeneratorType()!=FOLLOW_MOTION_TYPE)
         return true;
 
-	return m_owner->movespline->Finalized();
+    return m_owner->movespline->Finalized();
 
     /*Player* p_owner = (Player*)m_owner;
     FollowMovementGenerator<Player> *mgen = static_cast<FollowMovementGenerator<Player>*>(top());

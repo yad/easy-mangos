@@ -50,15 +50,6 @@ class MANGOS_DLL_SPEC TargetedMovementGeneratorMedium
     public:
         bool Update(T &, const uint32 &);
 
-        bool GetDestination(T& owner, float &x, float &y, float &z) const
-        {
-            if (owner.movespline->Finalized())
-                return false;
-
-            owner.movespline->GetDestination(x,y,z);
-            return true;
-        }
-
         bool IsReachable() const
         {
             return (i_path) ? (i_path->getPathType() & PATHFIND_NORMAL) : true;

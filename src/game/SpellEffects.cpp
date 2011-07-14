@@ -8071,7 +8071,7 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
 
                     break;
                 }
-                case 53110:									// Devour Humanoid
+                case 53110:                                    // Devour Humanoid
                 {
                     unitTarget->CastSpell(m_caster, m_spellInfo->CalculateSimpleValue(eff_idx),true, NULL, NULL, m_caster->GetObjectGuid()); 
                     return;

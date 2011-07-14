@@ -83,14 +83,14 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner)
             && owner.hasUnitState(UNIT_STAT_FOLLOW))
             forceDest = true;*/
 
-		if(!i_path)
-			i_path = new PathInfo(&owner);
+        if(!i_path)
+            i_path = new PathInfo(&owner);
 
-		/*// allow pets following their master to cheat while generating paths
-		bool forceDest = (owner.GetTypeId() == TYPEID_UNIT && ((Creature*)&owner)->IsPet()
-							&& owner.hasUnitState(UNIT_STAT_FOLLOW));*/
+        /*// allow pets following their master to cheat while generating paths
+        bool forceDest = (owner.GetTypeId() == TYPEID_UNIT && ((Creature*)&owner)->IsPet()
+                            && owner.hasUnitState(UNIT_STAT_FOLLOW));*/
 
-		i_path->calculate(x, y, z, false, false);
+        i_path->calculate(x, y, z, false, false);
         if(i_path->getPathType() & PATHFIND_NOPATH)
         {
             i_path->calculate(x, y, z, false, true);
@@ -101,73 +101,73 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner)
             }
         }
 
-		D::_addUnitStateMove(owner);
-		i_targetReached = false;
-		i_recalculateTravel = false;
+        D::_addUnitStateMove(owner);
+        i_targetReached = false;
+        i_recalculateTravel = false;
 
-		Movement::MoveSplineInit init(owner);
-		init.MovebyPath(i_path->getPath());
-		init.SetWalk(((D*)this)->EnableWalking());
-		init.Launch();
+        Movement::MoveSplineInit init(owner);
+        init.MovebyPath(i_path->getPath());
+        init.SetWalk(((D*)this)->EnableWalking());
+        init.Launch();
     }
     else
     {
-		float x, y, z;
+        float x, y, z;
 
-		// prevent redundant micro-movement for pets, other followers.
-		if (i_offset && i_target->IsWithinDistInMap(&owner,2*i_offset))
-		{
-			if (!owner.movespline->Finalized())
-				return;
+        // prevent redundant micro-movement for pets, other followers.
+        if (i_offset && i_target->IsWithinDistInMap(&owner,2*i_offset))
+        {
+            if (!owner.movespline->Finalized())
+                return;
 
-			owner.GetPosition(x, y, z);
-		}
-		else if (!i_offset)
-		{
-			// to nearest contact position
-			i_target->GetContactPoint( &owner, x, y, z );
-		}
-		else
-		{
-			// to at i_offset distance from target and i_angle from target facing
-			i_target->GetClosePoint(x, y, z, owner.GetObjectBoundingRadius(), i_offset, i_angle, &owner);
-		}
+            owner.GetPosition(x, y, z);
+        }
+        else if (!i_offset)
+        {
+            // to nearest contact position
+            i_target->GetContactPoint( &owner, x, y, z );
+        }
+        else
+        {
+            // to at i_offset distance from target and i_angle from target facing
+            i_target->GetClosePoint(x, y, z, owner.GetObjectBoundingRadius(), i_offset, i_angle, &owner);
+        }
 
-		/*
-			We MUST not check the distance difference and avoid setting the new location for smaller distances.
-			By that we risk having far too many GetContactPoint() calls freezing the whole system.
-			In TargetedMovementGenerator<T>::Update() we check the distance to the target and at
-			some range we calculate a new position. The calculation takes some processor cycles due to vmaps.
-			If the distance to the target it too large to ignore,
-			but the distance to the new contact point is short enough to be ignored,
-			we will calculate a new contact point each update loop, but will never move to it.
-			The system will freeze.
-			ralf
+        /*
+            We MUST not check the distance difference and avoid setting the new location for smaller distances.
+            By that we risk having far too many GetContactPoint() calls freezing the whole system.
+            In TargetedMovementGenerator<T>::Update() we check the distance to the target and at
+            some range we calculate a new position. The calculation takes some processor cycles due to vmaps.
+            If the distance to the target it too large to ignore,
+            but the distance to the new contact point is short enough to be ignored,
+            we will calculate a new contact point each update loop, but will never move to it.
+            The system will freeze.
+            ralf
 
-			//We don't update Mob Movement, if the difference between New destination and last destination is < BothObjectSize
-			float  bothObjectSize = i_target->GetObjectBoundingRadius() + owner.GetObjectBoundingRadius() + CONTACT_DISTANCE;
-			if( i_destinationHolder.HasDestination() && i_destinationHolder.GetDestinationDiff(x,y,z) < bothObjectSize )
-				return;
-		*/
+            //We don't update Mob Movement, if the difference between New destination and last destination is < BothObjectSize
+            float  bothObjectSize = i_target->GetObjectBoundingRadius() + owner.GetObjectBoundingRadius() + CONTACT_DISTANCE;
+            if( i_destinationHolder.HasDestination() && i_destinationHolder.GetDestinationDiff(x,y,z) < bothObjectSize )
+                return;
+        */
 
-		if(!i_path)
-			i_path = new PathInfo(&owner);
+        if(!i_path)
+            i_path = new PathInfo(&owner);
 
-		// allow pets following their master to cheat while generating paths
-		bool forceDest = (owner.GetTypeId() == TYPEID_UNIT && ((Creature*)&owner)->IsPet()
-							&& owner.hasUnitState(UNIT_STAT_FOLLOW));
-		i_path->calculate(x, y, z, false, forceDest);
-		if(i_path->getPathType() & PATHFIND_NOPATH)
-			return;
+        // allow pets following their master to cheat while generating paths
+        bool forceDest = (owner.GetTypeId() == TYPEID_UNIT && ((Creature*)&owner)->IsPet()
+                            && owner.hasUnitState(UNIT_STAT_FOLLOW));
+        i_path->calculate(x, y, z, false, forceDest);
+        if(i_path->getPathType() & PATHFIND_NOPATH)
+            return;
 
-		D::_addUnitStateMove(owner);
-		i_targetReached = false;
-		i_recalculateTravel = false;
+        D::_addUnitStateMove(owner);
+        i_targetReached = false;
+        i_recalculateTravel = false;
 
-		Movement::MoveSplineInit init(owner);
-		init.MovebyPath(i_path->getPath());
-		init.SetWalk(((D*)this)->EnableWalking());
-		init.Launch();
+        Movement::MoveSplineInit init(owner);
+        init.MovebyPath(i_path->getPath());
+        init.SetWalk(((D*)this)->EnableWalking());
+        init.Launch();
     }
 }
 
@@ -233,79 +233,94 @@ bool TargetedMovementGeneratorMedium<T,D>::Update(T &owner, const uint32 & time_
     {
         Unit* bot = (Unit*)&owner;
 
-		i_recheckDistance.Update(time_diff);
-		if (i_recheckDistance.Passed())
-		{
-			i_recheckDistance.Reset(100);
+        i_recheckDistance.Update(time_diff);
+        if (i_recheckDistance.Passed())
+        {
+            i_recheckDistance.Reset(100);
 
-			//More distance let have better performance, less distance let have more sensitive reaction at target move.
-			float allowed_dist = owner.GetObjectBoundingRadius() + sWorld.getConfig(CONFIG_FLOAT_RATE_TARGET_POS_RECALCULATION_RANGE);
-			G3D::Vector3 dest = owner.movespline->FinalDestination();
+            //More distance let have better performance, less distance let have more sensitive reaction at target move.
+            float allowed_dist = owner.GetObjectBoundingRadius() + sWorld.getConfig(CONFIG_FLOAT_RATE_TARGET_POS_RECALCULATION_RANGE);
+            G3D::Vector3 dest = owner.movespline->FinalDestination();
 
-			bool targetMoved = false;
-			if (owner.GetTypeId() == TYPEID_PLAYER && ((Player*)&owner)->IsFlying())
-				targetMoved = !i_target->IsWithinDist3d(dest.x, dest.y, dest.z, allowed_dist);
-			else
-				targetMoved = !i_target->IsWithinDist2d(dest.x, dest.y, allowed_dist);
+            bool targetMoved = false;
 
-			if (targetMoved)
-				_setTargetLocation(owner);
-		}
+            if (i_target.getTarget()==bot)
+            {
+                if (owner.GetTypeId() == TYPEID_PLAYER && ((Player*)&owner)->IsFlying())
+                    targetMoved = !bot->IsWithinDist3d(i_x, i_y, i_z, allowed_dist);
+                else
+                    targetMoved = !bot->IsWithinDist2d(i_x, i_y, allowed_dist);
+            }
+            else
+            {
+                if (owner.GetTypeId() == TYPEID_PLAYER && ((Player*)&owner)->IsFlying())
+                    targetMoved = !i_target->IsWithinDist3d(dest.x, dest.y, dest.z, allowed_dist);
+                else
+                    targetMoved = !i_target->IsWithinDist2d(dest.x, dest.y, allowed_dist);
+            }
+            if (owner.GetTypeId() == TYPEID_PLAYER && ((Player*)&owner)->IsFlying())
+                targetMoved = !i_target->IsWithinDist3d(dest.x, dest.y, dest.z, allowed_dist);
+            else
+                targetMoved = !i_target->IsWithinDist2d(dest.x, dest.y, allowed_dist);
 
-		if (owner.movespline->Finalized())
-		{
-			if (i_angle == 0.f && !owner.HasInArc(0.01f, i_target.getTarget()))
-				owner.SetInFront(i_target.getTarget());
+            if (targetMoved)
+                _setTargetLocation(owner);
+        }
 
-			if (!i_targetReached)
-			{
-				i_targetReached = true;
-				static_cast<D*>(this)->_reachTarget(owner);
-			}
-		}
-		else
-		{
-			if (i_recalculateTravel)
-				_setTargetLocation(owner);
-		}
+        if (owner.movespline->Finalized())
+        {
+            if (i_angle == 0.f && !owner.HasInArc(0.01f, i_target.getTarget()))
+                owner.SetInFront(i_target.getTarget());
+
+            if (!i_targetReached)
+            {
+                i_targetReached = true;
+                static_cast<D*>(this)->_reachTarget(owner);
+            }
+        }
+        else
+        {
+            if (i_recalculateTravel)
+                _setTargetLocation(owner);
+        }
     }
     else
     {
-		i_recheckDistance.Update(time_diff);
-		if (i_recheckDistance.Passed())
-		{
-			i_recheckDistance.Reset(100);
+        i_recheckDistance.Update(time_diff);
+        if (i_recheckDistance.Passed())
+        {
+            i_recheckDistance.Reset(100);
 
-			//More distance let have better performance, less distance let have more sensitive reaction at target move.
-			float allowed_dist = owner.GetObjectBoundingRadius() + sWorld.getConfig(CONFIG_FLOAT_RATE_TARGET_POS_RECALCULATION_RANGE);
-			G3D::Vector3 dest = owner.movespline->FinalDestination();
+            //More distance let have better performance, less distance let have more sensitive reaction at target move.
+            float allowed_dist = owner.GetObjectBoundingRadius() + sWorld.getConfig(CONFIG_FLOAT_RATE_TARGET_POS_RECALCULATION_RANGE);
+            G3D::Vector3 dest = owner.movespline->FinalDestination();
 
-			bool targetMoved = false;
-			if (owner.GetTypeId() == TYPEID_UNIT && ((Creature*)&owner)->CanFly())
-				targetMoved = !i_target->IsWithinDist3d(dest.x, dest.y, dest.z, allowed_dist);
-			else
-				targetMoved = !i_target->IsWithinDist2d(dest.x, dest.y, allowed_dist);
+            bool targetMoved = false;
+            if (owner.GetTypeId() == TYPEID_UNIT && ((Creature*)&owner)->CanFly())
+                targetMoved = !i_target->IsWithinDist3d(dest.x, dest.y, dest.z, allowed_dist);
+            else
+                targetMoved = !i_target->IsWithinDist2d(dest.x, dest.y, allowed_dist);
 
-			if (targetMoved)
-				_setTargetLocation(owner);
-		}
+            if (targetMoved)
+                _setTargetLocation(owner);
+        }
 
-		if (owner.movespline->Finalized())
-		{
-			if (i_angle == 0.f && !owner.HasInArc(0.01f, i_target.getTarget()))
-				owner.SetInFront(i_target.getTarget());
+        if (owner.movespline->Finalized())
+        {
+            if (i_angle == 0.f && !owner.HasInArc(0.01f, i_target.getTarget()))
+                owner.SetInFront(i_target.getTarget());
 
-			if (!i_targetReached)
-			{
-				i_targetReached = true;
-				static_cast<D*>(this)->_reachTarget(owner);
-			}
-		}
-		else
-		{
-			if (i_recalculateTravel)
-				_setTargetLocation(owner);
-		}
+            if (!i_targetReached)
+            {
+                i_targetReached = true;
+                static_cast<D*>(this)->_reachTarget(owner);
+            }
+        }
+        else
+        {
+            if (i_recalculateTravel)
+                _setTargetLocation(owner);
+        }
     }
     return true;
 }
@@ -360,7 +375,7 @@ bool FollowMovementGenerator<Creature>::EnableWalking() const
 
 bool FollowMovementGenerator<Player>::EnableWalking() const
 {
-    return i_target.isValid() && i_target->IsWalking();
+    return false; //i_target.isValid() && i_target->IsWalking();
 }
 
 template<>
