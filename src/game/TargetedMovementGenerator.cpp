@@ -93,7 +93,7 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner)
 		i_path->calculate(x, y, z, false, false);
         if(i_path->getPathType() & PATHFIND_NOPATH)
         {
-            newPathCalculated = i_path->Update(x, y, z, false, true);
+            i_path->calculate(x, y, z, false, true);
             if(i_path->getPathType() & PATHFIND_NOPATH)
             {
                 ((Player*)&owner)->TeleportTo(((Player*)&owner)->GetMapId(), x, y, z, 0.0f);
@@ -358,16 +358,9 @@ bool FollowMovementGenerator<Creature>::EnableWalking() const
     return i_target.isValid() && i_target->IsWalking();
 }
 
-template<>
-void FollowMovementGenerator<Player>::_updateWalkMode(Player &u)
-{
-    if (i_target.isValid())
-        u.UpdateWalkMode(i_target.getTarget());
-}
-
 bool FollowMovementGenerator<Player>::EnableWalking() const
 {
-    return false;
+    return i_target.isValid() && i_target->IsWalking();
 }
 
 template<>

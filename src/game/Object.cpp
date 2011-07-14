@@ -42,6 +42,7 @@
 #include "ObjectPosSelector.h"
 #include "TemporarySummon.h"
 #include "movement/packet_builder.h"
+#include "WorldPvP.h"
 
 Object::Object( )
 {
@@ -1067,6 +1068,16 @@ float WorldObject::GetDistance2d(float x, float y) const
     float dy = GetPositionY() - y;
     float sizefactor = GetObjectBoundingRadius();
     float dist = sqrt((dx*dx) + (dy*dy)) - sizefactor;
+    return ( dist > 0 ? dist : 0);
+}
+
+float WorldObject::GetDistance(float x, float y, float z) const
+{
+    float dx = GetPositionX() - x;
+    float dy = GetPositionY() - y;
+    float dz = GetPositionZ() - z;
+    float sizefactor = GetObjectBoundingRadius();
+    float dist = sqrt((dx*dx) + (dy*dy) + (dz*dz)) - sizefactor;
     return ( dist > 0 ? dist : 0);
 }
 

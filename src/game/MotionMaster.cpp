@@ -523,9 +523,11 @@ bool MotionMaster::HasArrived()
     if (top()->GetMovementGeneratorType()!=FOLLOW_MOTION_TYPE)
         return true;
 
-    Player* p_owner = (Player*)m_owner;
+	return m_owner->movespline->Finalized();
+
+    /*Player* p_owner = (Player*)m_owner;
     FollowMovementGenerator<Player> *mgen = static_cast<FollowMovementGenerator<Player>*>(top());
-    return mgen->HasArrived();
+    return mgen->HasArrived();*/
 }
 
 void MotionMaster::UpdateFinalDistanceToTarget(float fDistance)
