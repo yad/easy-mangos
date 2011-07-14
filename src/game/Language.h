@@ -916,7 +916,28 @@ enum MangosStrings
     LANG_SCRIPTS_RELOADED_OK            = 1168,
     LANG_SCRIPTS_OUTDATED               = 1169,
     LANG_NPCINFO_CHAR_DIFFICULTY        = 1170,
-    // Room for more level 3              1171-1199 not used
+    LANG_AHBOT_RELOAD_OK                = 1171,
+    LANG_AHBOT_RELOAD_FAIL              = 1172,
+    LANG_AHBOT_STATUS_BAR_CONSOLE       = 1173,
+    LANG_AHBOT_STATUS_MIDBAR_CONSOLE    = 1174,
+    LANG_AHBOT_STATUS_TITLE1_CONSOLE    = 1175,
+    LANG_AHBOT_STATUS_TITLE1_CHAT       = 1176,
+    LANG_AHBOT_STATUS_FORMAT_CONSOLE    = 1177,
+    LANG_AHBOT_STATUS_FORMAT_CHAT       = 1178,
+    LANG_AHBOT_STATUS_ITEM_COUNT        = 1179,
+    LANG_AHBOT_STATUS_ITEM_RATIO        = 1180,
+    LANG_AHBOT_STATUS_TITLE2_CONSOLE    = 1181,
+    LANG_AHBOT_STATUS_TITLE2_CHAT       = 1182,
+    LANG_AHBOT_QUALITY_GREY             = 1183,
+    LANG_AHBOT_QUALITY_WHITE            = 1184,
+    LANG_AHBOT_QUALITY_GREEN            = 1185,
+    LANG_AHBOT_QUALITY_BLUE             = 1186,
+    LANG_AHBOT_QUALITY_PURPLE           = 1187,
+    LANG_AHBOT_QUALITY_ORANGE           = 1188,
+    LANG_AHBOT_QUALITY_YELLOW           = 1189,
+    LANG_AHBOT_ITEMS_AMOUNT             = 1190,
+    LANG_AHBOT_ITEMS_RATIO              = 1191,
+    // Room for more level 3              1192-1199 not used
 
     // Debug commands
     LANG_CINEMATIC_NOT_EXIST            = 1200,
@@ -1018,6 +1039,16 @@ enum MangosStrings
     //LANG_OPVP_GH_LOOSE_A                = 10054,
 
     // Use for custom patches             11000-11999
+    LANG_COMMAND_FRIEND                 = 11133,
+    LANG_COMMAND_FRIEND_ERROR           = 11134,
+    LANG_BAN_ACCOUNT_ANNOUNCE           = 17890,
+    LANG_PERMBAN_ACCOUNT_ANNOUNCE       = 17891,
+    LANG_BAN_CHARACTER_ANNOUNCE         = 17892,
+    LANG_PERMBAN_CHARACTER_ANNOUNCE     = 17893,
+    LANG_BAN_IP_ANNOUNCE                = 17894,
+    LANG_PERMBAN_IP_ANNOUNCE            = 17895,
+    LANG_MUTE_ANNOUNCE                  = 17896,
+    LANG_ARENA_STARTED_ANNOUNCE_WORLD   = 17898,
 
     // NOT RESERVED IDS                   12000-1999999999
     // `db_script_string` table index     2000000000-2000009999 (MIN_DB_SCRIPT_STRING_ID-MAX_DB_SCRIPT_STRING_ID)

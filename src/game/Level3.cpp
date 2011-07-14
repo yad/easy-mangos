@@ -56,364 +56,169 @@
 #include "DBCEnums.h"
 #include "AuctionHouseBot/AuctionHouseBot.h"
 
-bool ChatHandler::HandleAHBotOptionsCommand(char* args)
+static uint32 ahbotQualityIds[MAX_AUCTION_QUALITY] =
 {
-    uint32 ahMapID = 0;
-    char * opt = strtok((char*)args, " ");
-    char * ahOptionStr = strtok(NULL, " ");
-    if (!opt)
-    {
-        PSendSysMessage("Syntax is: ahbot option [suboption] [$parameter]");
-        PSendSysMessage("Try 'ahbot help' to see a list of options.");
-        return false;
-    }
-    int l = strlen(opt);
+    LANG_AHBOT_QUALITY_GREY, LANG_AHBOT_QUALITY_WHITE,
+    LANG_AHBOT_QUALITY_GREEN, LANG_AHBOT_QUALITY_BLUE,
+    LANG_AHBOT_QUALITY_PURPLE, LANG_AHBOT_QUALITY_ORANGE,
+    LANG_AHBOT_QUALITY_YELLOW
+};
 
-    if (strncmp(opt,"help",l) == 0)
+bool ChatHandler::HandleAHBotItemsAmountCommand(char* args)
+{
+    uint32 qVals[MAX_AUCTION_QUALITY];
+    for (int i = 0; i < MAX_AUCTION_QUALITY; ++i)
+        if (!ExtractUInt32(&args, qVals[i]))
+            return false;
+
+    sAuctionBot.SetItemsAmount(qVals);
+
+    for (int i = 0; i < MAX_AUCTION_QUALITY; ++i)
+        PSendSysMessage(LANG_AHBOT_ITEMS_AMOUNT, GetMangosString(ahbotQualityIds[i]), sAuctionBotConfig.getConfigItemQualityAmount(AuctionQuality(i)));
+
+    return true;
+}
+
+template<int Q>
+bool ChatHandler::HandleAHBotItemsAmountQualityCommand(char* args)
+{
+    uint32 qVal;
+    if (!ExtractUInt32(&args, qVal))
+        return false;
+    sAuctionBot.SetItemsAmountForQuality(AuctionQuality(Q), qVal);
+    PSendSysMessage(LANG_AHBOT_ITEMS_AMOUNT, GetMangosString(ahbotQualityIds[Q]),
+        sAuctionBotConfig.getConfigItemQualityAmount(AuctionQuality(Q)));
+    return true;
+}
+
+template bool ChatHandler::HandleAHBotItemsAmountQualityCommand<AUCTION_QUALITY_GREY>(char*);
+template bool ChatHandler::HandleAHBotItemsAmountQualityCommand<AUCTION_QUALITY_WHITE>(char*);
+template bool ChatHandler::HandleAHBotItemsAmountQualityCommand<AUCTION_QUALITY_GREEN>(char*);
+template bool ChatHandler::HandleAHBotItemsAmountQualityCommand<AUCTION_QUALITY_BLUE>(char*);
+template bool ChatHandler::HandleAHBotItemsAmountQualityCommand<AUCTION_QUALITY_PURPLE>(char*);
+template bool ChatHandler::HandleAHBotItemsAmountQualityCommand<AUCTION_QUALITY_ORANGE>(char*);
+template bool ChatHandler::HandleAHBotItemsAmountQualityCommand<AUCTION_QUALITY_YELLOW>(char*);
+
+bool ChatHandler::HandleAHBotItemsRatioCommand(char* args)
+{
+    uint32 rVal[MAX_AUCTION_HOUSE_TYPE];
+    for (int i = 0; i < MAX_AUCTION_HOUSE_TYPE; ++i)
+        if (!ExtractUInt32(&args, rVal[i]))
+            return false;
+
+    sAuctionBot.SetItemsRatio(rVal[0], rVal[1], rVal[2]);
+
+    for (int i = 0; i < MAX_AUCTION_HOUSE_TYPE; ++i)
+        PSendSysMessage(LANG_AHBOT_ITEMS_RATIO, AuctionBotConfig::GetHouseTypeName(AuctionHouseType(i)), sAuctionBotConfig.getConfigItemAmountRatio(AuctionHouseType(i)));
+    return true;
+}
+
+template<int H>
+bool ChatHandler::HandleAHBotItemsRatioHouseCommand(char* args)
+{
+    uint32 rVal;
+    if (!ExtractUInt32(&args, rVal))
+        return false;
+    sAuctionBot.SetItemsRatioForHouse(AuctionHouseType(H), rVal);
+    PSendSysMessage(LANG_AHBOT_ITEMS_RATIO, AuctionBotConfig::GetHouseTypeName(AuctionHouseType(H)), sAuctionBotConfig.getConfigItemAmountRatio(AuctionHouseType(H)));
+    return true;
+}
+
+template bool ChatHandler::HandleAHBotItemsRatioHouseCommand<AUCTION_HOUSE_ALLIANCE>(char*);
+template bool ChatHandler::HandleAHBotItemsRatioHouseCommand<AUCTION_HOUSE_HORDE>(char*);
+template bool ChatHandler::HandleAHBotItemsRatioHouseCommand<AUCTION_HOUSE_NEUTRAL>(char*);
+
+bool ChatHandler::HandleAHBotRebuildCommand(char* args)
+{
+    bool all = false;
+    if (*args)
     {
-        PSendSysMessage("AHBot commands:");
-        PSendSysMessage("reloadall   # reload parameter from configfile");
-        PSendSysMessage("status      # display actual configuration and some usefull informations");
-        PSendSysMessage("items       # set amounts and ratio of items");
-        PSendSysMessage("rebuild     # rebuild all database");
+        if (!ExtractLiteralArg(&args, "all"))
+            return false;
+        all = true;
+    }
+
+    sAuctionBot.Rebuild(all);
+    return true;
+}
+
+bool ChatHandler::HandleAHBotReloadCommand(char* args)
+{
+    if (sAuctionBot.ReloadAllConfig())
+    {
+        SendSysMessage(LANG_AHBOT_RELOAD_OK);
         return true;
     }
-    else if (strncmp(opt,"reloadall",l) == 0)
+    else
     {
-        if (auctionbot.ReloadAllConfig()) PSendSysMessage("All config are reloaded from ahbot configuration file");
-        else PSendSysMessage("Error while trying to reload config.");
+        SendSysMessage(LANG_AHBOT_RELOAD_FAIL);
+        SetSentErrorMessage(true);
+        return false;
     }
-    else if (strncmp(opt,"items",l) == 0)
+}
+
+bool ChatHandler::HandleAHBotStatusCommand(char* args)
+{
+    bool all = false;
+    if (*args)
     {
-        char * param1 = strtok(NULL, " ");
-        char * param2 = strtok(NULL, " ");
-        char * param3 = strtok(NULL, " ");
-        char * param4 = strtok(NULL, " ");
-        char * param5 = strtok(NULL, " ");
-        char * param6 = strtok(NULL, " ");
-        char * param7 = strtok(NULL, " ");
-        uint32 uparam1;
-        uint32 uparam2;
-        uint32 uparam3;
-        uint32 uparam4;
-        uint32 uparam5;
-        uint32 uparam6;
-        uint32 uparam7;
-        if (param1) uparam1 = (uint32) strtoul(param1, NULL, 0);
-        if (param2) uparam2 = (uint32) strtoul(param2, NULL, 0);
-        if (param3) uparam3 = (uint32) strtoul(param3, NULL, 0);
-        if (param4) uparam4 = (uint32) strtoul(param4, NULL, 0);
-        if (param5) uparam5 = (uint32) strtoul(param5, NULL, 0);
-        if (param6) uparam6 = (uint32) strtoul(param6, NULL, 0);
-        if (param7) uparam7 = (uint32) strtoul(param7, NULL, 0);
-
-        if (!ahOptionStr)
-        {
-            PSendSysMessage("Syntax is: ahbot items option");
-            PSendSysMessage("Try 'ahbot items help' to see a list of options.");
+        if (!ExtractLiteralArg(&args, "all"))
             return false;
-        }
-        if (strncmp(ahOptionStr,"help",l) == 0)
-        {
-            PSendSysMessage("AHBot items commands:");
-            PSendSysMessage("ratio     # set ratio of items in 3 auctions house");
-            PSendSysMessage("amount    # set amount of each items color be selled on ah");
-            return true;
-        }
-        if (strncmp(ahOptionStr,"ratio",1) == 0)
-        {
-            if (!param1)
-            {
-                PSendSysMessage("Syntax is: ahbot items ratio $allianceratio $horderatio $neutralratio");
-                PSendSysMessage("Syntax is: ahbot items ratio alliance $ratio");
-                PSendSysMessage("Syntax is: ahbot items ratio horde $ratio");
-                PSendSysMessage("Syntax is: ahbot items ratio neutral $ratio");
-                return false;
-            }
-            if (strncmp(param1,"alliance",1) == 0)
-            {
-                if (!param2)
-                {
-                    PSendSysMessage("Syntax is: ahbot items ratio alliance $ratio");
-                    return false;
-                }
-                else
-                {
-                    auctionbot.SetItemsRatio(&uparam2, NULL, NULL);
-                    PSendSysMessage("Items ratio for alliance is set to %u.",auctionbot.getConfig(CONFIG_UINT32_AHBOT_ALLIANCE_RATIO));
-                }
-            }
-            else if (strncmp(param1,"horde",1) == 0)
-            {
-                if (!param2)
-                {
-                    PSendSysMessage("Syntax is: ahbot items ratio horde $ratio");
-                    return false;
-                }
-                else
-                {
-                    auctionbot.SetItemsRatio(NULL, &uparam2, NULL);
-                    PSendSysMessage("Items ratio for the horde is set to %u.",auctionbot.getConfig(CONFIG_UINT32_AHBOT_HORDE_RATIO));
-                }
-            }
-            else if (strncmp(param1,"neutral",1) == 0)
-            {
-                if (!param2)
-                {
-                    PSendSysMessage("Syntax is: ahbot items ratio neutral $ratio");
-                    return false;
-                }
-                else
-                {
-                    auctionbot.SetItemsRatio(NULL, NULL, &uparam2);
-                    PSendSysMessage("Items ratio for neutral is set to %u.",auctionbot.getConfig(CONFIG_UINT32_AHBOT_NEUTRAL_RATIO));
-                }
-            }
-            else if (strncmp(param1,"help",1) == 0)
-            {
-                PSendSysMessage("Syntax is: ahbot items ratio $allianceratio $horderatio $neutralratio");
-                PSendSysMessage("Syntax is: ahbot items ratio alliance $ratio");
-                PSendSysMessage("Syntax is: ahbot items ratio horde $ratio");
-                PSendSysMessage("Syntax is: ahbot items ratio neutral $ratio");
-                return true;
-            }
-            else if (param3)
-            {
-                auctionbot.SetItemsRatio(&uparam1, &uparam2, &uparam3);
-                PSendSysMessage("Items ratio for alliance is set to %u.",auctionbot.getConfig(CONFIG_UINT32_AHBOT_ALLIANCE_RATIO));
-                PSendSysMessage("Items ratio for the horde is set to %u.",auctionbot.getConfig(CONFIG_UINT32_AHBOT_HORDE_RATIO));
-                PSendSysMessage("Items ratio for neutral is set to %u.",auctionbot.getConfig(CONFIG_UINT32_AHBOT_NEUTRAL_RATIO));
-            }
-            else
-            {
-                PSendSysMessage("Syntax is: ahbot items ratio $allianceratio $horderatio $neutralratio");
-                PSendSysMessage("Syntax is: ahbot items ratio alliance $ratio");
-                PSendSysMessage("Syntax is: ahbot items ratio horde $ratio");
-                PSendSysMessage("Syntax is: ahbot items ratio neutral $ratio");
-                return false;
-            }
-
-        }
-        else if (strncmp(ahOptionStr,"amount",1) == 0)
-        {
-            if (!param1)
-            {
-                PSendSysMessage("Syntax is: ahbot items amount $GreyItems $WhiteItems $GreenItems $BlueItems $PurpleItems $OrangeItems $YellowItems");
-                PSendSysMessage("Syntax is: ahbot items amount grey $GreyItem");
-                PSendSysMessage("Syntax is: ahbot items amount white $WhiteItem");
-                PSendSysMessage("Syntax is: ahbot items amount green $GreenItem");
-                PSendSysMessage("Syntax is: ahbot items amount blue $BlueItem");
-                PSendSysMessage("Syntax is: ahbot items amount purple $PurpleItem");
-                PSendSysMessage("Syntax is: ahbot items amount orange $OrangeItem");
-                PSendSysMessage("Syntax is: ahbot items amount yellow $YellowItem");
-                return false;
-            }
-            if (strncmp(param1,"grey",1) == 0)
-            {
-                if (!param2)
-                {
-                    PSendSysMessage("Syntax is: ahbot items amount grey $GreyItem");
-                    return false;
-                }
-                else
-                {
-                    auctionbot.SetItemsAmount(&uparam2, NULL, NULL, NULL, NULL, NULL, NULL);
-                    PSendSysMessage("Amount of grey items is set to %u.",auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_GREY_AMOUNT));
-                }
-            }
-            else if (strncmp(param1,"white",1) == 0)
-            {
-                if (!param2)
-                {
-                    PSendSysMessage("Syntax is: ahbot items amount white $WhiteItem");
-                    return false;
-                }
-                else
-                {
-                    auctionbot.SetItemsAmount(NULL, &uparam2, NULL, NULL, NULL, NULL, NULL);
-                    PSendSysMessage("Amount of white items is set to %u.",auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_WHITE_AMOUNT));
-                }
-            }
-            else if (strncmp(param1,"green",1) == 0)
-            {
-                if (!param2)
-                {
-                    PSendSysMessage("Syntax is: ahbot items amount green $GreenItem");
-                    return false;
-                }
-                else
-                {
-                    auctionbot.SetItemsAmount(NULL, NULL, &uparam2, NULL, NULL, NULL, NULL);
-                    PSendSysMessage("Amount of green items is set to %u.",auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_GREEN_AMOUNT));
-                }
-            }
-            else if (strncmp(param1,"blue",1) == 0)
-            {
-                if (!param2)
-                {
-                    PSendSysMessage("Syntax is: ahbot items amount blue $BlueItem");
-                    return false;
-                }
-                else
-                {
-                    auctionbot.SetItemsAmount(NULL, NULL, NULL, &uparam2, NULL, NULL, NULL);
-                    PSendSysMessage("Amount of blue items is set to %u.",auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_BLUE_AMOUNT));
-                }
-            }
-            else if (strncmp(param1,"purple",1) == 0)
-            {
-                if (!param2)
-                {
-                    PSendSysMessage("Syntax is: ahbot items amount purple $PurpleItem");
-                    return false;
-                }
-                else
-                {
-                    auctionbot.SetItemsAmount(NULL, NULL, NULL, NULL, &uparam2, NULL, NULL);
-                    PSendSysMessage("Amount of purple items is set to %u.",auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_PURPLE_AMOUNT));
-                }
-            }
-            else if (strncmp(param1,"orange",1) == 0)
-            {
-                if (!param2)
-                {
-                    PSendSysMessage("Syntax is: ahbot items amount orange $OrangeItem");
-                    return false;
-                }
-                else
-                {
-                    auctionbot.SetItemsAmount(NULL, NULL, NULL, NULL, NULL, &uparam2, NULL);
-                    PSendSysMessage("Amount of orange items is set to %u.",auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_ORANGE_AMOUNT));
-                }
-            }
-            else if (strncmp(param1,"yellow",1) == 0)
-            {
-                if (!param2)
-                {
-                    PSendSysMessage("Syntax is: ahbot items amount yellow $YellowItem");
-                    return false;
-                }
-                else
-                {
-                    auctionbot.SetItemsAmount(NULL, NULL, NULL, NULL, NULL, NULL, &uparam2);
-                    PSendSysMessage("Amount of yellow items is set to %u.",auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_YELLOW_AMOUNT));
-                }
-            }
-            else if (strncmp(param1,"help",1) == 0)
-            {
-                PSendSysMessage("Syntax is: ahbot items amount $GreyItems $WhiteItems $GreenItems $BlueItems $PurpleItems $OrangeItems $YellowItems");
-                PSendSysMessage("Syntax is: ahbot items amount grey $GreyItem");
-                PSendSysMessage("Syntax is: ahbot items amount white $WhiteItem");
-                PSendSysMessage("Syntax is: ahbot items amount green $GreenItem");
-                PSendSysMessage("Syntax is: ahbot items amount blue $BlueItem");
-                PSendSysMessage("Syntax is: ahbot items amount purple $PurpleItem");
-                PSendSysMessage("Syntax is: ahbot items amount orange $OrangeItem");
-                PSendSysMessage("Syntax is: ahbot items amount yellow $YellowItem");
-                return true;
-            }
-            else if (param7)
-            {
-                auctionbot.SetItemsAmount(&uparam1, &uparam2, &uparam3, &uparam4, &uparam5, &uparam6, &uparam7);
-                PSendSysMessage("Amount of grey items is set to %u.",auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_GREY_AMOUNT));
-                PSendSysMessage("Amount of white items is set to %u.",auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_WHITE_AMOUNT));
-                PSendSysMessage("Amount of green items is set to %u.",auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_GREEN_AMOUNT));
-                PSendSysMessage("Amount of blue items is set to %u.",auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_BLUE_AMOUNT));
-                PSendSysMessage("Amount of purple items is set to %u.",auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_PURPLE_AMOUNT));
-                PSendSysMessage("Amount of orange items is set to %u.",auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_ORANGE_AMOUNT));
-                PSendSysMessage("Amount of yellow items is set to %u.",auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_YELLOW_AMOUNT));
-            }
-            else
-            {
-                PSendSysMessage("Syntax is: ahbot items amount $GreyItems $WhiteItems $GreenItems $BlueItems $PurpleItems $OrangeItems $YellowItems");
-                PSendSysMessage("Syntax is: ahbot items amount grey $GreyItem");
-                PSendSysMessage("Syntax is: ahbot items amount white $WhiteItem");
-                PSendSysMessage("Syntax is: ahbot items amount green $GreenItem");
-                PSendSysMessage("Syntax is: ahbot items amount blue $BlueItem");
-                PSendSysMessage("Syntax is: ahbot items amount purple $PurpleItem");
-                PSendSysMessage("Syntax is: ahbot items amount orange $OrangeItem");
-                PSendSysMessage("Syntax is: ahbot items amount yellow $YellowItem");
-                return false;
-            }
-        }
+        all = true;
     }
-    else if (strncmp(opt,"status",l) == 0)
+
+    AuctionHouseBotStatusInfo statusInfo;
+    sAuctionBot.PrepareStatusInfos(statusInfo);
+
+    if (!m_session)
     {
-        if ((ahOptionStr) &&  (strncmp(ahOptionStr,"all",l)==0))
+        SendSysMessage(LANG_AHBOT_STATUS_BAR_CONSOLE);
+        SendSysMessage(LANG_AHBOT_STATUS_TITLE1_CONSOLE);
+        SendSysMessage(LANG_AHBOT_STATUS_MIDBAR_CONSOLE);
+    }
+    else
+        SendSysMessage(LANG_AHBOT_STATUS_TITLE1_CHAT);
+
+    uint32 fmtId = m_session ? LANG_AHBOT_STATUS_FORMAT_CHAT : LANG_AHBOT_STATUS_FORMAT_CONSOLE;
+
+    PSendSysMessage(fmtId, GetMangosString(LANG_AHBOT_STATUS_ITEM_COUNT),
+        statusInfo[AUCTION_HOUSE_ALLIANCE].ItemsCount,
+        statusInfo[AUCTION_HOUSE_HORDE].ItemsCount,
+        statusInfo[AUCTION_HOUSE_NEUTRAL].ItemsCount,
+        statusInfo[AUCTION_HOUSE_ALLIANCE].ItemsCount +
+        statusInfo[AUCTION_HOUSE_HORDE].ItemsCount +
+        statusInfo[AUCTION_HOUSE_NEUTRAL].ItemsCount);
+
+    if (all)
+    {
+        PSendSysMessage(fmtId, GetMangosString(LANG_AHBOT_STATUS_ITEM_RATIO),
+            sAuctionBotConfig.getConfig(CONFIG_UINT32_AHBOT_ALLIANCE_ITEM_AMOUNT_RATIO),
+            sAuctionBotConfig.getConfig(CONFIG_UINT32_AHBOT_HORDE_ITEM_AMOUNT_RATIO),
+            sAuctionBotConfig.getConfig(CONFIG_UINT32_AHBOT_NEUTRAL_ITEM_AMOUNT_RATIO),
+            sAuctionBotConfig.getConfig(CONFIG_UINT32_AHBOT_ALLIANCE_ITEM_AMOUNT_RATIO) +
+            sAuctionBotConfig.getConfig(CONFIG_UINT32_AHBOT_HORDE_ITEM_AMOUNT_RATIO) +
+            sAuctionBotConfig.getConfig(CONFIG_UINT32_AHBOT_NEUTRAL_ITEM_AMOUNT_RATIO));
+
+        if (!m_session)
         {
-            auctionbot.PrepStatusInfos();
-            PSendSysMessage("Name is set to %s",auctionbot.GetAHBotName());
-            PSendSysMessage("Items loaded for Alliance=%u, Horde=%u, Neutral=%u. Total = %u",
-                auctionbot.GetAllianceItemsCount(), auctionbot.GetHordeItemsCount(), auctionbot.GetNeutralItemsCount(),
-                auctionbot.GetAllianceItemsCount() + auctionbot.GetHordeItemsCount() + auctionbot.GetNeutralItemsCount());
-            PSendSysMessage("Alliance table\n================");
-            PSendSysMessage("Grey = %u, White = %u, Green = %u, Blue = %u, Purple = %u, Orange = %u, Yellow = %u",
-                auctionbot.GetAHBotItemInfos(0, E_GREY), auctionbot.GetAHBotItemInfos(0, E_WHITE), auctionbot.GetAHBotItemInfos(0, E_GREEN),
-                auctionbot.GetAHBotItemInfos(0, E_BLUE), auctionbot.GetAHBotItemInfos(0, E_PURPLE), auctionbot.GetAHBotItemInfos(0, E_ORANGE),
-                auctionbot.GetAHBotItemInfos(0, E_YELLOW));
-            PSendSysMessage("Horde table\n================");
-            PSendSysMessage("Grey = %u, White = %u, Green = %u, Blue = %u, Purple = %u, Orange = %u, Yellow = %u",
-                auctionbot.GetAHBotItemInfos(1, E_GREY), auctionbot.GetAHBotItemInfos(1, E_WHITE), auctionbot.GetAHBotItemInfos(1, E_GREEN),
-                auctionbot.GetAHBotItemInfos(1, E_BLUE), auctionbot.GetAHBotItemInfos(1, E_PURPLE), auctionbot.GetAHBotItemInfos(1, E_ORANGE),
-                auctionbot.GetAHBotItemInfos(1, E_YELLOW));
-            PSendSysMessage("Neutral table\n================");
-            PSendSysMessage("Grey = %u, White = %u, Green = %u, Blue = %u, Purple = %u, Orange = %u, Yellow = %u",
-                auctionbot.GetAHBotItemInfos(2, E_GREY), auctionbot.GetAHBotItemInfos(2, E_WHITE), auctionbot.GetAHBotItemInfos(2, E_GREEN),
-                auctionbot.GetAHBotItemInfos(2, E_BLUE), auctionbot.GetAHBotItemInfos(2, E_PURPLE), auctionbot.GetAHBotItemInfos(2, E_ORANGE),
-                auctionbot.GetAHBotItemInfos(2, E_YELLOW));
-            PSendSysMessage("Items ratio : Alliance = %u%%, Horde = %u%%, Neutral = %u%%",
-                auctionbot.getConfig(CONFIG_UINT32_AHBOT_ALLIANCE_RATIO), auctionbot.getConfig(CONFIG_UINT32_AHBOT_HORDE_RATIO), auctionbot.getConfig(CONFIG_UINT32_AHBOT_NEUTRAL_RATIO));
-            PSendSysMessage("Items Amount : Grey = %u, White = %u, Green = %u, Blue = %u, Purple = %u, Orange = %u, Yellow = %u",
-                auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_GREY_AMOUNT), auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_WHITE_AMOUNT),
-                auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_GREEN_AMOUNT), auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_BLUE_AMOUNT),
-                auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_PURPLE_AMOUNT), auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_ORANGE_AMOUNT),
-                auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_YELLOW_AMOUNT));
-        }
-        else if ((ahOptionStr) &&  (strncmp(ahOptionStr,"help",l)==0))
-        {
-            PSendSysMessage("Type '.ahbot status' to see some informations.");
-            PSendSysMessage("Type '.ahbot status all' to see more detailled informations of ahbot.");
-            return true;
-        }
-        else if (ahOptionStr)
-        {
-            PSendSysMessage("Type '.ahbot status' to see some informations.");
-            PSendSysMessage("Type '.ahbot status all' to see more detailled informations of ahbot.");
-            return false;
+            SendSysMessage(LANG_AHBOT_STATUS_BAR_CONSOLE);
+            SendSysMessage(LANG_AHBOT_STATUS_TITLE2_CONSOLE);
+            SendSysMessage(LANG_AHBOT_STATUS_MIDBAR_CONSOLE);
         }
         else
-        {
-            auctionbot.PrepStatusInfos();
-            PSendSysMessage("Name is set to %s",auctionbot.GetAHBotName());
-            PSendSysMessage("Items loaded for Alliance=%u, Horde=%u, Neutral=%u. Total = %u",
-                auctionbot.GetAllianceItemsCount(), auctionbot.GetHordeItemsCount(), auctionbot.GetNeutralItemsCount(),
-                auctionbot.GetAllianceItemsCount() + auctionbot.GetHordeItemsCount() + auctionbot.GetNeutralItemsCount());
-        }
+            SendSysMessage(LANG_AHBOT_STATUS_TITLE2_CHAT);
+
+        for (int i = 0; i < MAX_AUCTION_QUALITY; ++i)
+            PSendSysMessage(fmtId, GetMangosString(ahbotQualityIds[i]),
+                statusInfo[AUCTION_HOUSE_ALLIANCE].QualityInfo[i],
+                statusInfo[AUCTION_HOUSE_HORDE].QualityInfo[i],
+                statusInfo[AUCTION_HOUSE_NEUTRAL].QualityInfo[i],
+                sAuctionBotConfig.getConfigItemQualityAmount(AuctionQuality(i)));
     }
-    else if (strncmp(opt,"rebuild",l) == 0)
-    {
-        if ((ahOptionStr) &&  (strncmp(ahOptionStr,"all",l)==0))
-        {
-            auctionbot.Rebuild(true);
-            PSendSysMessage("All AhBot auctions are expired! The database will be rebuilded according settings.");
-        }
-        else if ((ahOptionStr) &&  (strncmp(ahOptionStr,"help",l)==0))
-        {
-            PSendSysMessage("Type '.ahbot rebuild' to expire all actual auction of ahbot except bided by player.");
-            PSendSysMessage("Type '.ahbot rebuild all' to expire all actual auction of ahbot.");
-            return true;
-        }
-        else if (ahOptionStr)
-        {
-            PSendSysMessage("Type '.ahbot rebuild' to expire all actual auction of ahbot except bided by player.");
-            PSendSysMessage("Type '.ahbot rebuild all' to expire all actual auction of ahbot.");
-            return false;
-        }
-        else
-        {
-            auctionbot.Rebuild(false);
-            PSendSysMessage("All AhBot auctions are expired(except bided items)! The database will be rebuilded according settings.");
-        }
-    }
+
+    if (!m_session)
+        SendSysMessage(LANG_AHBOT_STATUS_BAR_CONSOLE);
+
     return true;
 }
 
@@ -1421,7 +1226,12 @@ bool ChatHandler::HandleAccountSetPasswordCommand(char* args)
             return false;
     }
 
-    return true;
+    // OK, but avoid normal report for hide passwords, but log use command for anyone
+    char msg[100];
+    snprintf( msg, 100, ".account set password %s *** ***", account_name.c_str());
+    LogCommand(msg);
+    SetSentErrorMessage(true);
+    return false;
 }
 
 
@@ -4810,8 +4620,13 @@ bool ChatHandler::HandleNpcInfoCommand(char* /*args*/)
     uint32 npcflags = target->GetUInt32Value(UNIT_NPC_FLAGS);
     uint32 displayid = target->GetDisplayId();
     uint32 nativeid = target->GetNativeDisplayId();
+    uint32 phaseMask = target->GetPhaseMask();
     uint32 Entry = target->GetEntry();
     CreatureInfo const* cInfo = target->GetCreatureInfo();
+    uint32 VehicleId = cInfo ? cInfo->vehicleId : 0;
+    uint32 difficulty_entry_1 = cInfo ? cInfo->DifficultyEntry[0] : 0;
+    uint32 difficulty_entry_2 = cInfo ? cInfo->DifficultyEntry[1] : 0;
+    uint32 difficulty_entry_3 = cInfo ? cInfo->DifficultyEntry[2] : 0;
 
     time_t curRespawnDelay = target->GetRespawnTimeEx()-time(NULL);
     if(curRespawnDelay < 0)
@@ -4833,8 +4648,8 @@ bool ChatHandler::HandleNpcInfoCommand(char* /*args*/)
     else
         PSendSysMessage(LANG_NPCINFO_CHAR, target->GetGuidStr().c_str(), faction, npcflags, Entry, displayid, nativeid);
 
-    if (cInfo->vehicleId)
-        PSendSysMessage("VehicleId: %u", cInfo->vehicleId);
+    PSendSysMessage("VehicleId: %u", cInfo->vehicleId);
+    PSendSysMessage("difficulty_entry_1: %u, difficulty_entry_2: %u, difficulty_entry_3: %u", difficulty_entry_1, difficulty_entry_2, difficulty_entry_3);
 
     PSendSysMessage(LANG_NPCINFO_LEVEL, target->getLevel());
     PSendSysMessage(LANG_NPCINFO_HEALTH,target->GetCreateHealth(), target->GetMaxHealth(), target->GetHealth());
@@ -4843,6 +4658,13 @@ bool ChatHandler::HandleNpcInfoCommand(char* /*args*/)
     PSendSysMessage(LANG_NPCINFO_LOOT,  cInfo->lootid,cInfo->pickpocketLootId,cInfo->SkinLootId);
     PSendSysMessage(LANG_NPCINFO_DUNGEON_ID, target->GetInstanceId());
     PSendSysMessage(LANG_NPCINFO_POSITION,float(target->GetPositionX()), float(target->GetPositionY()), float(target->GetPositionZ()));
+
+    if (target->SD2AIName())
+    PSendSysMessage("ScriptName: %s", target->GetScriptName().c_str());
+    if (target->HasAIName())
+    PSendSysMessage("Event_AI: %s", target->GetAIName().c_str());
+
+    PSendSysMessage("phaseMask: %u", phaseMask);
 
     if ((npcflags & UNIT_NPC_FLAG_VENDOR) )
     {
@@ -5216,6 +5038,97 @@ bool ChatHandler::HandleAuctionCommand(char* /*args*/)
 {
     m_session->GetPlayer()->SetAuctionAccessMode(0);
     m_session->SendAuctionHello(m_session->GetPlayer());
+
+    return true;
+}
+
+bool ChatHandler::HandleAuctionItemCommand(char* args)
+{
+    // format: (alliance|horde|goblin) item[:count] price [buyout] [short|long|verylong]
+    char* typeStr = ExtractLiteralArg(&args);
+    if (!typeStr)
+        return false;
+
+    uint32 houseid;
+    if (strncmp(typeStr, "alliance", strlen(typeStr)) == 0)
+        houseid = 1;
+    else if (strncmp(typeStr, "horde", strlen(typeStr)) == 0)
+        houseid = 6;
+    else if (strncmp(typeStr, "goblin", strlen(typeStr)) == 0)
+        houseid = 7;
+    else
+        return false;
+
+    // parse item str
+    char* itemStr = ExtractArg(&args);
+    if (!itemStr)
+        return false;
+
+    uint32 item_id = 0;
+    uint32 item_count = 1;
+    if (sscanf(itemStr, "%u:%u", &item_id, &item_count) != 2)
+        if (sscanf(itemStr, "%u", &item_id) != 1)
+            return false;
+
+    uint32 price;
+    if (!ExtractUInt32(&args, price))
+        return false;
+
+    uint32 buyout;
+    if (!ExtractOptUInt32(&args, buyout, 0))
+        return false;
+
+    uint32 etime = 4*MIN_AUCTION_TIME;
+    if (char* timeStr = ExtractLiteralArg(&args))
+    {
+        if (strncmp(timeStr, "short", strlen(timeStr)) == 0)
+            etime = 1*MIN_AUCTION_TIME;
+        else if (strncmp(timeStr, "long", strlen(timeStr)) == 0)
+            etime = 2*MIN_AUCTION_TIME;
+        else if (strncmp(timeStr, "verylong", strlen(timeStr)) == 0)
+            etime = 4*MIN_AUCTION_TIME;
+        else
+            return false;
+    }
+
+    AuctionHouseEntry const* auctionHouseEntry = sAuctionHouseStore.LookupEntry(houseid);
+    AuctionHouseObject* auctionHouse = sAuctionMgr.GetAuctionsMap(auctionHouseEntry);
+
+    if (!item_id)
+    {
+        PSendSysMessage(LANG_COMMAND_ITEMIDINVALID, item_id);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    ItemPrototype const* item_proto = ObjectMgr::GetItemPrototype(item_id);
+    if (!item_proto)
+    {
+        PSendSysMessage(LANG_COMMAND_ITEMIDINVALID, item_id);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    if (item_count < 1 || (item_proto->MaxCount > 0 && item_count > uint32(item_proto->MaxCount)))
+    {
+        PSendSysMessage(LANG_COMMAND_INVALID_ITEM_COUNT, item_count, item_id);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    Player* pl = m_session ? m_session->GetPlayer() : NULL;
+
+    do
+    {
+        uint32 item_stack = item_count > item_proto->GetMaxStackSize() ? item_proto->GetMaxStackSize() : item_count;
+        item_count -= item_stack;
+
+        Item* newItem = Item::CreateItem(item_id, item_stack);
+        MANGOS_ASSERT(newItem);
+
+        auctionHouse->AddAuction(auctionHouseEntry, newItem, etime, price, buyout);
+
+    } while (item_count);
 
     return true;
 }
@@ -6215,6 +6128,35 @@ bool ChatHandler::HandleBanHelper(BanMode mode, char* args)
                 PSendSysMessage(LANG_BAN_YOUBANNED, nameOrIP.c_str(), secsToTimeString(duration_secs,true).c_str(), reason);
             else
                 PSendSysMessage(LANG_BAN_YOUPERMBANNED, nameOrIP.c_str(), reason);
+            if (sWorld.getConfig(CONFIG_BOOL_GM_ANNOUNCE_BAN))
+            {
+                std::string GMnameLink;
+                if (m_session)
+                    GMnameLink = playerLink(m_session->GetPlayerName());
+                else
+                    GMnameLink = "";
+                switch(mode)
+                {
+                    case BAN_ACCOUNT:
+                        if (duration_secs > 0)
+                            PSendGlobalSysMessage(LANG_BAN_ACCOUNT_ANNOUNCE, GMnameLink.c_str(), nameOrIP.c_str(), secsToTimeString(duration_secs, true).c_str(), reason);
+                        else
+                            PSendGlobalSysMessage(LANG_PERMBAN_ACCOUNT_ANNOUNCE, GMnameLink.c_str(), nameOrIP.c_str(), secsToTimeString(duration_secs, true).c_str(), reason);
+                        break;
+                    case BAN_CHARACTER:
+                        if (duration_secs > 0)
+                            PSendGlobalSysMessage(LANG_BAN_CHARACTER_ANNOUNCE, GMnameLink.c_str(), nameOrIP.c_str(), secsToTimeString(duration_secs, true).c_str(), reason);
+                        else
+                            PSendGlobalSysMessage(LANG_PERMBAN_CHARACTER_ANNOUNCE, GMnameLink.c_str(), nameOrIP.c_str(), secsToTimeString(duration_secs, true).c_str(), reason);
+                       break;
+                    case BAN_IP:
+                        if (duration_secs > 0)
+                            PSendGlobalSysMessage(LANG_BAN_IP_ANNOUNCE, GMnameLink.c_str(), nameOrIP.c_str(), secsToTimeString(duration_secs, true).c_str(), reason);
+                        else
+                            PSendGlobalSysMessage(LANG_PERMBAN_IP_ANNOUNCE, GMnameLink.c_str(), nameOrIP.c_str(), secsToTimeString(duration_secs, true).c_str(), reason);
+                        break;
+                }
+            }
             break;
         case BAN_SYNTAX_ERROR:
             return false;
@@ -6797,6 +6739,8 @@ bool ChatHandler::HandleMovegensCommand(char* /*args*/)
     PSendSysMessage(LANG_MOVEGENS_LIST,(unit->GetTypeId()==TYPEID_PLAYER ? "Player" : "Creature" ),unit->GetGUIDLow());
 
     MotionMaster* mm = unit->GetMotionMaster();
+    float x,y,z;
+    mm->GetDestination(x,y,z);
     for(MotionMaster::const_iterator itr = mm->begin(); itr != mm->end(); ++itr)
     {
         switch((*itr)->GetMovementGeneratorType())
@@ -6840,8 +6784,6 @@ bool ChatHandler::HandleMovegensCommand(char* /*args*/)
             case HOME_MOTION_TYPE:
                 if(unit->GetTypeId()==TYPEID_UNIT)
                 {
-                    float x,y,z;
-                    (*itr)->GetDestination(x,y,z);
                     PSendSysMessage(LANG_MOVEGENS_HOME_CREATURE,x,y,z);
                 }
                 else
@@ -6850,8 +6792,6 @@ bool ChatHandler::HandleMovegensCommand(char* /*args*/)
             case FLIGHT_MOTION_TYPE:   SendSysMessage(LANG_MOVEGENS_FLIGHT);  break;
             case POINT_MOTION_TYPE:
             {
-                float x,y,z;
-                (*itr)->GetDestination(x,y,z);
                 PSendSysMessage(LANG_MOVEGENS_POINT,x,y,z);
                 break;
             }
@@ -7070,13 +7010,6 @@ bool ChatHandler::HandleComeToMeCommand(char *args)
         SetSentErrorMessage(true);
         return false;
     }
-
-    uint32 newFlags;
-    if (!ExtractUInt32(&args, newFlags))
-        return false;
-
-    if (target->GetTypeId() == TYPEID_UNIT)
-        ((Creature*)target)->SetSplineFlags(SplineFlags(newFlags));
 
     Player* pl = m_session->GetPlayer();
 

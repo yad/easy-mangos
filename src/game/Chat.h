@@ -98,6 +98,10 @@ class MANGOS_DLL_SPEC ChatHandler
         void PSendSysMessage(         const char *format, ...) ATTR_PRINTF(2,3);
         void PSendSysMessage(         int32     entry, ...  );
 
+        void SendGlobalSysMessage(const char *str);
+        void PSendGlobalSysMessage(const char *format, ...) ATTR_PRINTF(2,3);
+        void PSendGlobalSysMessage(int32 entry, ...  );
+
         bool ParseCommands(const char* text);
         ChatCommand const* FindCommand(char const* text);
 
@@ -120,10 +124,10 @@ class MANGOS_DLL_SPEC ChatHandler
         bool HasLowerSecurity(Player* target, ObjectGuid guid = ObjectGuid(), bool strong = false);
         bool HasLowerSecurityAccount(WorldSession* target, uint32 account, bool strong = false);
 
-        void SendGlobalSysMessage(const char *str);
-
         bool SetDataForCommandInTable(ChatCommand *table, const char* text, uint32 security, std::string const& help);
         void ExecuteCommand(const char* text);
+        void LogCommand(char const* fullcmd);
+
         bool ShowHelpForCommand(ChatCommand *table, const char* cmd);
         bool ShowHelpForSubCommands(ChatCommand *table, char const* cmd);
         ChatCommandSearchResult FindCommand(ChatCommand* table, char const*& text, ChatCommand*& command, ChatCommand** parentCommand = NULL, std::string* cmdNamePtr = NULL, bool allAvailable = false, bool exactlyName = false);
@@ -152,9 +156,20 @@ class MANGOS_DLL_SPEC ChatHandler
         bool HandleBotInvite(char* args);
         bool HandleBotInviteArena(char* args);
 
+        bool HandleAHBotItemsAmountCommand(char* args);
+        template <int Q>
+        bool HandleAHBotItemsAmountQualityCommand(char* args);
+        bool HandleAHBotItemsRatioCommand(char* args);
+        template <int H>
+        bool HandleAHBotItemsRatioHouseCommand(char* args);
+        bool HandleAHBotRebuildCommand(char* args);
+        bool HandleAHBotReloadCommand(char* args);
+        bool HandleAHBotStatusCommand(char* args);
+
         bool HandleAuctionAllianceCommand(char* args);
         bool HandleAuctionGoblinCommand(char* args);
         bool HandleAuctionHordeCommand(char* args);
+        bool HandleAuctionItemCommand(char* args);
         bool HandleAuctionCommand(char* args);
 
         bool HandleAchievementCommand(char* args);

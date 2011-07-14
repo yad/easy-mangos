@@ -2063,7 +2063,7 @@ bool LFGMgr::CheckRoles(LFGRolesMap* rolesMap)
 //    if (sWorld.getConfig(CONFIG_BOOL_LFG_DEBUG_ENABLE))
 //        return true;
 
-    if ((healers + tanks + dps) > (MAX_GROUP_SIZE - rolesMap->size()))
+    if ((healers + tanks + dps) > int8(MAX_GROUP_SIZE - rolesMap->size()))
         return false;
 
     return true;
@@ -2365,8 +2365,8 @@ bool LFGMgr::TryAddMembersToGroup(Group* group, LFGQueueSet* players)
 
         if (LFGProposal* pProposal = group->GetLFGState()->GetProposal())
         {
-            if (pProposal->IsDecliner(player->GetObjectGuid()))
-               return false;
+//            if (pProposal->IsDecliner(player->GetObjectGuid()))
+//               return false;
         }
 
         if (!CheckRoles(group, player))
@@ -2971,13 +2971,23 @@ void LFGMgr::RemoveMemberFromLFDGroup(Group* group, ObjectGuid guid)
 {
     Player* player = sObjectMgr.GetPlayer(guid);
 
-    if (!player || !player->IsInWorld())
+    if (!player)
         return;
 
     if (player->HasAura(LFG_SPELL_DUNGEON_COOLDOWN) && !sWorld.getConfig(CONFIG_BOOL_LFG_DEBUG_ENABLE))
         player->CastSpell(player,LFG_SPELL_DUNGEON_DESERTER,true);
 
     player->RemoveAurasDueToSpell(LFG_SPELL_LUCK_OF_THE_DRAW);
+
+    if (!group)
+    {
+        Leave(player);
+        player->GetLFGState()->Clear();
+        return;
+    }
+
+    if (!player->IsInWorld())
+        return;
 
     if (player->GetLFGState()->GetState() > LFG_STATE_QUEUED)
         Teleport(player, true);

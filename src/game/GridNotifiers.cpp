@@ -94,16 +94,6 @@ VisibleNotifier::Notify()
         // target aura duration for caster show only if target exist at caster client
         if ((*vItr) != &player && (*vItr)->isType(TYPEMASK_UNIT))
             player.SendAurasForTarget((Unit*)(*vItr));
-
-        // non finished movements show to player
-        if ((*vItr)->GetTypeId()==TYPEID_UNIT && ((Creature*)(*vItr))->isAlive())
-            ((Creature*)(*vItr))->SendMonsterMoveWithSpeedToCurrentDestination(&player);
-        else if ((*vItr)->GetTypeId()==TYPEID_PLAYER && ((Player*)(*vItr))->isAlive() && ((Player*)(*vItr))->IsBot())
-        {
-            float x, y, z;
-            if(((Player*)(*vItr))->GetMotionMaster()->GetDestination(x, y, z))
-                 ((Player*)(*vItr))->SendMonsterMoveWithSpeed(x, y, z, 0, &player);
-        }
     }
 }
 

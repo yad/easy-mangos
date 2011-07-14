@@ -32,7 +32,6 @@
 #include "Item.h"
 #include "Player.h"
 #include "World.h"
-#include "AuctionHouseBot/AuctionHouseBot.h"
 
 /**
  * Creates a new MailSender object.
@@ -195,10 +194,10 @@ void MailDraft::SendReturnToSender(uint32 sender_acc, ObjectGuid sender_guid, Ob
     Player *receiver = sObjectMgr.GetPlayer(receiver_guid);
 
     uint32 rc_account = 0;
-    if(!receiver)
+    if (!receiver)
         rc_account = sObjectMgr.GetPlayerAccountIdByGUID(receiver_guid);
 
-    if(!receiver && !rc_account)                            // sender not exist
+    if (!receiver && !rc_account)                           // sender not exist
     {
         deleteIncludedItems(true);
         return;
@@ -207,17 +206,17 @@ void MailDraft::SendReturnToSender(uint32 sender_acc, ObjectGuid sender_guid, Ob
     // prepare mail and send in other case
     bool needItemDelay = false;
 
-    if(!m_items.empty())
+    if (!m_items.empty())
     {
         // if item send to character at another account, then apply item delivery delay
         needItemDelay = sender_acc != rc_account;
 
         // set owner to new receiver (to prevent delete item with sender char deleting)
         CharacterDatabase.BeginTransaction();
-        for(MailItemMap::iterator mailItemIter = m_items.begin(); mailItemIter != m_items.end(); ++mailItemIter)
+        for (MailItemMap::iterator mailItemIter = m_items.begin(); mailItemIter != m_items.end(); ++mailItemIter)
         {
             Item* item = mailItemIter->second;
-            item->SaveToDB();                      // item not in inventory and can be save standalone
+            item->SaveToDB();                               // item not in inventory and can be save standalone
             // owner in data will set at mail receive and item extracting
             CharacterDatabase.PExecute("UPDATE item_instance SET owner_guid = '%u' WHERE guid='%u'", receiver_guid.GetCounter(), item->GetGUIDLow());
         }
@@ -245,15 +244,17 @@ void MailDraft::SendMailTo(MailReceiver const& receiver, MailSender const& sende
 {
     Player* pReceiver = receiver.GetPlayer();               // can be NULL
 
-    bool has_items = !m_items.empty();
+    uint32 pReceiverAccount = 0;
+    if (!pReceiver)
+        pReceiverAccount = sObjectMgr.GetPlayerAccountIdByGUID(receiver.GetPlayerGuid());
 
-    if (receiver.GetPlayerGuid() == auctionbot.GetAHBObjectGuid())
+    if (!pReceiver && !pReceiverAccount)                    // receiver not exist
     {
-        if (sender.GetMailMessageType() == MAIL_AUCTION && has_items)
-            deleteIncludedItems(true);
-
+        deleteIncludedItems(true);
         return;
     }
+
+    bool has_items = !m_items.empty();
 
     // generate mail template items for online player, for offline player items will generated at open
     if (pReceiver)

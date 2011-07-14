@@ -20,9 +20,7 @@
 #define MANGOS_CONFUSEDMOVEMENTGENERATOR_H
 
 #include "MovementGenerator.h"
-#include "DestinationHolder.h"
-#include "Traveller.h"
-#include "PathFinder.h"
+#include "Timer.h"
 
 template<class T>
 class MANGOS_DLL_SPEC ConfusedMovementGenerator
@@ -41,6 +39,5 @@ class MANGOS_DLL_SPEC ConfusedMovementGenerator
     private:
         TimeTracker i_nextMoveTime;
         float i_x, i_y, i_z;
-        DestinationHolder< Traveller<T> > i_destinationHolder;
 };
 #endif

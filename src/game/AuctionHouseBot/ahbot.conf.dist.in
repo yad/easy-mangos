@@ -20,14 +20,6 @@ ConfVersion=2010102201
 #        Enable/Disable (disabled if 0) the part of AHBot that puts items up for auction on Neutral AH
 #    Default 100 (Enabled with 100% of items specified in AuctionHouse.Items.Amount.color section)
 #
-#    AuctionHouseBot.Buyer.Enabled
-#        Enable/Disable the part of AHBot that buys items from players
-#    Default 0 (disabled)
-#
-#    AuctionHouseBot.Name
-#        If you want show other name in place of "AHBot" to auction house, just type it between the quote
-#    Default: "AhBot" ("AhBot" name)
-#
 #    AuctionHouseBot.MinTime
 #        Minimum time for the new auction
 #    Default 1 (Hour)
@@ -76,15 +68,15 @@ ConfVersion=2010102201
 #
 #    AuctionHouseBot.Alliance.Price.Ratio
 #        Define the price of selled item here for the Alliance Auction House
-#    Default 100
+#    Default 200
 #
 #    AuctionHouseBot.Horde.Price.Ratio
 #        Define the price of selled item here for the Horde Auction House
-#    Default 100
+#    Default 200
 #
 #    AuctionHouseBot.Alliance.Price.Ratio
 #        Define the price of selled item here for the Neutral Auction House
-#    Default 100
+#    Default 200
 #
 #    AuctionHouseBot.Items.ItemLevel.*
 #        Prevent seller from listing items below/above this item level
@@ -104,7 +96,7 @@ ConfVersion=2010102201
 #        items will be show on Auction House
 #    Default 0, 2000, 2500, 1500, 1000, 0, 0 (grey, white, green, blue, purple, orange, yellow)
 #
-#    AustionHouseBot.Class.*
+#    AuctionHouseBot.Class.*
 #        Here you can set the class of items you prefer to be show on AH
 #        These value is preference value, it's not percentage. So the maximum is 10.
 #        The minimum is 0 (disabled).
@@ -153,6 +145,7 @@ ConfVersion=2010102201
 ###################################################################################################################
 
 AuctionHouseBot.Seller.Enabled = 1
+AuctionHouseBot.DEBUG.Seller = 0
 
 AuctionHouseBot.Alliance.Items.Amount.Ratio = 100
 AuctionHouseBot.Horde.Items.Amount.Ratio = 100
@@ -203,7 +196,7 @@ AuctionHouseBot.Class.Reagent = 1
 AuctionHouseBot.Class.Projectile = 2
 AuctionHouseBot.Class.TradeGood = 10
 AuctionHouseBot.Class.Generic = 1
-AuctionHouseBot.Class.Reciepe = 6
+AuctionHouseBot.Class.Recipe = 6
 AuctionHouseBot.Class.Quiver = 1
 AuctionHouseBot.Class.Quest = 1
 AuctionHouseBot.Class.Key = 1
@@ -231,7 +224,11 @@ AuctionHouseBot.forceExcludeItems = ""
 #
 #    AuctionHouseBot.Buyer.Enabled
 #        General enable or disable AuctionHouseBot Buyer fonctionality
-#    Default 1 (Enabled)
+#    Default 0 (Disabled)
+#
+#    AuctionHouseBot.DEBUG.Buyer
+#        Enable or disable AuctionHouseBot Buyer debug mode
+#    Default 0 (Disabled)
 #
 #    AuctionHouseBot.Buyer.FACTION.Enabled
 #        Enable or disable buyer independently by faction
@@ -256,6 +253,7 @@ AuctionHouseBot.forceExcludeItems = ""
 ###################################################################################################################
 
 AuctionHouseBot.Buyer.Enabled = 1
+AuctionHouseBot.DEBUG.Buyer = 0
 
 AuctionHouseBot.Buyer.Alliance.Enabled = 1
 AuctionHouseBot.Buyer.Horde.Enabled = 1

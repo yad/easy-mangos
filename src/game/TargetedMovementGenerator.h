@@ -20,10 +20,9 @@
 #define MANGOS_TARGETEDMOVEMENTGENERATOR_H
 
 #include "MovementGenerator.h"
-#include "DestinationHolder.h"
-#include "Traveller.h"
 #include "FollowerReference.h"
 #include "PathFinder.h"
+#include "Unit.h"
 
 class MANGOS_DLL_SPEC TargetedMovementGeneratorBase
 {
@@ -39,23 +38,17 @@ class MANGOS_DLL_SPEC TargetedMovementGeneratorMedium
 : public MovementGeneratorMedium< T, D >, public TargetedMovementGeneratorBase
 {
     protected:
-        TargetedMovementGeneratorMedium()
-            : TargetedMovementGeneratorBase(), i_offset(0), i_angle(0), i_recalculateTravel(false),
-                i_path(NULL), m_pathPointsSent(0), i_x(0.0f), i_y(0.0f), i_z(0.0f) {}
-        TargetedMovementGeneratorMedium(Unit &target)
-            : TargetedMovementGeneratorBase(target), i_offset(0), i_angle(0), i_recalculateTravel(false),
-                i_path(NULL), m_pathPointsSent(0), i_x(target.GetPositionX()), i_y(target.GetPositionY()),
-                i_z(target.GetPositionZ()) {}
-        TargetedMovementGeneratorMedium(Unit &target, float offset, float angle)
-            : TargetedMovementGeneratorBase(target), i_offset(offset), i_angle(angle), i_recalculateTravel(false),
-                i_path(NULL), m_pathPointsSent(0), i_x(target.GetPositionX()), i_y(target.GetPositionY()),
-                i_z(target.GetPositionZ()) {}
+        TargetedMovementGeneratorMedium(Unit &target, float offset, float angle) :
+            TargetedMovementGeneratorBase(target), i_offset(offset), i_angle(angle),
+            i_recalculateTravel(false), i_targetReached(false), i_recheckDistance(0),
+                i_path(NULL), i_x(target.GetPositionX()), i_y(target.GetPositionY()),
+                i_z(target.GetPositionZ())
+        {
+        }
         ~TargetedMovementGeneratorMedium() { delete i_path; }
 
     public:
         bool Update(T &, const uint32 &);
-
-        Unit* GetTarget() const { return i_target.getTarget(); }
 
         bool GetDestination(float &x, float &y, float &z) const
         {
@@ -69,19 +62,21 @@ class MANGOS_DLL_SPEC TargetedMovementGeneratorMedium
             return (i_path) ? (i_path->getPathType() & PATHFIND_NORMAL) : true;
         }
 
+        Unit* GetTarget() const { return i_target.getTarget(); }
+
         void unitSpeedChanged() { i_recalculateTravel=true; }
         void UpdateFinalDistance(float fDistance);
 
     protected:
         void _setTargetLocation(T &);
 
+        ShortTimeTracker i_recheckDistance;
         float i_offset;
         float i_angle;
-        DestinationHolder< Traveller<T> > i_destinationHolder;
-        bool i_recalculateTravel;
+        bool i_recalculateTravel : 1;
+        bool i_targetReached : 1;
 
         PathInfo* i_path;
-        uint32 m_pathPointsSent;
 
         //don't use it in move chase...
         //in fact never call movechase with bot
@@ -107,6 +102,7 @@ class MANGOS_DLL_SPEC ChaseMovementGenerator : public TargetedMovementGeneratorM
 
         static void _clearUnitStateMove(T &u) { u.clearUnitState(UNIT_STAT_CHASE_MOVE); }
         static void _addUnitStateMove(T &u)  { u.addUnitState(UNIT_STAT_CHASE_MOVE); }
+        bool EnableWalking() const { return false;}
         bool _lostTarget(T &u) const { return u.getVictim() != this->GetTarget(); }
         void _reachTarget(T &);
 };
@@ -135,10 +131,10 @@ class MANGOS_DLL_SPEC FollowMovementGenerator : public TargetedMovementGenerator
 
         static void _clearUnitStateMove(T &u) { u.clearUnitState(UNIT_STAT_FOLLOW_MOVE); }
         static void _addUnitStateMove(T &u)  { u.addUnitState(UNIT_STAT_FOLLOW_MOVE); }
+        bool EnableWalking() const;
         bool _lostTarget(T &) const { return false; }
         void _reachTarget(T &) {}
     private:
-        void _updateWalkMode(T &u);
         void _updateSpeed(T &u);
 };
 
