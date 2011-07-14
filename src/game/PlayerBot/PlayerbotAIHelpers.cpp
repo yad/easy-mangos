@@ -434,7 +434,7 @@ Player* PlayerbotAI::FindGroupMainTank()
             case WarriorProtection:
                 return ref->getSource();
             case DruidFeralCombat:
-                if (ref->getSource()->HasAura(5487))
+                if (!mainTank)
                     mainTank = ref->getSource();
                 break;
             case PaladinProtection:
@@ -1238,19 +1238,62 @@ bool PlayerbotAI::HasAuraFromUnit(uint32 spellId, Unit *target, Unit *caster)
     return false;
 }
 
-bool PlayerbotAI::Cast(uint32 spellId, Unit *target, bool OneAuraByCaster)
+bool PlayerbotAI::RespectCondition(uint32 spellId, Unit *target, CastCondition condition)
+{
+    switch (condition)
+    {
+    case IF_TARGET_HAS_NOT_AURA:
+        if (!HasAura(spellId, target))
+            return true;
+        break;
+    case IF_TARGET_HAS_AURA:
+        if (HasAura(spellId, target))
+            return true;
+        break;
+    case IF_TARGET_HAS_AURA_FROM_CURRENT_CASTER:
+        if (HasAuraFromUnit(spellId, target, m_bot))
+            return true;
+        break;
+    case IF_TARGET_HAS_NOT_AURA_FROM_CURRENT_CASTER:
+        if (!HasAuraFromUnit(spellId, target, m_bot))
+            return true;
+        break;
+    case IF_CASTER_HAS_AURA:
+        if (HasAura(spellId, m_bot))
+            return true;
+        break;
+    case IF_CASTER_HAS_NOT_AURA:
+        if (!HasAura(spellId, m_bot))
+            return true;
+        break;
+    case IF_CASTER_HAS_AURA_FROM_CURRENT_CASTER:
+        if (HasAuraFromUnit(spellId, m_bot, m_bot))
+            return true;
+        break;
+    case IF_CASTER_HAS_NOT_AURA_FROM_CURRENT_CASTER:
+        if (!HasAuraFromUnit(spellId, m_bot, m_bot))
+            return true;
+        break;
+    case NO_CONDITION:
+        return true;
+    }
+
+    return false;
+}
+
+bool PlayerbotAI::Cast(uint32 spellId, Unit *target, CastCondition condition, uint32 spellIdForSecondCondition, CastCondition SecondCondition)
 {
     if (!target)
         target = m_bot;
 
-    if (OneAuraByCaster)
+    if (SecondCondition && spellIdForSecondCondition)
     {
-        if (!HasAuraFromUnit(spellId, target, m_bot))
+        if (RespectCondition(spellId, target, condition) && RespectCondition(spellIdForSecondCondition, target, SecondCondition))
             return CastSpell(spellId, target);
     }
     else
     {
-        if (!HasAura(spellId, target))
+        if (RespectCondition(spellId, target, condition))
             return CastSpell(spellId, target);
     }
 

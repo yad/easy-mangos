@@ -97,7 +97,7 @@ bool PlayerbotMageAI::DoEvadeAction()
     PlayerbotAI *ai = GetAI();
     Player *m_bot = GetPlayerBot();
 
-    if (ai->CastAura(ICE_BLOCK, m_bot))
+    if (ai->Cast(ICE_BLOCK, m_bot))
         return true;
 
     return false;

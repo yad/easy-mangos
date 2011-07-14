@@ -170,6 +170,9 @@ void PlayerbotAI::SetLeader(Player* pl)
 
 void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
 {
+    if (!GetLeader() || !GetLeader()->IsInWorld() || !GetLeader()->GetSession() || GetLeader()->GetSession()->PlayerLogout())
+        return;
+
     switch (packet.GetOpcode())
     {
         case SMSG_DUEL_WINNER:
@@ -206,7 +209,8 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
         case SMSG_SPELL_FAILURE:
         {
             WorldPacket p(packet);
-            ObjectGuid casterGuid = p.readPackGUID();
+            ObjectGuid casterGuid;
+            p >> casterGuid.ReadAsPacked();
             if (casterGuid != m_bot->GetObjectGuid())
                 return;
             m_ignoreAIUpdatesUntilTime = time(0);
@@ -222,7 +226,8 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
         case SMSG_MOVE_SET_CAN_FLY:
         {
             WorldPacket p(packet);
-            ObjectGuid guid = p.readPackGUID();
+            ObjectGuid guid;
+            p >> guid.ReadAsPacked();
             if (guid != m_bot->GetObjectGuid())
                 return;
             m_bot->m_movementInfo.AddMovementFlag(MOVEFLAG_FLYING);
@@ -233,7 +238,8 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
         case SMSG_MOVE_UNSET_CAN_FLY:
         {
             WorldPacket p(packet);
-            ObjectGuid guid = p.readPackGUID();
+            ObjectGuid guid;
+            p >> guid.ReadAsPacked();
             if (guid != m_bot->GetObjectGuid())
                 return;
             m_bot->m_movementInfo.RemoveMovementFlag(MOVEFLAG_FLYING);
@@ -376,8 +382,10 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
         case SMSG_SPELL_START:
         {
             WorldPacket p(packet);
-            ObjectGuid castItemGuid = p.readPackGUID();
-            ObjectGuid casterGuid = p.readPackGUID();
+            ObjectGuid castItemGuid;
+            p >> castItemGuid.ReadAsPacked();
+            ObjectGuid casterGuid;
+            p >> casterGuid.ReadAsPacked();
             uint8 castCount;
             p >> castCount;
             uint32 spellId;
@@ -411,7 +419,11 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
                 if (mainTank)
                 {
                     if (mainTank==m_bot)
+                    {
+                        if (m_bot->getRole()==DruidFeralCombat) //TODO create proper first_combat_action for AI
+                            Cast(5487);
                         MoveTo(m_latestVictim);
+                    }
                     else
                         MoveTo(m_latestVictim, m_bot->GetAngle(m_latestVictim)+rand_float(-0.25f, 0.25f), GetDist(), 0.0f);
                 }
@@ -429,8 +441,10 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
         case SMSG_SPELL_GO:
         {
             WorldPacket p(packet);
-            ObjectGuid castItemGuid = p.readPackGUID();
-            ObjectGuid casterGuid = p.readPackGUID();
+            ObjectGuid castItemGuid;
+            p >> castItemGuid.ReadAsPacked();
+            ObjectGuid casterGuid;
+            p >> casterGuid.ReadAsPacked();
             if (casterGuid != m_bot->GetObjectGuid())
                 return;
 

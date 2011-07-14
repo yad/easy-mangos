@@ -107,13 +107,13 @@ bool PlayerbotWarriorAI::DoProtectSelfAction()
     PlayerbotAI *ai = GetAI();
     Player *m_bot = GetPlayerBot();
 
-    if (m_bot->GetHealthPercent() < 40 && ai->CastAura(SHIELD_WALL, m_bot))
+    if (m_bot->GetHealthPercent() < 40 && ai->Cast(SHIELD_WALL, m_bot))
         return true;
 
-    if (m_bot->GetHealthPercent() < 60 && ai->CastAura(ENRAGED_REGENERATION, m_bot))
+    if (m_bot->GetHealthPercent() < 60 && ai->Cast(ENRAGED_REGENERATION, m_bot))
         return true;
 
-    if (ai->CastAura(SPELL_REFLECTION, m_bot))
+    if (ai->Cast(SPELL_REFLECTION, m_bot))
         return true;
 
     return false;
@@ -185,8 +185,8 @@ void PlayerbotWarriorAI::DoNonCombatActions()
     Player* m_bot = GetPlayerBot();
     Player* m_master = ai->GetLeader();
 
-    if (!ai->CastAura(BERSERKER_STANCE, m_bot))
-        if (m_bot->getRole() == WarriorProtection && !ai->CastAura(DEFENSIVE_STANCE, m_bot))
-            if (ai->CastAura(BATTLE_STANCE, m_bot))
+    if (!ai->Cast(BERSERKER_STANCE, m_bot))
+        if (m_bot->getRole() == WarriorProtection && !ai->Cast(DEFENSIVE_STANCE, m_bot))
+            if (ai->Cast(BATTLE_STANCE, m_bot))
                 return;
 }

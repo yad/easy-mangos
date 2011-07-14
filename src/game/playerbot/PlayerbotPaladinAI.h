@@ -92,7 +92,10 @@ enum PaladinSpells
     SENSE_UNDEAD_1                  = 5502,
     SHADOW_RESISTANCE_AURA_1        = 19876,
     SHIELD_OF_RIGHTEOUSNESS_1       = 53600,
-    TURN_EVIL_1                     = 10326
+    TURN_EVIL_1                     = 10326,
+    
+    // Aura for exorcism or flash heal instant
+    AURA_ART_OF_WAR                 = 59578
 };
 //class Player;
 

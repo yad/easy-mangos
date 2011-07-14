@@ -787,8 +787,7 @@ int WorldSocket::HandleAuthSession(WorldPacket& recvPacket)
                                 "s, "                       //6
                                 "expansion, "               //7
                                 "mutetime, "                //8
-                                "locale, "                  //9
-                                "os "                       //10
+                                "locale "                   //9
                                 "FROM account "
                                 "WHERE username = '%s'",
                                 safe_account.c_str());
@@ -851,8 +850,6 @@ int WorldSocket::HandleAuthSession(WorldPacket& recvPacket)
     locale = LocaleConstant(fields[9].GetUInt8());
     if (locale >= MAX_LOCALE)
         locale = LOCALE_enUS;
-
-    std::string os = fields[10].GetString();
 
     delete result;
 

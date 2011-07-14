@@ -364,10 +364,6 @@ bool AuthSocket::_HandleLogonChallenge()
 
     _login = (const char*)ch->I;
     _build = ch->build;
-    _os = (const char*)ch->os;
-
-    if(_os.size() > 4)
-        return false;
 
     ///- Normalize account name
     //utf8ToUpperOnlyLatin(_login); -- client already send account in expected form
@@ -743,7 +739,7 @@ bool AuthSocket::_HandleLogonProof()
         if (_autoreg)
             LoginDatabase.PExecute("UPDATE account SET gmlevel = 3, expansion = 2, sessionkey = '%s', last_ip = '%s', last_login = NOW(), locale = 2, failed_logins = 0 WHERE username = '%s'", K_hex, get_remote_address().c_str(), _login.c_str());
         else
-            LoginDatabase.PExecute("UPDATE account SET sessionkey = '%s', last_ip = '%s', last_login = NOW(), locale = '%u', os = '%s', failed_logins = 0 WHERE username = '%s'", K_hex, get_remote_address().c_str(), GetLocaleByName(_localizationName), _os.c_str(), _safelogin.c_str() );
+            LoginDatabase.PExecute("UPDATE account SET sessionkey = '%s', last_ip = '%s', last_login = NOW(), locale = '%u', failed_logins = 0 WHERE username = '%s'", K_hex, get_remote_address().c_str(), GetLocaleByName(_localizationName), _safelogin.c_str() );
 
         OPENSSL_free((void*)K_hex);
 
@@ -850,10 +846,6 @@ bool AuthSocket::_HandleReconnectChallenge()
 
     EndianConvert(ch->build);
     _build = ch->build;
-    _os = (const char*)ch->os;
-
-    if(_os.size() > 4)
-        return false;
 
     QueryResult *result = LoginDatabase.PQuery ("SELECT sessionkey FROM account WHERE username = '%s'", _safelogin.c_str ());
 
