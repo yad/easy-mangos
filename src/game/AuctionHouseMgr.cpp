@@ -990,14 +990,12 @@ uint32 AuctionEntry::GetAuctionOutBid() const
 
 void AuctionEntry::DeleteFromDB() const
 {
-    return;
     //No SQL injection (Id is integer)
     CharacterDatabase.PExecute("DELETE FROM auction WHERE id = '%u'", Id);
 }
 
 void AuctionEntry::SaveToDB() const
 {
-    return;
     //No SQL injection (no strings)
     CharacterDatabase.PExecute("INSERT INTO auction (id,houseid,itemguid,item_template,item_count,item_randompropertyid,itemowner,buyoutprice,time,moneyTime,buyguid,lastbid,startbid,deposit) "
         "VALUES ('%u', '%u', '%u', '%u', '%u', '%i', '%u', '%u', '" UI64FMTD "', '" UI64FMTD "', '%u', '%u', '%u', '%u')",
