@@ -45,7 +45,7 @@ typedef std::map<ObjectGuid, BattleGroundPlayer> BattleGroundPlayerMap;
 #define MAX_DIST_COMBAT_RANGED_TARGET  25.0f
 #define MIN_DIST_COMBAT_CAC_TARGET      2.0f
 #define MAX_DIST_COMBAT_CAC_TARGET     20.0f
-#define MAX_RANGE_MOVEMENT            500.0f
+#define MAX_RANGE_MOVEMENT            250.0f
 
 enum RacialTraits
 {

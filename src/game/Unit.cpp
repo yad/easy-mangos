@@ -8815,8 +8815,11 @@ void Unit::UpdateSpeed(UnitMoveType mtype, bool forced, float ratio)
             {
                 if(Player* leader = ((Player*)this)->GetPlayerbotAI()->GetLeader())
                 {
-                    SetSpeedRate(mtype, leader->GetSpeedRate(mtype), forced);
-                    return;
+                    if (leader != ((Player*)this))
+                    {
+                        SetSpeedRate(mtype, leader->GetSpeedRate(mtype), forced);
+                        return;
+                    }
                 }
             }
             break;
