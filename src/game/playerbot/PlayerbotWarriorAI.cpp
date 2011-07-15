@@ -185,8 +185,10 @@ void PlayerbotWarriorAI::DoNonCombatActions()
     Player* m_bot = GetPlayerBot();
     Player* m_master = ai->GetLeader();
 
-    if (!ai->Cast(BERSERKER_STANCE, m_bot))
-        if (m_bot->getRole() == WarriorProtection && !ai->Cast(DEFENSIVE_STANCE, m_bot))
-            if (ai->Cast(BATTLE_STANCE, m_bot))
-                return;
+    if (m_bot->getRole() == WarriorProtection && ai->Cast(DEFENSIVE_STANCE))
+        return;
+    else if (ai->Cast(BERSERKER_STANCE))
+        return;
+    else if (ai->Cast(BATTLE_STANCE))
+        return;
 }
