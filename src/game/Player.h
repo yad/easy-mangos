@@ -1647,14 +1647,13 @@ class MANGOS_DLL_SPEC Player : public Unit
         void SendProficiency(ItemClass itemClass, uint32 itemSubclassMask);
         void SendInitialSpells();
         bool addSpell(uint32 spell_id, bool active, bool learning, bool dependent, bool disabled);
-        void learnSpell(uint32 spell_id, bool dependent, bool debug = false);
+        void learnSpell(uint32 spell_id, bool dependent);
         void removeSpell(uint32 spell_id, bool disabled = false, bool learn_low_rank = true, bool sendUpdate = true);
         void resetSpells();
         void learnDefaultSpells();
         void learnQuestRewardedSpells();
         void learnQuestRewardedSpells(Quest const* quest);
         void learnSpellHighRank(uint32 spellid);
-        bool isWtfSpell(uint32 spell_id);
         void choseMount(uint32 *Mount, uint32 max);
 
         uint32 GetFreeTalentPoints() const { return GetUInt32Value(PLAYER_CHARACTER_POINTS1); }

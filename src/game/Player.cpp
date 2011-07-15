@@ -3513,13 +3513,8 @@ bool Player::IsNeedCastPassiveLikeSpellAtLearn(SpellEntry const* spellInfo) cons
     return need_cast && (!spellInfo->CasterAuraState || HasAuraState(AuraState(spellInfo->CasterAuraState)));
 }
 
-void Player::learnSpell(uint32 spell_id, bool dependent, bool debug)
+void Player::learnSpell(uint32 spell_id, bool dependent)
 {
-    /*if (debug)
-    {
-        SpellEntry const* spellInfo = sSpellStore.LookupEntry(spell_id);
-        sLog.outString("%u %s %s", spellInfo->Id, spellInfo->SpellName[2], spellInfo->Rank[2]);
-    }*/
     PlayerSpellMap::iterator itr = m_spells.find(spell_id);
 
     bool disabled = (itr != m_spells.end()) ? itr->second.disabled : false;

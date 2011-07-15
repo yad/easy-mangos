@@ -2446,6 +2446,50 @@ void ObjectMgr::LoadItemSetPrototypes()
     sLog.outString( ">> Loaded %u Items in Sets", count );
 }
 
+void ObjectMgr::LoadSpellInfo()
+{
+    uint32 count = 0;
+    QueryResult *result = WorldDatabase.Query("SELECT id, class, name_en, name_en2, name_fr, learn_level, rank, prev_rank, next_rank FROM spell_info");
+
+    if (!result)
+    {
+        BarGoLink bar(1);
+
+        bar.step();
+
+        sLog.outString();
+        sLog.outErrorDb(">> Loaded 0 Spells Info . DB table `spell_info` is empty.");
+        return;
+    }
+
+    BarGoLink bar(result->GetRowCount());
+
+    do
+    {
+        Field *fields = result->Fetch();
+        bar.step();
+
+        SpellInfo spellinfo;
+        spellinfo.id          = fields[0].GetUInt32();
+        spellinfo._class      = fields[1].GetUInt8();
+        //spellinfo.name_en     = fields[2].GetCppString();
+        spellinfo.name_en2    = fields[3].GetCppString();
+        //spellinfo.name_fr     = fields[4].GetCppString();
+        spellinfo.learn_level = fields[5].GetUInt32();
+        spellinfo.rank        = fields[6].GetUInt8();
+        spellinfo.prev_rank   = fields[7].GetUInt8();
+        spellinfo.next_rank   = fields[8].GetUInt8();
+
+        m_SpellInfoMap[count] = spellinfo;
+
+        ++count;
+    } while (result->NextRow());
+
+    delete result;
+    sLog.outString();
+    sLog.outString( ">> Loaded %u Spells Info", count );
+}
+
 void ObjectMgr::LoadItemConverts()
 {
     m_ItemConvert.clear();                                  // needed for reload case

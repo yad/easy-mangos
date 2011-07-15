@@ -1017,6 +1017,9 @@ void World::SetInitialWorldSettings()
     sLog.outString( "Loading Items Sets..." );
     sObjectMgr.LoadItemSetPrototypes();
 
+    sLog.outString( "Loading Spells Info..." );
+    sObjectMgr.LoadSpellInfo();
+
     sLog.outString("Loading Item converts...");             // must be after LoadItemPrototypes
     sObjectMgr.LoadItemConverts();
 
